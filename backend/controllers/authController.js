@@ -69,8 +69,8 @@ const register = async (req, res) => {
 };
 
 const logout = async (req, res) => {
-   
-  const incomingRefreshToken = req.cookies.refreshToken;
+   try{
+      const incomingRefreshToken = req.cookies.refreshToken;
   if (incomingRefreshToken) {
     const decoded = jwt.decode(incomingRefreshToken);
 
@@ -91,11 +91,16 @@ const logout = async (req, res) => {
 
   clearTokens(res);
   res.status(200).json({ message: "Logged out successfully" });
+   }
+   catch(error){
+    console.log('erroring')
+   }
+  
 };
 
 const refreshToken = async (req, res) => {
   try {
- 
+    
     const incomingRefreshToken = req.cookies.refreshToken;
   if (!incomingRefreshToken) return res.status(401).json({ message: "No token" });
 
@@ -103,6 +108,7 @@ const refreshToken = async (req, res) => {
   const decoded = jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET);
 
   const user = await User.findOne({ _id: decoded.id }).select('+refreshTokens');
+  console.log(user,'hii')
 
   if (!user || !user.refreshTokens.includes(incomingRefreshToken)) {
 
@@ -114,7 +120,7 @@ const refreshToken = async (req, res) => {
   }
 
 
-  const newAccessToken = jwt.sign({ id: user._id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '15m' });
+  const newAccessToken = jwt.sign({ id: user._id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: 10});
   const newRefreshToken = jwt.sign({ id: user._id }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '7d' });
 
  
@@ -124,14 +130,14 @@ const refreshToken = async (req, res) => {
 
   res.cookie('accessToken', newAccessToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: false,
     sameSite: "strict",
-    maxAge: 15 * 60 * 1000,
+    maxAge: 10000,
   });
 
   res.cookie('refreshToken', newRefreshToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: false,
     sameSite: "strict",
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });

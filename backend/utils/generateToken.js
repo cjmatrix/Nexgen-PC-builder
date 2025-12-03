@@ -1,10 +1,10 @@
 const jwt = require("jsonwebtoken");
-const User=require('../models/User')
-const generateTokens = async(res, userId) => {
+const User = require("../models/User");
+const generateTokens = async (res, userId) => {
   const accessToken = jwt.sign(
     { id: userId },
     process.env.ACCESS_TOKEN_SECRET,
-    { expiresIn: "15m" }
+    { expiresIn: 10 }
   );
 
   const refreshToken = jwt.sign(
@@ -15,29 +15,27 @@ const generateTokens = async(res, userId) => {
     }
   );
 
-  const user= await User.findById(userId).select('+refreshTokens');;
-  console.log(user)
+  const user = await User.findById(userId).select("+refreshTokens");
+  console.log(user);
   user.refreshTokens.push(refreshToken);
 
-    await user.save();
+  await user.save();
 
   res.cookie("accessToken", accessToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: false,
     sameSite: "strict",
-    maxAge: 15 * 60 * 1000,
+    maxAge: 10000,
   });
 
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure:false,
     sameSite: "strict",
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 
-  
-  console.log('heyyyyyyy')
- 
+  console.log("heyyyyyyy");
 };
 
 const clearTokens = (res) => {
