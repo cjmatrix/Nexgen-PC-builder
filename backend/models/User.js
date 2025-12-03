@@ -77,6 +77,7 @@ const userSchema = new mongoose.Schema({
     enum: ['active', 'suspended', 'banned'],
     default: 'active'
   },
+
   
   lastLogin: {
     type: Date,
@@ -88,6 +89,10 @@ const userSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Order'
   },
+  refreshTokens: [{
+    type: String,
+    select: false 
+  }]
 
 }, {
   timestamps: true // Automatically creates createdAt and updatedAt fields
