@@ -65,9 +65,7 @@ export const updateUser = createAsyncThunk(
 
 const initialState = {
   users: [],
-  page: 1,
-  totalPages: 1,
-  totalUsers: 0,
+  pagination: {},
   search: "",
   isLoading: false,
   isError: false,
@@ -85,10 +83,6 @@ const userSlice = createSlice({
     },
     setSearch: (state, action) => {
       state.search = action.payload;
-      state.page = 1; // Reset to page 1 on new search
-    },
-    setPage: (state, action) => {
-      state.page = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -99,9 +93,11 @@ const userSlice = createSlice({
       .addCase(getUsers.fulfilled, (state, action) => {
         state.isLoading = false;
         state.users = action.payload.users;
-        state.totalPages = action.payload.totalPages;
-        state.totalUsers = action.payload.totalUsers;
-        state.page = action.payload.page;
+        state.pagination = {
+          page: action.payload.page,
+          totalPages: action.payload.totalPages,
+          totalUsers: action.payload.totalUsers,
+        };
       })
       .addCase(getUsers.rejected, (state, action) => {
         state.isLoading = false;
@@ -130,5 +126,5 @@ const userSlice = createSlice({
   },
 });
 
-export const { reset, setSearch, setPage } = userSlice.actions;
+export const { reset, setSearch } = userSlice.actions;
 export default userSlice.reducer;

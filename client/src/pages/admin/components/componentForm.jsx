@@ -1,24 +1,55 @@
-import React, { useState } from "react";
-import { Upload, ChevronLeft } from "lucide-react"; // npm install lucide-react
-import { CATEGORY_SPECS } from "../config/componentFields";
-import api from "../api/axios"; // Your Axios instance
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Upload, ChevronLeft } from "lucide-react";
+import { CATEGORY_SPECS } from "../../../config/componentFields";
+import api from "../../../api/axios";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  createComponent,
+  updateComponent,
+  fetchComponentById,
+} from "../../../store/slices/componentSlice";
 
-const CreateComponent = () => {
-  // 1. State for Universal Fields
+const ComponentForm = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const isEditMode = !!id;
+
   const [baseData, setBaseData] = useState({
     name: "",
     price: "",
     stock: "",
     category: "",
-    tier_level: 1, // Default Tier
-    image: "heyy", // We'll store the URL string here for MVP
+    tier_level: 1,
+    image: "heyy",
   });
 
-  // 2. State for Dynamic Specs
   const [specs, setSpecs] = useState({});
+  const { loading } = useSelector((state) => state.components);
 
-  // --- Handlers ---
+  useEffect(() => {
+    if (isEditMode) {
+      dispatch(fetchComponentById(id))
+        .unwrap()
+        .then((data) => {
+          setBaseData({
+            name: data.name,
+            price: data.price,
+            stock: data.stock,
+            category: data.category,
+            tier_level: data.tier_level,
+            image: data.image,
+          });
+          setSpecs(data.specs || {});
+        })
+        .catch((err) => {
+          console.error("Failed to fetch component:", err);
+          alert("Failed to fetch component details");
+          navigate("/admin/components");
+        });
+    }
+  }, [id, isEditMode, dispatch, navigate]);
 
   const handleBaseChange = (e) => {
     setBaseData({ ...baseData, [e.target.name]: e.target.value });
@@ -27,7 +58,7 @@ const CreateComponent = () => {
   const handleCategoryChange = (e) => {
     const newCategory = e.target.value;
     setBaseData({ ...baseData, category: newCategory });
-    setSpecs({}); // Clear specs when category changes to avoid pollution
+    setSpecs({});
   };
 
   const handleSpecChange = (e) => {
@@ -43,13 +74,18 @@ const CreateComponent = () => {
       specs: specs,
     };
 
-    console.log("Sending Payload:", payload);
     try {
-      await api.post("/admin/components", payload);
-      alert("Component Created Successfully!");
-      // Reset form or redirect
+      if (isEditMode) {
+        await dispatch(updateComponent({ id, data: payload })).unwrap();
+        alert("Component Updated Successfully!");
+      } else {
+        await dispatch(createComponent(payload)).unwrap();
+        alert("Component Created Successfully!");
+      }
+      navigate("/admin/components");
     } catch (error) {
-      alert("Error creating component");
+      console.error("Error saving component:", error);
+      alert(`Error ${isEditMode ? "updating" : "creating"} component`);
     }
   };
 
@@ -63,7 +99,7 @@ const CreateComponent = () => {
           name={field.name}
           onChange={handleSpecChange}
           className={commonClasses}
-          defaultValue=""
+          value={specs[field.name] || ""}
         >
           <option value="" disabled>
             Select {field.label}
@@ -84,6 +120,7 @@ const CreateComponent = () => {
             type="checkbox"
             name={field.name}
             onChange={handleSpecChange}
+            checked={!!specs[field.name]}
             className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 border-gray-300"
           />
           <span className="ml-2 text-gray-700">{field.label}</span>
@@ -97,10 +134,19 @@ const CreateComponent = () => {
         name={field.name}
         placeholder={field.placeholder || ""}
         onChange={handleSpecChange}
+        value={specs[field.name] || ""}
         className={commonClasses}
       />
     );
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex justify-center items-center">
+        Loading...
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-8 flex justify-center">
@@ -108,16 +154,14 @@ const CreateComponent = () => {
         {/* Header */}
         <div className="flex justify-between items-center mb-8 border-b pb-4">
           <h1 className="text-2xl font-bold text-gray-800">
-            Add New Inventory Item
+            {isEditMode ? "Edit Inventory Item" : "Add New Inventory Item"}
           </h1>
-          
-            <Link to='/admin/components'>
+
+          <Link to="/admin/components">
             <button className="flex items-center text-gray-500 hover:text-gray-800 transition">
-                  <ChevronLeft size={18} /> Back to Inventory
+              <ChevronLeft size={18} /> Back to Inventory
             </button>
-            </Link>
-            
-        
+          </Link>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
@@ -135,6 +179,7 @@ const CreateComponent = () => {
                   required
                   type="text"
                   name="name"
+                  value={baseData.name}
                   onChange={handleBaseChange}
                   className="w-full border border-gray-300 rounded-md p-2"
                 />
@@ -148,6 +193,7 @@ const CreateComponent = () => {
                   required
                   type="number"
                   name="price"
+                  value={baseData.price}
                   onChange={handleBaseChange}
                   className="w-full border border-gray-300 rounded-md p-2"
                 />
@@ -161,6 +207,7 @@ const CreateComponent = () => {
                   required
                   type="number"
                   name="stock"
+                  value={baseData.stock}
                   onChange={handleBaseChange}
                   className="w-full border border-gray-300 rounded-md p-2"
                 />
@@ -240,7 +287,10 @@ const CreateComponent = () => {
               name="category"
               value={baseData.category}
               onChange={handleCategoryChange}
-              className="w-full border border-gray-300 rounded-md p-3 text-lg"
+              className={`w-full border border-gray-300 rounded-md p-3 text-lg ${
+                isEditMode ? "bg-gray-200 appearance-none" : ""
+              }`}
+              disabled={isEditMode} // Disable category change in edit mode to prevent schema mismatch issues
             >
               <option value="">Select Category...</option>
               {Object.keys(CATEGORY_SPECS).map((cat) => (
@@ -249,6 +299,11 @@ const CreateComponent = () => {
                 </option>
               ))}
             </select>
+            {isEditMode && (
+              <p className="text-sm text-gray-500 mt-1">
+                Category cannot be changed during edit.
+              </p>
+            )}
           </div>
 
           {/* SECTION C: Dynamic Technical Specs */}
@@ -277,6 +332,7 @@ const CreateComponent = () => {
                   <select
                     name="tier_level"
                     onChange={handleBaseChange}
+                    value={baseData.tier_level}
                     className="w-full border border-gray-300 rounded-md p-2"
                   >
                     <option value="1">Tier 1 - Entry</option>
@@ -292,19 +348,20 @@ const CreateComponent = () => {
 
           {/* Footer Actions */}
           <div className="flex justify-end gap-4 border-t pt-6">
-            <Link to='/admin/components'>
+            <Link to="/admin/components">
               <button
-              type="button"
-              className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-            >
-              Cancel
-            </button></Link>
-          
+                type="button"
+                className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+            </Link>
+
             <button
               type="submit"
               className="px-6 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800"
             >
-              Save Component
+              {isEditMode ? "Update Component" : "Save Component"}
             </button>
           </div>
         </form>
@@ -313,4 +370,4 @@ const CreateComponent = () => {
   );
 };
 
-export default CreateComponent;
+export default ComponentForm;

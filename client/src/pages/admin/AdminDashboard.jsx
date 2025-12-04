@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { Outlet } from "react-router-dom";
-import Sidebar from "../components/SideBar";
+import Sidebar from "../../components/SideBar";
 import { Menu } from "lucide-react";
-import AdminHeader from "../components/AdminHeader";
+import AdminHeader from "../../components/AdminHeader";
 function AdminDashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 

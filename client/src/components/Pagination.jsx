@@ -1,38 +1,28 @@
 import React from 'react'
 import { useDispatch } from 'react-redux'
 
-function Pagination({totalCount,setPage}) {
+function Pagination({pagination,page,setPage}) {
 
-
-    const dispatch=useDispatch();
-    
-    const buttonList=[]
-    
-    for(let i=1;i<=totalCount;i++){
-
-        buttonList.push(i)
-    }
+  const dispatch=useDispatch();
+   
     
   return (
-    <div className="px-6 py-4 bg-white border-t border-gray-200 flex items-center justify-end gap-2">
-          <button className="text-gray-500 hover:text-gray-700 text-sm font-medium px-2">
+   <div className="p-4 border-t border-gray-100 flex justify-between items-center bg-gray-50/50">
+          <button
+            disabled={page === 1}
+            onClick={() => setPage((p) => p - 1)}
+            className="px-4 py-2 border border-gray-200 rounded-lg bg-white text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
             Previous
           </button>
-
-          <div className="flex gap-1">
-            {
-                buttonList.map(page=>(
-                     <button key={page} className="w-8 h-8 flex items-center justify-center rounded text-sm text-gray-600 hover:bg-gray-100"
-                        onClick={()=>dispatch(setPage(page))}
-                     >
-                        {page}
-                    </button>
-                ))
-            }
-           
-          </div>
-
-          <button className="text-gray-500 hover:text-gray-700 text-sm font-medium px-2">
+          <span className="text-sm text-gray-600 font-medium">
+            Page {pagination?.page} of {pagination?.totalPages}
+          </span>
+          <button
+            disabled={page === pagination?.totalPages}
+            onClick={() => setPage((p) => p + 1)}
+            className="px-4 py-2 border border-gray-200 rounded-lg bg-white text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
             Next
           </button>
         </div>

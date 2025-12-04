@@ -1,6 +1,6 @@
-import { useSelector, useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import { logout, reset } from '../store/slices/authSlice';
+import { useSelector, useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { logout, reset } from "../../store/slices/authSlice";
 
 const CustomerDashboard = () => {
   const navigate = useNavigate();
@@ -10,7 +10,7 @@ const CustomerDashboard = () => {
   const onLogout = () => {
     dispatch(logout());
     dispatch(reset());
-    navigate('/login');
+    navigate("/login");
   };
 
   return (
@@ -21,7 +21,9 @@ const CustomerDashboard = () => {
             <div className="flex space-x-7">
               <div>
                 <a href="#" className="flex items-center py-4 px-2">
-                  <span className="font-semibold text-gray-500 text-lg">Nexgen PC Builder</span>
+                  <span className="font-semibold text-gray-500 text-lg">
+                    Nexgen PC Builder
+                  </span>
                 </a>
               </div>
             </div>
@@ -39,12 +41,15 @@ const CustomerDashboard = () => {
 
       <div className="container mx-auto mt-10 p-4">
         <div className="bg-white p-8 rounded shadow-md">
-          <h1 className="text-3xl font-bold mb-4">Welcome, {user && user.name}!</h1>
+          <h1 className="text-3xl font-bold mb-4">
+            Welcome, {user && user.name}!
+          </h1>
           <p className="text-gray-700 text-lg">
-            This is your customer dashboard. You can manage your orders and profile here.
+            This is your customer dashboard. You can manage your orders and
+            profile here.
           </p>
           <div className="mt-6">
-             <p className="text-gray-600">More features coming soon...</p>
+            <p className="text-gray-600">More features coming soon...</p>
           </div>
         </div>
       </div>

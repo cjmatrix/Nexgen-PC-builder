@@ -6,7 +6,13 @@ const {
   updateUser,
 } = require("../controllers/adminController");
 
-const {createComponent,getAdminComponents, deleteComponent}=require('../controllers/componentController')
+const {
+  createComponent,
+  getAdminComponents,
+  deleteComponent,
+  getComponentById,
+  updateComponent,
+} = require("../controllers/componentController");
 
 const { protect, admin } = require("../middleware/authMiddleware");
 
@@ -18,7 +24,9 @@ router.patch("/users/:id/block", blockUser);
 
 router.put("/users/:id/update", updateUser);
 router.post("/components", createComponent);
-router.get("/components" ,getAdminComponents)
-router.patch("/components/:id/delete",deleteComponent)
+router.get("/components", getAdminComponents);
+router.get("/components/:id", getComponentById);
+router.put("/components/:id", updateComponent);
+router.patch("/components/:id/delete", deleteComponent);
 
 module.exports = router;

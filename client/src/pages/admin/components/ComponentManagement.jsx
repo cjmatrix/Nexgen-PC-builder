@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   fetchAdminComponents,
   deleteComponent,
-} from "../store/slices/componentSlice";
+} from "../../../store/slices/componentSlice";
 import { Link } from "react-router-dom";
 import {
   Edit,
@@ -14,7 +14,24 @@ import {
   RefreshCcw,
 } from "lucide-react";
 
-import Pagination from "./Pagination";
+import Pagination from "../../../components/Pagination";
+
+function tierList(tier) {
+  switch (tier) {
+    case 1:
+      return " Entry ";
+    case 2:
+      return " Budget ";
+    case 3:
+      return " Mid-Range ";
+    case 4:
+      return " High-end ";
+    case 5:
+      return " Ultra ";
+    default:
+      return " Unknown ";
+  }
+}
 
 const ComponentManagement = () => {
   const dispatch = useDispatch();
@@ -120,9 +137,8 @@ const ComponentManagement = () => {
               className="appearance-none bg-white border border-gray-200 text-gray-700 py-2.5 pl-4 pr-10 rounded-lg text-sm focus:outline-none focus:border-blue-500 cursor-pointer"
             >
               <option value="">Status All</option>
-              <option value="avaialable">Available</option>
-              <option value="unavaialable">Unavailable</option>
-              
+              <option value="available">Available</option>
+              <option value="unavailable">Unavailable</option>
             </select>
             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
           </div>
@@ -206,7 +222,7 @@ const ComponentManagement = () => {
                           item.tier_level
                         )}`}
                       >
-                        Tier {item.tier_level}
+                        Tier {item.tier_level} ({tierList(item.tier_level)})
                       </span>
                     </td>
                     <td className="px-6 py-4">
@@ -255,25 +271,11 @@ const ComponentManagement = () => {
         </div>
 
         {/* Pagination */}
-        <div className="p-4 border-t border-gray-100 flex justify-between items-center bg-gray-50/50">
-          <button
-            disabled={page === 1}
-            onClick={() => setPage((p) => p - 1)}
-            className="px-4 py-2 border border-gray-200 rounded-lg bg-white text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            Previous
-          </button>
-          <span className="text-sm text-gray-600 font-medium">
-            Page {pagination?.currentPage} of {pagination?.totalPages}
-          </span>
-          <button
-            disabled={page === pagination?.totalPages}
-            onClick={() => setPage((p) => p + 1)}
-            className="px-4 py-2 border border-gray-200 rounded-lg bg-white text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            Next
-          </button>
-        </div>
+        <Pagination
+          pagination={pagination}
+          page={page}
+          setPage={setPage}
+        ></Pagination>
       </div>
     </div>
   );

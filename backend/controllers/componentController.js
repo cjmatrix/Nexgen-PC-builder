@@ -43,4 +43,31 @@ const deleteComponent = async (req, res) => {
   }
 };
 
-module.exports = { createComponent, getAdminComponents, deleteComponent };
+const getComponentById = async (req, res) => {
+  try {
+    const component = await componentService.getComponentById(req.params.id);
+    res.status(200).json({ success: true, data: component });
+  } catch (error) {
+    res.status(404).json({ success: false, message: error.message });
+  }
+};
+
+const updateComponent = async (req, res) => {
+  try {
+    const component = await componentService.updateComponent(
+      req.params.id,
+      req.body
+    );
+    res.status(200).json({ success: true, data: component });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+module.exports = {
+  createComponent,
+  getAdminComponents,
+  deleteComponent,
+  getComponentById,
+  updateComponent,
+};

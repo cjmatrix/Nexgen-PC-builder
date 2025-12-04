@@ -3,14 +3,14 @@ import {
   RouterProvider,
   Navigate,
 } from "react-router-dom";
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
-import AdminDashboard from "./pages/AdminDashboard";
-import CustomerDashboard from "./pages/CustomerDashboard";
+import Login from "./pages/auth/Login";
+import Signup from "./pages/auth/Signup";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import CustomerDashboard from "./pages/customer/CustomerDashboard";
 
-import UserManagement from "./components/UserManagement";
-import CreateComponent from "./pages/CreateComponentPage";
-import ComponentManagement from "./components/ComponentManagement";
+import UserManagement from "./pages/admin/components/UserManagement";
+import CreateComponent from "./pages/admin/components/componentForm";
+import ComponentManagement from "./pages/admin/components/ComponentManagement";
 
 const router = createBrowserRouter([
   {
@@ -28,20 +28,24 @@ const router = createBrowserRouter([
   {
     path: "/admin",
     element: <AdminDashboard />,
-    children:[
+    children: [
       {
-        index:true,
-        element:<UserManagement/>
+        index: true,
+        element: <UserManagement />,
       },
       {
-        path:'/admin/components/create',
-        element:<CreateComponent/>
+        path: "/admin/components/create",
+        element: <CreateComponent />,
       },
       {
-        path:'/admin/components',
-        element:<ComponentManagement/>
-      }
-    ]
+        path: "/admin/components/edit/:id",
+        element: <CreateComponent />,
+      },
+      {
+        path: "/admin/components",
+        element: <ComponentManagement />,
+      },
+    ],
   },
   {
     path: "/dashboard",

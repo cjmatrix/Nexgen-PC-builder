@@ -1,33 +1,21 @@
 import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { Search, Edit, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
-import {
-  getUsers,
-  blockUser,
-  setSearch,
-  setPage,
-  reset,
-} from "../store/slices/userSlice";
-import { logout, reset as authReset } from "../store/slices/authSlice";
-import {
-  FaSearch,
-  FaTrash,
-  FaBan,
-  FaCheck,
-  FaSignOutAlt,
-} from "react-icons/fa";
+import { Search } from "lucide-react";
+import { getUsers, setSearch, reset } from "../../../store/slices/userSlice";
+import { logout, reset as authReset } from "../../../store/slices/authSlice";
+import { FaSignOutAlt } from "react-icons/fa";
 import UsersList from "./UsersList";
-import Pagination from "./Pagination";
+import Pagination from "../../../components/Pagination";
 const UserManagement = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
   const { user } = useSelector((state) => state.auth);
-  const { users, isLoading, isError, message, page, totalPages, search } =
-    useSelector((state) => state.users);
+  const { users, pagination, search } = useSelector((state) => state.users);
 
   const [searchInput, setSearchInput] = useState("");
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     if (!user || user.role !== "admin") {
@@ -45,19 +33,12 @@ const UserManagement = () => {
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
       dispatch(setSearch(searchInput));
+      setPage(1); // Reset to page 1 on new search
     }, 500);
 
     return () => clearTimeout(delayDebounceFn);
   }, [searchInput, dispatch]);
 
-  const handleResetSearch = () => {
-    setSearchInput("");
-    dispatch(setSearch(""));
-  };
-
-  console.log("ree");
-
-  console.log(page);
   const handleLogout = () => {
     dispatch(logout());
     dispatch(authReset());
@@ -153,10 +134,10 @@ const UserManagement = () => {
         </div>
 
         {/* Pagination Footer */}
-        <Pagination totalCount={totalPages} setPage={setPage}></Pagination>
+            <Pagination pagination={pagination} page={page} setPage={setPage}></Pagination>
       </div>
     </div>
   );
 };
 
-export default UserManagement ;
+export default UserManagement;

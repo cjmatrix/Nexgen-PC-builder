@@ -21,7 +21,52 @@ export const fetchAdminComponents = createAsyncThunk(
   }
 );
 
-// 2. Async Thunk to Soft Delete (Deactivate)
+// 2. Async Thunk to Fetch Single Component
+export const fetchComponentById = createAsyncThunk(
+  "components/fetchById",
+  async (id, { rejectWithValue }) => {
+    try {
+      const response = await api.get(`/admin/components/${id}`);
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to fetch component"
+      );
+    }
+  }
+);
+
+// 3. Async Thunk to Create Component
+export const createComponent = createAsyncThunk(
+  "components/create",
+  async (componentData, { rejectWithValue }) => {
+    try {
+      const response = await api.post("/admin/components", componentData);
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to create component"
+      );
+    }
+  }
+);
+
+// 4. Async Thunk to Update Component
+export const updateComponent = createAsyncThunk(
+  "components/update",
+  async ({ id, data }, { rejectWithValue }) => {
+    try {
+      const response = await api.put(`/admin/components/${id}`, data);
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to update component"
+      );
+    }
+  }
+);
+
+// 5. Async Thunk to Soft Delete (Deactivate)
 export const deleteComponent = createAsyncThunk(
   "components/delete",
   async (id, { rejectWithValue }) => {
@@ -60,10 +105,54 @@ const componentSlice = createSlice({
         state.pagination = {
           total: action.payload.total,
           totalPages: action.payload.totalPages,
-          currentPage: action.payload.currentPage,
+          page: action.payload.currentPage,
         };
       })
       .addCase(fetchAdminComponents.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Handle Fetch Single Component
+      .addCase(fetchComponentById.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchComponentById.fulfilled, (state, action) => {
+        state.loading = false;
+        // We might want to store the single item separately or just use it in the form
+      })
+      .addCase(fetchComponentById.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Handle Create
+      .addCase(createComponent.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(createComponent.fulfilled, (state, action) => {
+        state.loading = false;
+        state.items.unshift(action.payload); // Add new item to list
+      })
+      .addCase(createComponent.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Handle Update
+      .addCase(updateComponent.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateComponent.fulfilled, (state, action) => {
+        state.loading = false;
+        const index = state.items.findIndex(
+          (item) => item._id === action.payload._id
+        );
+        if (index !== -1) {
+          state.items[index] = action.payload;
+        }
+      })
+      .addCase(updateComponent.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
