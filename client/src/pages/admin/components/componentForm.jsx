@@ -22,11 +22,13 @@ const ComponentForm = () => {
     stock: "",
     category: "",
     tier_level: 1,
-    image: "heyy",
+    image: "",
   });
 
   const [specs, setSpecs] = useState({});
   const { loading } = useSelector((state) => state.components);
+
+  console.log(specs)
 
   useEffect(() => {
     if (isEditMode) {
@@ -128,6 +130,73 @@ const ComponentForm = () => {
       );
     }
 
+    if(field.type==="file"){
+      return(
+               <div className="col-span-2">
+                <label className="block text-sm font-medium text-gray-600 mb-1">
+                
+                </label>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center text-gray-500 bg-gray-50 hover:bg-gray-100 transition relative">
+                  {specs[field.name] && specs[field.name] !== "" ? (
+                    <div className="relative w-full h-48 flex justify-center">
+                      <img
+                        src={specs[field.name]}
+                        alt="Preview"
+                        className="h-full object-contain rounded-md"
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setBaseData((prev) => ({ ...prev, image: "" }))
+                        }
+                        className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full hover:bg-red-600"
+                      >
+                        <Upload size={16} className="rotate-45" />{" "}
+                        {/* Using rotate to mimic X */}
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <Upload size={32} className="mb-2" />
+                      <p className="text-sm text-gray-500">
+                        Click to upload image
+                      </p>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={async (e) => {
+                          const file = e.target.files[0];
+                          if (!file) return;
+
+                          const formData = new FormData();
+                          formData.append("image", file);
+
+                          try {
+                            // Show loading state if needed
+                            const res = await api.post("/upload", formData, {
+                              headers: {
+                                "Content-Type": "multipart/form-data",
+                              },
+                            });
+                            setSpecs((prev) => ({
+                              ...prev,
+                              [field.name]: res.data.imageUrl,
+                            }));
+                          } catch (error) {
+                            console.error("Upload failed", error);
+                            alert("Image upload failed");
+                          }
+                        }}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      />
+                    </>
+                  )}
+                </div>
+              </div>     
+
+      )
+    }
+
     return (
       <input
         type={field.type}
@@ -219,7 +288,7 @@ const ComponentForm = () => {
                   Product Image
                 </label>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center text-gray-500 bg-gray-50 hover:bg-gray-100 transition relative">
-                  {baseData.image && baseData.image !== "heyy" ? (
+                  {baseData.image && baseData.image !== "" ? (
                     <div className="relative w-full h-48 flex justify-center">
                       <img
                         src={baseData.image}

@@ -1,0 +1,114 @@
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import api from "../../api/axios";
+
+// --- Async Thunks for Fetching Components ---
+
+// 1. Generic Fetcher (Used for initial load or specific categories)
+export const fetchComponents = createAsyncThunk(
+  "builder/fetchComponents",
+  async ({ category, params = {} }, { rejectWithValue }) => {
+    try {
+      // params can contain cpuId, motherboardId, etc.
+      const response = await api.get("/admin/componentspublic", {
+        params: { category, ...params, limit: 100 }, // Fetch enough options
+      });
+
+      console.log(
+        `[BuilderSlice] Fetching ${category} success. Items:`,
+        response.data.components?.length
+      );
+      console.log(`[BuilderSlice] Data:`, response.data.components);
+      return { category, data: response.data.components };
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || "Fetch failed");
+    }
+  }
+);
+
+const initialState = {
+  // Selected Parts (The current build)
+  selected: {
+    cpu: null,
+    motherboard: null,
+    ram: null,
+    gpu: null,
+    storage: null,
+    case: null,
+    psu: null,
+    cooler: null,
+  },
+  // Available Options (Filtered lists from backend)
+  options: {
+    cpu: [],
+    motherboard: [],
+    ram: [],
+    gpu: [],
+    storage: [],
+    case: [],
+    psu: [],
+    cooler: [],
+  },
+  // Build Stats
+  totalPrice: 0,
+  estimatedWattage: 0,
+  // UI State
+  loading: false,
+  error: null,
+};
+
+const builderSlice = createSlice({
+  name: "builder",
+  initialState,
+  reducers: {
+    // Action when user selects a part
+    selectPart: (state, action) => {
+      const { category, component } = action.payload;
+      state.selected[category] = component;
+
+      // Reset downstream parts if upstream changes (Cascading Reset)
+      if (category === "cpu") {
+        state.selected.motherboard = null;
+        state.selected.ram = null;
+        state.selected.cooler = null;
+        // Clear options that depend on CPU
+        state.options.motherboard = [];
+        state.options.cooler = [];
+      }
+      if (category === "motherboard") {
+        state.selected.ram = null;
+        state.options.ram = [];
+      }
+
+      // Recalculate Totals
+      let price = 0;
+      let wattage = 0;
+      Object.values(state.selected).forEach((part) => {
+        if (part) {
+          price += part.price;
+          if (part.specs?.wattage) wattage += part.specs.wattage;
+        }
+      });
+      state.totalPrice = price;
+      state.estimatedWattage = wattage; // Add buffer in UI logic, not here
+    },
+    resetBuild: () => initialState,
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchComponents.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchComponents.fulfilled, (state, action) => {
+        state.loading = false;
+        const { category, data } = action.payload;
+        state.options[category] = data;
+      })
+      .addCase(fetchComponents.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
+  },
+});
+
+export const { selectPart, resetBuild } = builderSlice.actions;
+export default builderSlice.reducer;

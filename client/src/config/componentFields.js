@@ -34,8 +34,8 @@ export const CATEGORY_SPECS = {
   case: [
     { name: "formFactor", label: "Max Mobo Size", type: "select", options: ["ATX", "mATX", "ITX"] },
     { name: "maxGpuLength_mm", label: "Max GPU Length (mm)", type: "number" },
-    { name: "image_air_cooler", label: "Air Cooler Variant Image URL", type: "text" },
-    { name: "image_liquid_cooler", label: "Liquid Cooler Variant Image URL", type: "text" },
+    { name: "image_air_cooler", label: "Air Cooler Variant Image URL", type: "file" },
+    { name: "image_liquid_cooler", label: "Liquid Cooler Variant Image URL", type: "file" },
   ],
   psu: [
     { name: "wattage", label: "Wattage", type: "number" },

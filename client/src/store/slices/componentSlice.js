@@ -1,7 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import api from "../../api/axios"; // Your custom axios instance
+import api from "../../api/axios"; 
 
-// 1. Async Thunk to Fetch Admin Components
 export const fetchAdminComponents = createAsyncThunk(
   "components/fetchAdmin",
   async (
@@ -21,7 +20,8 @@ export const fetchAdminComponents = createAsyncThunk(
   }
 );
 
-// 2. Async Thunk to Fetch Single Component
+
+
 export const fetchComponentById = createAsyncThunk(
   "components/fetchById",
   async (id, { rejectWithValue }) => {
@@ -36,7 +36,7 @@ export const fetchComponentById = createAsyncThunk(
   }
 );
 
-// 3. Async Thunk to Create Component
+
 export const createComponent = createAsyncThunk(
   "components/create",
   async (componentData, { rejectWithValue }) => {
@@ -51,7 +51,8 @@ export const createComponent = createAsyncThunk(
   }
 );
 
-// 4. Async Thunk to Update Component
+
+
 export const updateComponent = createAsyncThunk(
   "components/update",
   async ({ id, data }, { rejectWithValue }) => {
@@ -66,12 +67,12 @@ export const updateComponent = createAsyncThunk(
   }
 );
 
-// 5. Async Thunk to Soft Delete (Deactivate)
+
 export const deleteComponent = createAsyncThunk(
   "components/delete",
   async (id, { rejectWithValue }) => {
     try {
-      // Calls: PUT /api/v1/admin/components/:id with isActive: false
+      
       const response = await api.patch(`/admin/components/${id}/delete`, {
         isActive: false,
       });
