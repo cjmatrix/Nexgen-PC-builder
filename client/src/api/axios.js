@@ -1,7 +1,7 @@
-import axios from 'axios';
+import axios from "axios";
 
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api/v1',
+  baseURL: "http://localhost:5000/api/v1",
   withCredentials: true,
 });
 
@@ -29,18 +29,18 @@ api.interceptors.response.use(
     // If the error comes from Login, Logout, or Refresh, simply reject it.
     // We don't want to try refreshing in these cases.
     if (
-      originalRequest.url.includes('/auth/login') ||
-      originalRequest.url.includes('/auth/logout') ||
-      originalRequest.url.includes('/auth/refresh')
+      originalRequest.url.includes("/auth/login") ||
+      originalRequest.url.includes("/auth/logout") ||
+      originalRequest.url.includes("/auth/refresh") ||
+      originalRequest.url.includes("/auth/profile")
     ) {
       return Promise.reject(error);
     }
 
-    // 2. CHECK FOR 401 AND RETRY
+
     if (error.response?.status === 401 && !originalRequest._retry) {
-      
       if (isRefreshing) {
-        // If already refreshing, wait in line
+       
         return new Promise(function (resolve, reject) {
           failedQueue.push({ resolve, reject });
         })
@@ -51,13 +51,13 @@ api.interceptors.response.use(
             return Promise.reject(err);
           });
       }
-      
+
       originalRequest._retry = true;
       isRefreshing = true;
 
       try {
         // Attempt Refresh
-        await api.post('/auth/refresh');
+        await api.post("/auth/refresh");
 
         // Success! Process the queue
         processQueue(null);
@@ -68,13 +68,16 @@ api.interceptors.response.use(
         // Failure! Log out user
         processQueue(refreshError, null);
         isRefreshing = false;
-        
+
         console.log("Session expired. Logging out...");
         // Cleanup local state
-        localStorage.removeItem("user"); 
+        localStorage.removeItem("user");
         // Redirect to login
-        window.location.href = '/login';
-        
+        // Redirect to login
+        // window.location.href = '/login'; // DISABLED: Causing infinite loop on profile fetch
+
+        return Promise.reject(refreshError);
+
         return Promise.reject(refreshError);
       }
     }

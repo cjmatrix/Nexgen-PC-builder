@@ -27,9 +27,9 @@ const getPublicProducts=async(req,res)=>{
   try{
     const page=parseInt(req.query.page)||1
      const limit = parseInt(req.query.limit) || 10;
-    const { search, category } = req.query;
+    const { search, category,sort } = req.query;
 
-    const result=await productService.getPublicProducts({page,limit,search,category})
+    const result=await productService.getPublicProducts({page,limit,search,category,sort})
 
     res.status(200).json({success:true,...result})
   }

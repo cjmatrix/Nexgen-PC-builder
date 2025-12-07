@@ -15,25 +15,28 @@ const ProductList = () => {
     search: "",
     category: "",
     sort: "newest",
-    page: 1,
   });
+    const [page,setPage]=useState(1);
 
   // Debounce search
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [seatchInput, setseatchInput] = useState("");
+
+
   useEffect(() => {
     const timer = setTimeout(() => {
-      setFilters((prev) => ({ ...prev, search: debouncedSearch, page: 1 }));
+      setFilters((prev) => ({ ...prev, search: seatchInput, page: 1 }));
     }, 500);
     return () => clearTimeout(timer);
-  }, [debouncedSearch]);
+  }, [seatchInput]);
 
   useEffect(() => {
-    dispatch(fetchPublicProducts(filters));
-  }, [dispatch, filters]);
+    dispatch(fetchPublicProducts({...filters,page}));
+  }, [dispatch, filters,page]);
 
-  const handlePageChange = (newPage) => {
-    setFilters((prev) => ({ ...prev, page: newPage }));
-  };
+
+
+
+
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
@@ -63,8 +66,8 @@ const ProductList = () => {
               type="text"
               placeholder="Search PCs..."
               className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-              value={debouncedSearch}
-              onChange={(e) => setDebouncedSearch(e.target.value)}
+              value={seatchInput}
+              onChange={(e) => setseatchInput(e.target.value)}
             />
           </div>
 
@@ -182,9 +185,9 @@ const ProductList = () => {
         {!loading && items.length > 0 && (
           <div className="flex justify-center">
             <Pagination
-              currentPage={pagination.page}
-              totalPages={pagination.totalPages}
-              onPageChange={handlePageChange}
+             pagination={pagination}
+              page={page}
+              setPage={setPage}    
             />
           </div>
         )}

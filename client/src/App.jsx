@@ -1,3 +1,6 @@
+import { useEffect } from "react";
+import { useDispatch } from "react-redux";
+import { fetchUserProfile } from "./store/slices/authSlice";
 import {
   createBrowserRouter,
   RouterProvider,
@@ -15,6 +18,7 @@ import PCBuilder from "./pages/admin/components/PCBuilder";
 import ProductManagement from "./pages/admin/components/ProductManagement";
 import AddProductForm from "./pages/admin/components/ProductForm";
 import ProductList from "./pages/customer/ProductList";
+import AdminRoutes from "./protectedroutes/AdminRoute";
 
 const router = createBrowserRouter([
   {
@@ -30,40 +34,45 @@ const router = createBrowserRouter([
     element: <Signup />,
   },
   {
-    path: "/admin",
-    element: <AdminDashboard />,
+    element: <AdminRoutes />,
     children: [
       {
-        index: true,
-        element: <UserManagement />,
-      },
-      {
-        path: "/admin/components/create",
-        element: <CreateComponent />,
-      },
-      {
-        path: "/admin/components/edit/:id",
-        element: <CreateComponent />,
-      },
-      {
-        path: "/admin/components",
-        element: <ComponentManagement />,
-      },
-      {
-        path: "/admin/products",
-        element: <ProductManagement />,
-      },
-      {
-        path: "/admin/products/bui",
-        element: <PCBuilder />,
-      },
-      {
-        path: "/admin/products/create",
-        element: <AddProductForm />,
-      },
-      {
-        path: "/admin/products/edit/:id",
-        element: <AddProductForm />,
+        path: "/admin",
+        element: <AdminDashboard />,
+        children: [
+          {
+            index: true,
+            element: <UserManagement />,
+          },
+          {
+            path: "/admin/components/create",
+            element: <CreateComponent />,
+          },
+          {
+            path: "/admin/components/edit/:id",
+            element: <CreateComponent />,
+          },
+          {
+            path: "/admin/components",
+            element: <ComponentManagement />,
+          },
+          {
+            path: "/admin/products",
+            element: <ProductManagement />,
+          },
+          {
+            path: "/admin/products/bui",
+            element: <PCBuilder />,
+          },
+          {
+            path: "/admin/products/create",
+            element: <AddProductForm />,
+          },
+          {
+            path: "/admin/products/edit/:id",
+            element: <AddProductForm />,
+          },
+        ],
       },
     ],
   },
@@ -79,6 +88,12 @@ const router = createBrowserRouter([
 ]);
 
 function App() {
+  const dispatch = useDispatch();
+  console.log('heyy')
+  useEffect(() => {
+    dispatch(fetchUserProfile());
+  }, [dispatch]);
+
   return (
     <div className="App">
       <RouterProvider router={router} />

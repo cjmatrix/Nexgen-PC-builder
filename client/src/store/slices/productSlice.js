@@ -72,7 +72,7 @@ export const deleteProduct = createAsyncThunk(
   }
 );
 
-// Helper to fetch single product for editing
+
 export const fetchProductById = createAsyncThunk(
   "products/fetchById",
   async (id, { rejectWithValue }) => {
