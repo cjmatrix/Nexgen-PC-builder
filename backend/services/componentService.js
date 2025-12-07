@@ -77,16 +77,14 @@ const updateComponent = async (id, updateData) => {
 const getPublicComponents = async (filters, page, limit, sort) => {
   const query = { isActive: true }; // Only show active items to users
 
-  // Basic Filters
+
   if (filters.category) query.category = filters.category;
   if (filters.search) query.name = { $regex: filters.search, $options: "i" };
 
-  // Direct Tier Filter (if user selects "Show me Tier 3 CPUs")
+
   if (filters.tier) query.tier_level = Number(filters.tier);
 
-  // --- COMPATIBILITY QUERY BUILDER ---
 
-  // 1. Socket (For Motherboards & Coolers)
   if (filters.socket) {
     if (filters.category === "motherboard") {
       query["specs.socket"] = filters.socket;
@@ -95,7 +93,7 @@ const getPublicComponents = async (filters, page, limit, sort) => {
     }
   }
 
-  // 2. RAM Type (For RAM sticks)
+  
   if (filters.ramType && filters.category === "ram") {
     query["specs.ramType"] = filters.ramType;
   }
@@ -136,7 +134,7 @@ const getPublicComponents = async (filters, page, limit, sort) => {
   }
 
   // Sorting
-  let sortOptions = { price: 1 }; // Default cheap to expensive
+  let sortOptions = { price: 1 }; 
   if (sort === "price_desc") sortOptions = { price: -1 };
   if (sort === "tier_high") sortOptions = { tier_level: -1 };
 

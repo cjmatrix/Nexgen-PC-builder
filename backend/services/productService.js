@@ -1,7 +1,7 @@
 const Product = require("../models/Product");
 
 const createProduct = async (productData) => {
-  // Auto-generate slug if not provided
+  
   if (!productData.slug) {
     productData.slug = productData.name.toLowerCase().split(" ").join("-");
   }
@@ -20,7 +20,7 @@ const getAdminProducts = async (page, limit, search, category, status) => {
     query.category = category;
   }
 
-  // Status filter logic (Active vs Inactive)
+
   if (status === "active") query.isActive = true;
   if (status === "inactive") query.isActive = false;
 
@@ -57,7 +57,7 @@ const getProductById = async (id) => {
 };
 
 const updateProduct = async (id, updateData) => {
-  // If name changed but slug didn't, regenerate slug
+
   if (updateData.name && !updateData.slug) {
      updateData.slug = updateData.name.toLowerCase().split(" ").join("-");
   }
@@ -72,7 +72,7 @@ const updateProduct = async (id, updateData) => {
 };
 
 const deleteProduct = async (id) => {
-  // Soft Delete
+ 
   const product = await Product.findByIdAndUpdate(
     id, 
     { isActive: false }, 

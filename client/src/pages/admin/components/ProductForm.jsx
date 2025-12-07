@@ -4,8 +4,14 @@ import {
   fetchComponents,
   selectPart,
   resetBuild,
+  setSelected,
 } from "../../../store/slices/builderSlice";
-import { createProduct } from "../../../store/slices/productSlice";
+
+import { useParams } from "react-router-dom";
+import {
+  createProduct,
+  updateProduct,
+} from "../../../store/slices/productSlice";
 import { useNavigate } from "react-router-dom";
 import {
   ShoppingCart,
@@ -17,9 +23,10 @@ import {
   Wind,
   Save,
   ArrowLeft,
+  Upload,
 } from "lucide-react";
-
-
+import { fetchProductById } from "../../../store/slices/productSlice";
+import api from "../../../api/axios";
 const PartSelector = ({
   category,
   label,
@@ -51,7 +58,7 @@ const PartSelector = ({
             </p>
           </div>
           <button
-            onClick={() => onSelect(category, null)} 
+            onClick={() => onSelect(category, null)}
             className="text-sm text-red-600 hover:underline font-medium"
           >
             Change
@@ -87,36 +94,46 @@ const AddProductForm = () => {
     (state) => state.builder
   );
 
-  // const { id } = useParams();
-  // console.log("[AddProductForm] Render. Options:", options);
-  // console.log("[AddProductForm] Selected:", selected);
+  const { id } = useParams();
 
+  const isEditMode = !!id;
+
+  useEffect(() => {
+    if (isEditMode) {
+      dispatch(fetchProductById(id))
+        .unwrap()
+        .then((data) => {
+          setFormData({
+            name: data.name,
+            description: data.description,
+            category: data.category,
+            base_price: data.base_price,
+            images: data.images,
+          });
+          dispatch(setSelected(data.default_config));
+        })
+        .catch((err) => {
+          console.error("Failed to fetch component:", err);
+          alert("Failed to fetch product details");
+          navigate("/admin/products");
+        });
+    }
+  }, [isEditMode, navigate, dispatch]);
 
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    category: "Gaming", 
-    base_price: "", 
+    category: "Gaming",
+    base_price: "",
     images: [],
   });
 
-
- 
   useEffect(() => {
     dispatch(resetBuild());
     dispatch(fetchComponents({ category: "cpu" }));
     dispatch(fetchComponents({ category: "storage" }));
-     
   }, [dispatch]);
 
-  useEffect(()=>{
-    if(selected.case){
-      setFormData(p=>({...p,images:[...p.images,selected?.cooler?.specs.coolerType==='Liquid'?selected.case.specs.image_liquid_cooler:selected.case.specs.image_air_cooler]}))
-    }
-
-    return ()=> setFormData(p=>({...p,images:[]}))
-
-  },[selected.case,selected.cooler])
   useEffect(() => {
     if (selected.cpu) {
       dispatch(
@@ -175,7 +192,6 @@ const AddProductForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validation
     const requiredParts = [
       "cpu",
       "motherboard",
@@ -218,11 +234,22 @@ const AddProductForm = () => {
       },
     };
 
-    console.log('product payload --------',productPayload)
+    console.log("product payload --------", productPayload);
 
     try {
-      await dispatch(createProduct(productPayload)).unwrap().then((data)=>console.log(data));
-      alert("Product Created Successfully!");
+      if (isEditMode) {
+        await dispatch(updateProduct({ id, data: productPayload }))
+          .unwrap()
+          .then((data) => console.log(data));
+        console.log("hey");
+        alert("Product Updated Successfully!");
+      } else {
+        await dispatch(createProduct(productPayload))
+          .unwrap()
+          .then((data) => console.log(data));
+        alert("Product Created Successfully!");
+      }
+
       navigate("/admin/products");
     } catch (error) {
       alert(`Error creating product: ${error}`);
@@ -320,8 +347,78 @@ const AddProductForm = () => {
                     }
                   />
                 </div>
+              </div>
+              {/* Image Upload Section */}
+              <div className="col-span-2">
+                <label className="block text-sm font-medium text-gray-600 mb-3">
+                  Product Images (Max 3)
+                </label>
+                <div className="grid grid-cols-3 gap-4">
+                  {[0, 1, 2].map((index) => (
+                    <div
+                      key={index}
+                      className="aspect-square border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center text-gray-500 bg-gray-50 hover:bg-gray-100 transition relative overflow-hidden"
+                    >
+                      {formData.images[index] ? (
+                        <div className="relative w-full h-full group">
+                          <img
+                            src={formData.images[index]}
+                            alt={`Product ${index + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newImages = [...formData.images];
+                              newImages.splice(index, 1);
+                              setFormData({ ...formData, images: newImages });
+                            }}
+                            className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                          >
+                            <Upload size={16} className="rotate-45" />
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <Upload size={24} className="mb-2 text-gray-400" />
+                          <p className="text-xs text-gray-500 text-center px-2">
+                            Upload Image {index + 1}
+                          </p>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={async (e) => {
+                              const file = e.target.files[0];
+                              if (!file) return;
 
-                
+                              const uploadData = new FormData();
+                              uploadData.append("image", file);
+
+                              try {
+                                const res = await api.post(
+                                  "/upload",
+                                  uploadData,
+                                  {
+                                    headers: {
+                                      "Content-Type": "multipart/form-data",
+                                    },
+                                  }
+                                );
+                                const newImages = [...formData.images];
+                                newImages[index] = res.data.imageUrl;
+                                setFormData({ ...formData, images: newImages });
+                              } catch (error) {
+                                console.error("Upload failed", error);
+                                alert("Image upload failed");
+                              }
+                            }}
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                          />
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -410,9 +507,13 @@ const AddProductForm = () => {
               </h2>
 
               <div className="aspect-video bg-gray-100 rounded-lg mb-6 flex items-center justify-center overflow-hidden">
-               {selected.case ? (
+                {selected.case ? (
                   <img
-                    src={selected?.cooler?.specs.coolerType==='Liquid'?selected.case.specs.image_liquid_cooler:selected.case.specs.image_air_cooler}
+                    src={
+                      selected?.cooler?.specs.coolerType === "Liquid"
+                        ? selected.case.specs.image_liquid_cooler
+                        : selected.case.specs.image_air_cooler
+                    }
                     alt="Case Preview"
                     className="w-full h-full object-cover"
                   />
@@ -460,7 +561,8 @@ const AddProductForm = () => {
                 onClick={handleSubmit}
                 className="w-full bg-blue-600 text-white py-3.5 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
               >
-                <Save size={20} /> Create Product
+                <Save size={20} />{" "}
+                {isEditMode ? "Update Product" : "Create Product"}
               </button>
             </div>
           </div>

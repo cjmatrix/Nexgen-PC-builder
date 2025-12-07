@@ -92,6 +92,19 @@ const builderSlice = createSlice({
       state.estimatedWattage = wattage; // Add buffer in UI logic, not here
     },
     resetBuild: () => initialState,
+    setSelected:(state,action)=>{
+      state.selected=action.payload
+      let price = 0;
+      let wattage = 0;
+      Object.values(state.selected).forEach((part) => {
+        if (part) {
+          price += part.price;
+          if (part.specs?.wattage) wattage += part.specs.wattage;
+        }
+      });
+      state.totalPrice = price;
+      state.estimatedWattage = wattage; // 
+    }
   },
   extraReducers: (builder) => {
     builder
@@ -110,5 +123,5 @@ const builderSlice = createSlice({
   },
 });
 
-export const { selectPart, resetBuild } = builderSlice.actions;
+export const { selectPart,setSelected, resetBuild } = builderSlice.actions;
 export default builderSlice.reducer;

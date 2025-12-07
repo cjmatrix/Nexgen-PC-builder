@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Upload, ChevronLeft } from "lucide-react";
+import { Cross } from "lucide-react";
 import { CATEGORY_SPECS } from "../../../config/componentFields";
 import api from "../../../api/axios";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -147,12 +148,12 @@ const ComponentForm = () => {
                       <button
                         type="button"
                         onClick={() =>
-                          setBaseData((prev) => ({ ...prev, image: "" }))
+                          setSpecs((prev) => ({ ...prev ,[field.name]:""}))
                         }
                         className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full hover:bg-red-600"
                       >
-                        <Upload size={16} className="rotate-45" />{" "}
-                        {/* Using rotate to mimic X */}
+                        <Cross size={16} className="rotate-45" />{" "}
+                       
                       </button>
                     </div>
                   ) : (

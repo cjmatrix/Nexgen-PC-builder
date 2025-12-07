@@ -13,7 +13,7 @@ import CreateComponent from "./pages/admin/components/componentForm";
 import ComponentManagement from "./pages/admin/components/ComponentManagement";
 import PCBuilder from "./pages/admin/components/PCBuilder";
 import ProductManagement from "./pages/admin/components/ProductManagement";
-import AddProductForm from "./pages/admin/components/AddProductForm";
+import AddProductForm from "./pages/admin/components/ProductForm";
 
 const router = createBrowserRouter([
   {

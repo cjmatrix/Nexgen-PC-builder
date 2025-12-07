@@ -2,9 +2,9 @@ const express = require('express');
 const router = express.Router();
 const upload = require('../middleware/uploadMiddleware');
 const cloudinary = require('cloudinary').v2;
-const streamifier = require('streamifier'); // You might need: npm install streamifier
+const streamifier = require('streamifier'); 
 
-// Configure Cloudinary (Ensure this is loaded from your .env)
+
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -16,10 +16,10 @@ router.post('/', upload.single('image'), (req, res) => {
     return res.status(400).json({ message: 'No file uploaded' });
   }
 
-  // Create a stream to upload to Cloudinary
+
   const uploadStream = cloudinary.uploader.upload_stream(
     {
-      folder: 'nexgen-pc-parts', // Your folder name
+      folder: 'nexgen-pc-parts', 
     },
     (error, result) => {
       if (error) {
