@@ -14,6 +14,7 @@ import ComponentManagement from "./pages/admin/components/ComponentManagement";
 import PCBuilder from "./pages/admin/components/PCBuilder";
 import ProductManagement from "./pages/admin/components/ProductManagement";
 import AddProductForm from "./pages/admin/components/ProductForm";
+import ProductList from "./pages/customer/ProductList";
 
 const router = createBrowserRouter([
   {
@@ -52,7 +53,7 @@ const router = createBrowserRouter([
         path: "/admin/products",
         element: <ProductManagement />,
       },
-       {
+      {
         path: "/admin/products/bui",
         element: <PCBuilder />,
       },
@@ -66,10 +67,14 @@ const router = createBrowserRouter([
       },
     ],
   },
-  
+
   {
     path: "/dashboard",
     element: <CustomerDashboard />,
+  },
+  {
+    path: "/products",
+    element: <ProductList />,
   },
 ]);
 

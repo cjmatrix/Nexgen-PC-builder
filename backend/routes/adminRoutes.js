@@ -44,6 +44,6 @@ router.post("/products", createProduct);
 router.get("/products", getAdminProducts);
 router.get("/products/:id", getProductById);
 router.put("/products/:id", updateProduct);
-router.delete("/products/:id", deleteProduct); // Mapped to Soft Delete in controller
+router.patch("/products/:id", deleteProduct); // Mapped to Soft Delete in controller
 
 module.exports = router;

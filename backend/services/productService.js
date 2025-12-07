@@ -40,6 +40,40 @@ const getAdminProducts = async (page, limit, search, category, status) => {
   };
 };
 
+const getPublicProducts=async ({page,limit,search,category})=>{
+
+  const query={isActive:true}
+  if(search){
+    query.name = { $regex: search, $options: "i" };
+  }
+
+  if (category) {
+    query.category = category;
+  }
+
+  const total= await Product.countDocuments(query);
+  const products=await Product.find(query).populate([
+    { path: "default_config.cpu", select: "name" },
+    { path: "default_config.gpu", select: "name" },
+    { path: "default_config.motherboard", select: "name" },
+    { path: "default_config.ram", select: "name" },
+    { path: "default_config.storage", select: "name" },
+    { path: "default_config.case", select: "name" },
+    { path: "default_config.psu", select: "name" },
+    { path: "default_config.cooler", select: "name" }
+  ]).sort({ createdAt: -1 })
+  .limit(limit)
+  .skip((page - 1) * limit);
+
+  return {
+    products,
+    total,
+    totalPages:Math.ceil(total/limit),
+    currentPage:page
+  }
+
+} 
+
 const getProductById = async (id) => {
   const product = await Product.findById(id).populate([
     { path: 'default_config.cpu' },
@@ -73,12 +107,13 @@ const updateProduct = async (id, updateData) => {
 
 const deleteProduct = async (id) => {
  
-  const product = await Product.findByIdAndUpdate(
-    id, 
-    { isActive: false }, 
-    { new: true }
-  );
+  const product=await Product.findById(id)
+
+  product.isActive=product.isActive?false:true
+  
+  await product.save()
   return product;
+
 };
 
 module.exports = {
@@ -86,5 +121,6 @@ module.exports = {
   getAdminProducts,
   getProductById,
   updateProduct,
-  deleteProduct
+  deleteProduct,
+  getPublicProducts
 };

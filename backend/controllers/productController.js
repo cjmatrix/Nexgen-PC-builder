@@ -22,6 +22,23 @@ const getAdminProducts = async (req, res) => {
   }
 };
 
+const getPublicProducts=async(req,res)=>{
+
+  try{
+    const page=parseInt(req.query.page)||1
+     const limit = parseInt(req.query.limit) || 10;
+    const { search, category } = req.query;
+
+    const result=await productService.getPublicProducts({page,limit,search,category})
+
+    res.status(200).json({success:true,...result})
+  }
+  catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+
+}
+
 const getProductById = async (req, res) => {
   try {
     const product = await productService.getProductById(req.params.id);
@@ -42,8 +59,8 @@ const updateProduct = async (req, res) => {
 
 const deleteProduct = async (req, res) => {
   try {
-    await productService.deleteProduct(req.params.id);
-    res.status(200).json({ success: true, message: "Product deactivated" });
+   const result= await productService.deleteProduct(req.params.id);
+    res.status(200).json({ success: true, message: "Product deactivated" ,data:result});
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -54,5 +71,6 @@ module.exports = {
   getAdminProducts,
   getProductById,
   updateProduct,
-  deleteProduct
+  deleteProduct,
+  getPublicProducts,
 };

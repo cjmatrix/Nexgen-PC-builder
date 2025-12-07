@@ -3,10 +3,30 @@ import api from "../../api/axios";
 
 export const fetchAdminProducts = createAsyncThunk(
   "products/fetchAdmin",
-  async ({ page = 1, limit = 10, search = "", category = "", status }, { rejectWithValue }) => {
+  async (
+    { page = 1, limit = 10, search = "", category = "", status },
+    { rejectWithValue }
+  ) => {
     try {
       const response = await api.get("/admin/products", {
         params: { page, limit, search, category, status },
+      });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || "Fetch failed");
+    }
+  }
+);
+
+export const fetchPublicProducts = createAsyncThunk(
+  "products/fetchPublic",
+  async (
+    { page = 1, limit = 10, search = "", category = "", sort = "" },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await api.get("/products", {
+        params: { page, limit, search, category, sort },
       });
       return response.data;
     } catch (error) {
@@ -43,8 +63,9 @@ export const deleteProduct = createAsyncThunk(
   "products/delete",
   async (id, { rejectWithValue }) => {
     try {
-      await api.delete(`/admin/products/${id}`);
-      return id;
+      const response=await api.patch(`/admin/products/${id}`);
+      console.log('success')
+      return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Delete failed");
     }
@@ -53,15 +74,15 @@ export const deleteProduct = createAsyncThunk(
 
 // Helper to fetch single product for editing
 export const fetchProductById = createAsyncThunk(
-    "products/fetchById",
-    async (id, { rejectWithValue }) => {
-      try {
-        const response = await api.get(`/admin/products/${id}`);
-        return response.data.data;
-      } catch (error) {
-        return rejectWithValue(error.response?.data?.message);
-      }
+  "products/fetchById",
+  async (id, { rejectWithValue }) => {
+    try {
+      const response = await api.get(`/admin/products/${id}`);
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message);
     }
+  }
 );
 
 const productSlice = createSlice({
@@ -74,11 +95,18 @@ const productSlice = createSlice({
     currentProduct: null, // For edit mode
   },
   reducers: {
-    clearCurrentProduct: (state) => { state.currentProduct = null; }
+    clearCurrentProduct: (state) => {
+      state.currentProduct = null;
+    },
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchAdminProducts.pending, (state) => { state.loading = true; })
+      .addCase(fetchAdminProducts.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchPublicProducts.pending, (state) => {
+        state.loading = true;
+      })
       .addCase(fetchAdminProducts.fulfilled, (state, action) => {
         state.loading = false;
         state.items = action.payload.products;
@@ -88,13 +116,26 @@ const productSlice = createSlice({
           page: action.payload.currentPage,
         };
       })
+      .addCase(fetchPublicProducts.fulfilled, (state, action) => {
+        state.loading = false;
+        state.items = action.payload.products;
+        state.pagination = {
+          total: action.payload.total,
+          totalPages: action.payload.totalPages,
+          page: action.payload.currentPage,
+        };
+      })
+      .addCase(fetchPublicProducts.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
       .addCase(fetchProductById.fulfilled, (state, action) => {
-          state.currentProduct = action.payload;
+        state.currentProduct = action.payload;
       })
       .addCase(deleteProduct.fulfilled, (state, action) => {
-         // Optimistic update: remove from list or mark inactive
-         const index = state.items.findIndex(p => p._id === action.payload);
-         if(index !== -1) state.items[index].isActive = false; 
+        // Optimistic update: remove from list or mark inactive
+        const index = state.items.findIndex((p) => p._id === action.payload.data._id);
+        if (index !== -1) state.items[index]=action.payload.data;
       });
   },
 });
