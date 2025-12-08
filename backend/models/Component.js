@@ -1,17 +1,13 @@
 const mongoose = require('mongoose');
 
-// ======================================================
-// 1. Define Base Schema Options
-// ======================================================
+
 const baseOptions = {
-  discriminatorKey: 'category', // This tells Mongoose to look at the 'category' field
-  collection: 'components',     // All parts are stored in the 'components' collection
-  timestamps: true              // Adds createdAt and updatedAt automatically
+  discriminatorKey: 'category', 
+  collection: 'components',     
+  timestamps: true              
 };
 
-// ======================================================
-// 2. The Base Schema (Fields common to ALL parts)
-// ======================================================
+
 const componentSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -23,7 +19,7 @@ const componentSchema = new mongoose.Schema({
     type: Number,
     required: [true, 'Please add a price'],
     min: [0, 'Price cannot be negative'],
-    // Helper to ensure we always store integers (e.g. 10000 paise instead of 100.00)
+  
     get: v => Math.round(v),
     set: v => Math.round(v)
   },
@@ -46,43 +42,40 @@ const componentSchema = new mongoose.Schema({
   },
   isActive: {
     type: Boolean,
-    default: true, // Used for Soft Delete
+    default: true, 
     index: true
   }
-  // The 'category' field is added automatically by Mongoose due to baseOptions
+
 }, baseOptions);
 
-// Initialize the Base Model
+
 const Component = mongoose.model('Component', componentSchema);
 
-// ======================================================
-// 3. Define Specific Schemas (The "Specs" for each type)
-// ======================================================
 
-// --- CPU Schema ---
+
 const CpuSchema = new mongoose.Schema({
   specs: {
-    socket: { type: String, required: true }, // e.g., "LGA1700"
+    socket: { type: String, required: true }, 
     cores: { type: Number, required: true },
     threads: { type: Number, required: true },
-    wattage: { type: Number, required: true }, // TDP
+    wattage: { type: Number, required: true },
     integratedGraphics: { type: Boolean, default: false }
   }
 });
 
-// --- GPU Schema ---
+
 const GpuSchema = new mongoose.Schema({
   specs: {
     vram_gb: { type: Number, required: true },
-    length_mm: { type: Number, required: true }, // Crucial for Case fit
+    length_mm: { type: Number, required: true }, 
     wattage: { type: Number, required: true },
-    recommendedPsuWattage: { type: Number, required: true }, // Crucial for PSU calc
+    recommendedPsuWattage: { type: Number, required: true }, 
     boostClock_mhz: { type: Number },
-    pcieStandard: { type: String } // e.g. "PCIe 4.0"
+    pcieStandard: { type: String } 
   }
 });
 
-// --- Motherboard Schema ---
+
 const MotherboardSchema = new mongoose.Schema({
   specs: {
     socket: { type: String, required: true }, // Must match CPU
@@ -94,18 +87,18 @@ const MotherboardSchema = new mongoose.Schema({
   }
 });
 
-// --- RAM Schema ---
+
 const RamSchema = new mongoose.Schema({
   specs: {
     ramType: { type: String, enum: ['DDR4', 'DDR5'], required: true },
-    capacity_gb: { type: Number, required: true }, // Total size (e.g., 32)
+    capacity_gb: { type: Number, required: true }, 
     speed_mhz: { type: Number, required: true },
-    modules: { type: String, required: true }, // e.g., "2x16GB"
+    modules: { type: String, required: true }, 
     casLatency: { type: Number }
   }
 });
 
-// --- Storage Schema ---
+
 const StorageSchema = new mongoose.Schema({
   specs: {
     storageType: { type: String, enum: ['SSD-NVME', 'SSD-SATA', 'HDD'], required: true },
@@ -114,14 +107,14 @@ const StorageSchema = new mongoose.Schema({
   }
 });
 
-// --- Case Schema ---
+
 const CaseSchema = new mongoose.Schema({
   specs: {
     formFactor: { type: String, enum: ['ATX', 'mATX', 'ITX'], required: true }, // Max size supported
     maxGpuLength_mm: { type: Number, required: true },
     maxCpuCoolerHeight_mm: { type: Number },
     powerSupplySupport: { type: String, enum: ['ATX', 'SFX'], default: 'ATX' },
-    // Visuals for the Builder
+  
     image_air_cooler: { type: String },
     image_liquid_cooler: { type: String }
   }

@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import api from "../../api/axios"; 
+import api from "../../api/axios";
 
 export const fetchAdminComponents = createAsyncThunk(
   "components/fetchAdmin",
@@ -11,7 +11,7 @@ export const fetchAdminComponents = createAsyncThunk(
       const response = await api.get(`/admin/components`, {
         params: { page, limit, search, category, status, sort },
       });
-      return response.data; // Returns { success, data, pagination }
+      return response.data;
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || "Failed to fetch components"
@@ -19,8 +19,6 @@ export const fetchAdminComponents = createAsyncThunk(
     }
   }
 );
-
-
 
 export const fetchComponentById = createAsyncThunk(
   "components/fetchById",
@@ -36,7 +34,6 @@ export const fetchComponentById = createAsyncThunk(
   }
 );
 
-
 export const createComponent = createAsyncThunk(
   "components/create",
   async (componentData, { rejectWithValue }) => {
@@ -50,8 +47,6 @@ export const createComponent = createAsyncThunk(
     }
   }
 );
-
-
 
 export const updateComponent = createAsyncThunk(
   "components/update",
@@ -67,16 +62,14 @@ export const updateComponent = createAsyncThunk(
   }
 );
 
-
 export const deleteComponent = createAsyncThunk(
   "components/delete",
   async (id, { rejectWithValue }) => {
     try {
-      
       const response = await api.patch(`/admin/components/${id}/delete`, {
         isActive: false,
       });
-      return response.data.data; // Return updated component
+      return response.data.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Delete failed");
     }
@@ -86,15 +79,15 @@ export const deleteComponent = createAsyncThunk(
 const componentSlice = createSlice({
   name: "components",
   initialState: {
-    items: [], // The list of components
-    pagination: {}, // { currentPage, totalPages, etc. }
+    items: [],
+    pagination: {},
     loading: false,
     error: null,
   },
   reducers: {},
   extraReducers: (builder) => {
     builder
-      // Handle Fetch
+
       .addCase(fetchAdminComponents.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -113,33 +106,32 @@ const componentSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-      // Handle Fetch Single Component
+
       .addCase(fetchComponentById.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(fetchComponentById.fulfilled, (state, action) => {
         state.loading = false;
-        // We might want to store the single item separately or just use it in the form
       })
       .addCase(fetchComponentById.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
-      // Handle Create
+
       .addCase(createComponent.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(createComponent.fulfilled, (state, action) => {
         state.loading = false;
-        state.items.unshift(action.payload); // Add new item to list
+        state.items.unshift(action.payload);
       })
       .addCase(createComponent.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
-      // Handle Update
+
       .addCase(updateComponent.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -157,9 +149,8 @@ const componentSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-      // Handle Delete (Optimistic Update)
+
       .addCase(deleteComponent.fulfilled, (state, action) => {
-        // Find the item and update its status to inactive immediately
         const index = state.items.findIndex(
           (item) => item._id === action.payload._id
         );

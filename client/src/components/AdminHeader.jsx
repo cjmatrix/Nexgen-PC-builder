@@ -1,10 +1,21 @@
 import React from "react";
 import { LogOut, Menu } from "lucide-react";
 
+import { logout } from "../store/slices/authSlice";
+import { useDispatch } from "react-redux";
+
+
 const AdminHeader = ({ onLogout, onMenuClick }) => {
+
+  const dispatch=useDispatch();
+   const handleLogout = () => {
+      dispatch(logout());
+      navigate("/login");
+    };
+  
   return (
     <header className="w-full bg-[#0f172a] text-white h-16 flex items-center justify-between px-6 shadow-md">
-      {/* Logo / Title Section */}
+     
       <div className="flex items-center gap-4">
         <button
           onClick={onMenuClick}
@@ -15,10 +26,10 @@ const AdminHeader = ({ onLogout, onMenuClick }) => {
         <h1 className="text-xl font-bold tracking-wide">NexGen Admin Panel</h1>
       </div>
 
-      {/* Right Side Actions */}
+     
       <div>
         <button
-          onClick={onLogout}
+          onClick={handleLogout}
           className="flex items-center gap-2 px-4 py-2 bg-[#1e293b] hover:bg-[#334155] text-gray-200 text-sm font-medium rounded-lg border border-gray-700 transition-all duration-200"
         >
           <LogOut className="w-4 h-4" />

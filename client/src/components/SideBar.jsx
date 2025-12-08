@@ -9,15 +9,15 @@ import {
   Ticket,
   LogOut,
 } from "lucide-react";
-
+import { Link } from "react-router-dom";
 const navItems = [
-  { name: "Dashboard Home", icon: LayoutDashboard },
-  { name: "Component Management", icon: Layers },
-  { name: "Product Management", icon: Package },
-  { name: "Order Management", icon: ShoppingCart },
-  { name: "User Management", icon: Users },
-  { name: "Sales & Reporting", icon: BarChart2 },
-  { name: "Coupon Management", icon: Ticket },
+  { name: "Dashboard Home", icon: LayoutDashboard, link: "" },
+  { name: "Component Management", icon: Layers, link: "/admin/components" },
+  { name: "Product Management", icon: Package, link: "/admin/products" },
+  { name: "Order Management", icon: ShoppingCart, link: "" },
+  { name: "User Management", icon: Users, link: "/admin" },
+  { name: "Sales & Reporting", icon: BarChart2, link: "" },
+  { name: "Coupon Management", icon: Ticket, link: "" },
 ];
 
 const Sidebar = ({ isOpen, onClose }) => {
@@ -25,7 +25,6 @@ const Sidebar = ({ isOpen, onClose }) => {
 
   return (
     <>
-      {/* Mobile Overlay */}
       {isOpen && (
         <div
           className=" fixed inset-0 z-40 bg-black/50 md:hidden"
@@ -35,14 +34,14 @@ const Sidebar = ({ isOpen, onClose }) => {
 
       <aside
         className={`
-          fixed inset-y-0 left-0 z-50 flex flex-col w-64 h-screen bg-white border-r border-gray-200 font-sans transition-transform duration-300 ease-in-out
+          fixed inset-y-0 left-0 z-50 flex flex-col w-70 h-screen bg-white border-r border-gray-200 font-sans transition-transform duration-300 ease-in-out
           md:static md:translate-x-0
           ${isOpen ? "translate-x-0" : "-translate-x-full"}
         `}
       >
         <div className="px-6 py-8 flex items-center justify-between">
           <h1 className="text-xl font-bold text-gray-900">NexGen Admin</h1>
-          {/* Close button for mobile */}
+
           <button
             onClick={onClose}
             className="md:hidden p-1 text-gray-500 hover:text-gray-700"
@@ -71,31 +70,33 @@ const Sidebar = ({ isOpen, onClose }) => {
 
               return (
                 <li key={item.name}>
-                  <button
-                    onClick={() => {
-                      setActiveItem(item.name);
-                      // Optional: Close sidebar on mobile when item clicked
-                      if (window.innerWidth < 768) onClose?.();
-                    }}
-                    className={`w-full flex items-center px-4 py-3 text-sm font-medium transition-colors rounded-lg group
+                  <Link to={item?.link}>
+                    <button
+                      onClick={() => {
+                        setActiveItem(item.name);
+
+                        if (window.innerWidth < 768) onClose?.();
+                      }}
+                      className={`w-full flex items-center px-4 py-3 text-sm font-medium transition-colors rounded-lg group
                       ${
                         isActive
                           ? "bg-gray-100 text-gray-900"
                           : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                       }
                     `}
-                  >
-                    <Icon
-                      className={`w-5 h-5 mr-3 transition-colors
+                    >
+                      <Icon
+                        className={`w-5 h-5 mr-3 transition-colors
                         ${
                           isActive
                             ? "text-gray-900"
                             : "text-gray-400 group-hover:text-gray-600"
                         }
                       `}
-                    />
-                    {item.name}
-                  </button>
+                      />
+                      {item.name}
+                    </button>
+                  </Link>
                 </li>
               );
             })}

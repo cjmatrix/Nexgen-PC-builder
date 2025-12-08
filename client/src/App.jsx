@@ -6,8 +6,12 @@ import {
   RouterProvider,
   Navigate,
 } from "react-router-dom";
+import LandingPage from "./pages/LandingPage";
 import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
+import AdminLogin from "./pages/auth/AdminLogin";
+import ForgotPassword from "./pages/auth/ForgotPassword";
+import ResetPassword from "./pages/auth/ResetPassword";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import CustomerDashboard from "./pages/customer/CustomerDashboard";
 
@@ -18,12 +22,15 @@ import PCBuilder from "./pages/admin/components/PCBuilder";
 import ProductManagement from "./pages/admin/components/ProductManagement";
 import AddProductForm from "./pages/admin/components/ProductForm";
 import ProductList from "./pages/customer/ProductList";
+import ProductDetail from "./pages/customer/ProductDetail";
 import AdminRoutes from "./protectedroutes/AdminRoute";
+
+import ProtectedRoute from "./protectedroutes/ProtectedRoute";
 
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <Navigate to="/login" replace />,
+    element: <LandingPage />,
   },
   {
     path: "/login",
@@ -32,6 +39,18 @@ const router = createBrowserRouter([
   {
     path: "/signup",
     element: <Signup />,
+  },
+  {
+    path: "/admin/login",
+    element: <AdminLogin />,
+  },
+  {
+    path: "/forgot-password",
+    element: <ForgotPassword />,
+  },
+  {
+    path: "/reset-password/:resetToken",
+    element: <ResetPassword />,
   },
   {
     element: <AdminRoutes />,
@@ -76,20 +95,28 @@ const router = createBrowserRouter([
       },
     ],
   },
-
   {
-    path: "/dashboard",
-    element: <CustomerDashboard />,
-  },
-  {
-    path: "/products",
-    element: <ProductList />,
+    element: <ProtectedRoute />,
+    children: [
+      {
+        path: "/dashboard",
+        element: <CustomerDashboard />,
+      },
+      {
+        path: "/products",
+        element: <ProductList />,
+      },
+      {
+        path: "/products/:id",
+        element: <ProductDetail />,
+      },
+    ],
   },
 ]);
 
 function App() {
   const dispatch = useDispatch();
-  console.log('heyy')
+  console.log("heyy");
   useEffect(() => {
     dispatch(fetchUserProfile());
   }, [dispatch]);

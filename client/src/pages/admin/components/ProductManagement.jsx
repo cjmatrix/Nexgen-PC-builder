@@ -39,7 +39,7 @@ const ProductManagement = () => {
         data: { is_featured_community_build: !currentStatus },
       })
     );
-    // Note: We're reusing the community flag as the "Featured" toggle for now
+
   };
 
   const handleDelete = (id, isActive) => {
@@ -165,7 +165,7 @@ const ProductManagement = () => {
             ))}
           </tbody>
         </table>
-        <Pagination pagination={pagination} setPage={setPage} />
+        <Pagination pagination={pagination} page={page} setPage={setPage} />
       </div>
     </div>
   );

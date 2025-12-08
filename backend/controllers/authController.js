@@ -1,4 +1,4 @@
-// backend/controllers/authController.js
+
 const authService = require("../services/authService");
 
 const setCookies = (res, accessToken, refreshToken) => {
@@ -6,20 +6,20 @@ const setCookies = (res, accessToken, refreshToken) => {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
-    maxAge: 15 * 60 * 1000, // 15m
+    maxAge: 15 * 60 * 1000, 
   });
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7d
+    maxAge: 7 * 24 * 60 * 60 * 1000, 
   });
 };
 
 const register = async (req, res) => {
   try {
     const result = await authService.registerUser(req.body);
-    res.status(200).json(result); // Now returns message, not user
+    res.status(200).json(result); 
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
@@ -121,6 +121,27 @@ const getProfile = async (req, res) => {
   }
 };
 
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const result = await authService.forgotPassword(email);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+const resetPassword = async (req, res) => {
+  try {
+    const { resetToken } = req.params;
+    const { password } = req.body;
+    const result = await authService.resetPassword(resetToken, password);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -129,4 +150,6 @@ module.exports = {
   verifyOTP,
   resendOTP,
   getProfile,
+  forgotPassword,
+  resetPassword,
 };

@@ -21,7 +21,7 @@ export const fetchAdminProducts = createAsyncThunk(
 export const fetchPublicProducts = createAsyncThunk(
   "products/fetchPublic",
   async (
-    { page = 1, limit = 10, search = "", category = "", sort = "" },
+    { page = 1, limit = 8, search = "", category = "", sort = "" },
     { rejectWithValue }
   ) => {
     try {
@@ -63,8 +63,8 @@ export const deleteProduct = createAsyncThunk(
   "products/delete",
   async (id, { rejectWithValue }) => {
     try {
-      const response=await api.patch(`/admin/products/${id}`);
-      console.log('success')
+      const response = await api.patch(`/admin/products/${id}`);
+      console.log("success");
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Delete failed");
@@ -72,12 +72,23 @@ export const deleteProduct = createAsyncThunk(
   }
 );
 
-
 export const fetchProductById = createAsyncThunk(
   "products/fetchById",
   async (id, { rejectWithValue }) => {
     try {
       const response = await api.get(`/admin/products/${id}`);
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message);
+    }
+  }
+);
+
+export const fetchPublicProductById = createAsyncThunk(
+  "products/fetchPublicById",
+  async (id, { rejectWithValue }) => {
+    try {
+      const response = await api.get(`/products/${id}`);
       return response.data.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message);
@@ -92,7 +103,7 @@ const productSlice = createSlice({
     pagination: {},
     loading: false,
     error: null,
-    currentProduct: null, // For edit mode
+    currentProduct: null,
   },
   reducers: {
     clearCurrentProduct: (state) => {
@@ -132,10 +143,14 @@ const productSlice = createSlice({
       .addCase(fetchProductById.fulfilled, (state, action) => {
         state.currentProduct = action.payload;
       })
+      .addCase(fetchPublicProductById.fulfilled, (state, action) => {
+        state.currentProduct = action.payload;
+      })
       .addCase(deleteProduct.fulfilled, (state, action) => {
-        // Optimistic update: remove from list or mark inactive
-        const index = state.items.findIndex((p) => p._id === action.payload.data._id);
-        if (index !== -1) state.items[index]=action.payload.data;
+        const index = state.items.findIndex(
+          (p) => p._id === action.payload.data._id
+        );
+        if (index !== -1) state.items[index] = action.payload.data;
       });
   },
 });

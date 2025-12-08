@@ -1,4 +1,3 @@
-// backend/controllers/adminController.js
 const userService = require("../services/userService");
 
 const getUsers = async (req, res) => {
@@ -7,7 +6,16 @@ const getUsers = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const search = req.query.search || "";
 
-    const result = await userService.getAllUsers(page, limit, search);
+    const status = req.query.status || "";
+    const sort = req.query.sort || "";
+
+    const result = await userService.getAllUsers(
+      page,
+      limit,
+      search,
+      status,
+      sort
+    );
     res.status(200).json(result);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -17,7 +25,9 @@ const getUsers = async (req, res) => {
 const blockUser = async (req, res) => {
   try {
     const user = await userService.toggleBlockStatus(req.params.id);
-    res.status(200).json({ message: `User status updated to ${user.status}`, user });
+    res
+      .status(200)
+      .json({ message: `User status updated to ${user.status}`, user });
   } catch (error) {
     const status = error.message === "User not found" ? 404 : 500;
     res.status(status).json({ message: error.message });

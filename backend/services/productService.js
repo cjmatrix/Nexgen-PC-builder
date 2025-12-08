@@ -25,7 +25,7 @@ const getAdminProducts = async (page, limit, search, category, status) => {
   const total = await Product.countDocuments(query);
 
   const products = await Product.find(query)
-    .populate("default_config.cpu", "name") // Optional: populate to show component names if needed
+    .populate("default_config.cpu", "name") 
     .sort({ createdAt: -1 })
     .limit(limit)
     .skip((page - 1) * limit);

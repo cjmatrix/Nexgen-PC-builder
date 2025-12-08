@@ -4,10 +4,10 @@ import api from "../../api/axios";
 
 export const getUsers = createAsyncThunk(
   "users/getAll",
-  async ({ page, limit, search }, thunkAPI) => {
+  async ({ page, limit, search, status, sort }, thunkAPI) => {
     try {
       const response = await api.get(
-        `/admin/users?page=${page}&limit=${limit}&search=${search}`
+        `/admin/users?page=${page}&limit=${limit}&search=${search}&status=${status}&sort=${sort}`
       );
       console.log(response.data);
       return response.data;
@@ -105,8 +105,6 @@ const userSlice = createSlice({
         state.message = action.payload;
       })
       .addCase(blockUser.fulfilled, (state, action) => {
-        // Update the user in the list
-
         const index = state.users.findIndex(
           (user) => user._id === action.payload.user._id
         );

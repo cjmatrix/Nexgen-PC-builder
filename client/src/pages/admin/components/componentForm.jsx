@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react";
-import { Upload, ChevronLeft } from "lucide-react";
-import { Cross } from "lucide-react";
+import React, { useEffect } from "react";
+import { Upload, ChevronLeft, Cross } from "lucide-react";
 import { CATEGORY_SPECS } from "../../../config/componentFields";
 import api from "../../../api/axios";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+import { useForm } from "react-hook-form";
 import {
   createComponent,
   updateComponent,
@@ -17,34 +17,45 @@ const ComponentForm = () => {
   const dispatch = useDispatch();
   const isEditMode = !!id;
 
-  const [baseData, setBaseData] = useState({
-    name: "",
-    price: "",
-    stock: "",
-    category: "",
-    tier_level: 1,
-    image: "",
-  });
-
-  const [specs, setSpecs] = useState({});
   const { loading } = useSelector((state) => state.components);
 
-  console.log(specs)
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    reset,
+    formState: { errors },
+  } = useForm({
+    defaultValues: {
+      name: "",
+      price: "",
+      stock: "",
+      category: "",
+      tier_level: "1",
+      image: "",
+      specs: {},
+    },
+  });
+
+  const category = watch("category");
+  const image = watch("image");
+  const specs = watch("specs");
 
   useEffect(() => {
     if (isEditMode) {
       dispatch(fetchComponentById(id))
         .unwrap()
         .then((data) => {
-          setBaseData({
+          reset({
             name: data.name,
             price: data.price,
             stock: data.stock,
             category: data.category,
-            tier_level: data.tier_level,
+            tier_level: String(data.tier_level), 
             image: data.image,
+            specs: data.specs || {},
           });
-          setSpecs(data.specs || {});
         })
         .catch((err) => {
           console.error("Failed to fetch component:", err);
@@ -52,29 +63,14 @@ const ComponentForm = () => {
           navigate("/admin/components");
         });
     }
-  }, [id, isEditMode, dispatch, navigate]);
+  }, [id, isEditMode, dispatch, navigate, reset]);
 
-  const handleBaseChange = (e) => {
-    setBaseData({ ...baseData, [e.target.name]: e.target.value });
-  };
-
-  const handleCategoryChange = (e) => {
-    const newCategory = e.target.value;
-    setBaseData({ ...baseData, category: newCategory });
-    setSpecs({});
-  };
-
-  const handleSpecChange = (e) => {
-    const value =
-      e.target.type === "checkbox" ? e.target.checked : e.target.value;
-    setSpecs({ ...specs, [e.target.name]: value });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const onSubmit = async (data) => {
     const payload = {
-      ...baseData,
-      specs: specs,
+      ...data,
+      tier_level: Number(data.tier_level),
+      price: Number(data.price),
+      stock: Number(data.stock),
     };
 
     try {
@@ -98,12 +94,7 @@ const ComponentForm = () => {
 
     if (field.type === "select") {
       return (
-        <select
-          name={field.name}
-          onChange={handleSpecChange}
-          className={commonClasses}
-          value={specs[field.name] || ""}
-        >
+        <select className={commonClasses} {...register(`specs.${field.name}`)}>
           <option value="" disabled>
             Select {field.label}
           </option>
@@ -121,91 +112,78 @@ const ComponentForm = () => {
         <div className="flex items-center h-10">
           <input
             type="checkbox"
-            name={field.name}
-            onChange={handleSpecChange}
-            checked={!!specs[field.name]}
             className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 border-gray-300"
+            {...register(`specs.${field.name}`)}
           />
           <span className="ml-2 text-gray-700">{field.label}</span>
         </div>
       );
     }
 
-    if(field.type==="file"){
-      return(
-               <div className="col-span-2">
-                <label className="block text-sm font-medium text-gray-600 mb-1">
-                
-                </label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center text-gray-500 bg-gray-50 hover:bg-gray-100 transition relative">
-                  {specs[field.name] && specs[field.name] !== "" ? (
-                    <div className="relative w-full h-48 flex justify-center">
-                      <img
-                        src={specs[field.name]}
-                        alt="Preview"
-                        className="h-full object-contain rounded-md"
-                      />
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setSpecs((prev) => ({ ...prev ,[field.name]:""}))
-                        }
-                        className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full hover:bg-red-600"
-                      >
-                        <Cross size={16} className="rotate-45" />{" "}
-                       
-                      </button>
-                    </div>
-                  ) : (
-                    <>
-                      <Upload size={32} className="mb-2" />
-                      <p className="text-sm text-gray-500">
-                        Click to upload image
-                      </p>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={async (e) => {
-                          const file = e.target.files[0];
-                          if (!file) return;
+    if (field.type === "file") {
+      const specImage = specs?.[field.name];
+      return (
+        <div className="col-span-2">
+          <label className="block text-sm font-medium text-gray-600 mb-1">
+            {field.label}
+          </label>
+          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center text-gray-500 bg-gray-50 hover:bg-gray-100 transition relative">
+            {specImage ? (
+              <div className="relative w-full h-48 flex justify-center">
+                <img
+                  src={specImage}
+                  alt="Preview"
+                  className="h-full object-contain rounded-md"
+                />
+                <button
+                  type="button"
+                  onClick={() => setValue(`specs.${field.name}`, "")}
+                  className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full hover:bg-red-600"
+                >
+                  <Cross size={16} className="rotate-45" />
+                </button>
+              </div>
+            ) : (
+              <>
+                <Upload size={32} className="mb-2" />
+                <p className="text-sm text-gray-500">Click to upload image</p>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={async (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
 
-                          const formData = new FormData();
-                          formData.append("image", file);
+                    const formData = new FormData();
+                    formData.append("image", file);
 
-                          try {
-                            // Show loading state if needed
-                            const res = await api.post("/upload", formData, {
-                              headers: {
-                                "Content-Type": "multipart/form-data",
-                              },
-                            });
-                            setSpecs((prev) => ({
-                              ...prev,
-                              [field.name]: res.data.imageUrl,
-                            }));
-                          } catch (error) {
-                            console.error("Upload failed", error);
-                            alert("Image upload failed");
-                          }
-                        }}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      />
-                    </>
-                  )}
-                </div>
-              </div>     
-
-      )
+                    try {
+                      const res = await api.post("/upload", formData, {
+                        headers: {
+                          "Content-Type": "multipart/form-data",
+                        },
+                      });
+                      setValue(`specs.${field.name}`, res.data.imageUrl);
+                    } catch (error) {
+                      console.error("Upload failed", error);
+                      alert("Image upload failed");
+                    }
+                  }}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                />
+              </>
+            )}
+          </div>
+        </div>
+      );
     }
 
     return (
       <input
         type={field.type}
-        name={field.name}
         placeholder={field.placeholder || ""}
-        onChange={handleSpecChange}
-        value={specs[field.name] || ""}
         className={commonClasses}
+        {...register(`specs.${field.name}`)}
       />
     );
   };
@@ -234,7 +212,7 @@ const ComponentForm = () => {
           </Link>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
           {/* SECTION A: Universal Details */}
           <div>
             <h2 className="text-lg font-semibold text-gray-700 mb-4">
@@ -246,13 +224,19 @@ const ComponentForm = () => {
                   Product Name
                 </label>
                 <input
-                  required
                   type="text"
-                  name="name"
-                  value={baseData.name}
-                  onChange={handleBaseChange}
-                  className="w-full border border-gray-300 rounded-md p-2"
+                  className={`w-full border rounded-md p-2 ${
+                    errors.name ? "border-red-500" : "border-gray-300"
+                  }`}
+                  {...register("name", {
+                    required: "Product Name is required",
+                  })}
                 />
+                {errors.name && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.name.message}
+                  </p>
+                )}
               </div>
 
               <div>
@@ -260,13 +244,17 @@ const ComponentForm = () => {
                   Price (₹)
                 </label>
                 <input
-                  required
                   type="number"
-                  name="price"
-                  value={baseData.price}
-                  onChange={handleBaseChange}
-                  className="w-full border border-gray-300 rounded-md p-2"
+                  className={`w-full border rounded-md p-2 ${
+                    errors.price ? "border-red-500" : "border-gray-300"
+                  }`}
+                  {...register("price", { required: "Price is required" })}
                 />
+                {errors.price && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.price.message}
+                  </p>
+                )}
               </div>
 
               <div>
@@ -274,13 +262,17 @@ const ComponentForm = () => {
                   Stock Quantity
                 </label>
                 <input
-                  required
                   type="number"
-                  name="stock"
-                  value={baseData.stock}
-                  onChange={handleBaseChange}
-                  className="w-full border border-gray-300 rounded-md p-2"
+                  className={`w-full border rounded-md p-2 ${
+                    errors.stock ? "border-red-500" : "border-gray-300"
+                  }`}
+                  {...register("stock", { required: "Stock is required" })}
                 />
+                {errors.stock && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.stock.message}
+                  </p>
+                )}
               </div>
 
               {/* Image Upload Section */}
@@ -289,22 +281,19 @@ const ComponentForm = () => {
                   Product Image
                 </label>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center text-gray-500 bg-gray-50 hover:bg-gray-100 transition relative">
-                  {baseData.image && baseData.image !== "" ? (
+                  {image ? (
                     <div className="relative w-full h-48 flex justify-center">
                       <img
-                        src={baseData.image}
+                        src={image}
                         alt="Preview"
                         className="h-full object-contain rounded-md"
                       />
                       <button
                         type="button"
-                        onClick={() =>
-                          setBaseData((prev) => ({ ...prev, image: "" }))
-                        }
+                        onClick={() => setValue("image", "")}
                         className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full hover:bg-red-600"
                       >
-                        <Upload size={16} className="rotate-45" />{" "}
-                        {/* Using rotate to mimic X */}
+                        <Cross size={16} className="rotate-45" />
                       </button>
                     </div>
                   ) : (
@@ -324,16 +313,12 @@ const ComponentForm = () => {
                           formData.append("image", file);
 
                           try {
-                            // Show loading state if needed
                             const res = await api.post("/upload", formData, {
                               headers: {
                                 "Content-Type": "multipart/form-data",
                               },
                             });
-                            setBaseData((prev) => ({
-                              ...prev,
-                              image: res.data.imageUrl,
-                            }));
+                            setValue("image", res.data.imageUrl);
                           } catch (error) {
                             console.error("Upload failed", error);
                             alert("Image upload failed");
@@ -354,13 +339,11 @@ const ComponentForm = () => {
               Section B: The Category Selector
             </h2>
             <select
-              name="category"
-              value={baseData.category}
-              onChange={handleCategoryChange}
               className={`w-full border border-gray-300 rounded-md p-3 text-lg ${
                 isEditMode ? "bg-gray-200 appearance-none" : ""
               }`}
-              disabled={isEditMode} // Disable category change in edit mode to prevent schema mismatch issues
+              disabled={isEditMode}
+              {...register("category", { required: "Category is required" })}
             >
               <option value="">Select Category...</option>
               {Object.keys(CATEGORY_SPECS).map((cat) => (
@@ -369,6 +352,11 @@ const ComponentForm = () => {
                 </option>
               ))}
             </select>
+            {errors.category && (
+              <p className="text-red-500 text-xs mt-1">
+                {errors.category.message}
+              </p>
+            )}
             {isEditMode && (
               <p className="text-sm text-gray-500 mt-1">
                 Category cannot be changed during edit.
@@ -377,15 +365,15 @@ const ComponentForm = () => {
           </div>
 
           {/* SECTION C: Dynamic Technical Specs */}
-          {baseData.category && (
+          {category && CATEGORY_SPECS[category] && (
             <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 fade-in">
               <h2 className="text-lg font-semibold text-gray-700 mb-4">
-                Section C: Technical Specs ({baseData.category.toUpperCase()})
+                Section C: Technical Specs ({category.toUpperCase()})
               </h2>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* 1. Render Specific Fields based on Category */}
-                {CATEGORY_SPECS[baseData.category].map((field) => (
+                {CATEGORY_SPECS[category].map((field) => (
                   <div key={field.name}>
                     <label className="block text-sm font-medium text-gray-600 mb-1">
                       {field.label}
@@ -400,10 +388,8 @@ const ComponentForm = () => {
                     Performance Tier
                   </label>
                   <select
-                    name="tier_level"
-                    onChange={handleBaseChange}
-                    value={baseData.tier_level}
                     className="w-full border border-gray-300 rounded-md p-2"
+                    {...register("tier_level")}
                   >
                     <option value="1">Tier 1 - Entry</option>
                     <option value="2">Tier 2 - Budget</option>

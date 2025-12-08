@@ -1,16 +1,12 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../../api/axios";
 
-// --- Async Thunks for Fetching Components ---
-
-// 1. Generic Fetcher (Used for initial load or specific categories)
 export const fetchComponents = createAsyncThunk(
   "builder/fetchComponents",
   async ({ category, params = {} }, { rejectWithValue }) => {
     try {
-      // params can contain cpuId, motherboardId, etc.
       const response = await api.get("/admin/componentspublic", {
-        params: { category, ...params, limit: 100 }, // Fetch enough options
+        params: { category, ...params, limit: 100 },
       });
 
       console.log(
@@ -26,7 +22,6 @@ export const fetchComponents = createAsyncThunk(
 );
 
 const initialState = {
-  // Selected Parts (The current build)
   selected: {
     cpu: null,
     motherboard: null,
@@ -37,7 +32,6 @@ const initialState = {
     psu: null,
     cooler: null,
   },
-  // Available Options (Filtered lists from backend)
   options: {
     cpu: [],
     motherboard: [],
@@ -48,10 +42,8 @@ const initialState = {
     psu: [],
     cooler: [],
   },
-  // Build Stats
   totalPrice: 0,
   estimatedWattage: 0,
-  // UI State
   loading: false,
   error: null,
 };
@@ -60,17 +52,14 @@ const builderSlice = createSlice({
   name: "builder",
   initialState,
   reducers: {
-    // Action when user selects a part
     selectPart: (state, action) => {
       const { category, component } = action.payload;
       state.selected[category] = component;
 
-      // Reset downstream parts if upstream changes (Cascading Reset)
       if (category === "cpu") {
         state.selected.motherboard = null;
         state.selected.ram = null;
         state.selected.cooler = null;
-        // Clear options that depend on CPU
         state.options.motherboard = [];
         state.options.cooler = [];
       }
@@ -79,7 +68,6 @@ const builderSlice = createSlice({
         state.options.ram = [];
       }
 
-      // Recalculate Totals
       let price = 0;
       let wattage = 0;
       Object.values(state.selected).forEach((part) => {
@@ -89,11 +77,11 @@ const builderSlice = createSlice({
         }
       });
       state.totalPrice = price;
-      state.estimatedWattage = wattage; // Add buffer in UI logic, not here
+      state.estimatedWattage = wattage;
     },
     resetBuild: () => initialState,
-    setSelected:(state,action)=>{
-      state.selected=action.payload
+    setSelected: (state, action) => {
+      state.selected = action.payload;
       let price = 0;
       let wattage = 0;
       Object.values(state.selected).forEach((part) => {
@@ -103,8 +91,8 @@ const builderSlice = createSlice({
         }
       });
       state.totalPrice = price;
-      state.estimatedWattage = wattage; // 
-    }
+      state.estimatedWattage = wattage;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -123,5 +111,5 @@ const builderSlice = createSlice({
   },
 });
 
-export const { selectPart,setSelected, resetBuild } = builderSlice.actions;
+export const { selectPart, setSelected, resetBuild } = builderSlice.actions;
 export default builderSlice.reducer;

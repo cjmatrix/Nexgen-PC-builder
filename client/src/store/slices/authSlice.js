@@ -28,7 +28,7 @@ export const register = createAsyncThunk(
   async (user, thunkAPI) => {
     try {
       const response = await api.post("/auth/register", user);
-      return response.data; // Returns message
+      return response.data;
     } catch (error) {
       const message =
         (error.response &&
@@ -111,7 +111,7 @@ const initialState = {
   user: null,
   isError: false,
   isSuccess: false,
-  isLoading: true, // Start loading to check auth status
+  isLoading: true,
   message: "",
 };
 
@@ -137,8 +137,8 @@ const authSlice = createSlice({
       .addCase(register.fulfilled, (state, action) => {
         state.isLoading = false;
         state.isSuccess = true;
-        state.message = action.payload.message; // OTP sent message
-        state.user = null; // Not logged in yet
+        state.message = action.payload.message;
+        state.user = null;
       })
       .addCase(register.rejected, (state, action) => {
         state.isLoading = false;

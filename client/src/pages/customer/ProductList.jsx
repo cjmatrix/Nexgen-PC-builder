@@ -1,10 +1,11 @@
-
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchPublicProducts } from "../../store/slices/productSlice";
 import Pagination from "../../components/Pagination";
 import { Search, Filter, ShoppingCart, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+
+import Navbar from "../../components/Navbar";
 
 const ProductList = () => {
   const dispatch = useDispatch();
@@ -16,11 +17,9 @@ const ProductList = () => {
     category: "",
     sort: "newest",
   });
-    const [page,setPage]=useState(1);
+  const [page, setPage] = useState(1);
 
-  // Debounce search
   const [seatchInput, setseatchInput] = useState("");
-
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -30,18 +29,14 @@ const ProductList = () => {
   }, [seatchInput]);
 
   useEffect(() => {
-    dispatch(fetchPublicProducts({...filters,page}));
-  }, [dispatch, filters,page]);
-
-
-
-
-
+    dispatch(fetchPublicProducts({ ...filters, page }));
+  }, [dispatch, filters, page]);
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
-      {/* Hero Section */}
-      <div className="bg-white border-b border-gray-200">
+      <Navbar />
+    
+      <div className="bg-white border-b border-gray-200 pt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <h1 className="text-4xl font-extrabold text-gray-900 mb-2">
             Explore All PCs
@@ -54,9 +49,8 @@ const ProductList = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Filters & Controls */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-          {/* Search */}
+        
           <div className="relative w-full md:w-96">
             <Search
               className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
@@ -71,7 +65,6 @@ const ProductList = () => {
             />
           </div>
 
-          {/* Filters */}
           <div className="flex items-center gap-3 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
             <div className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">
               <Filter size={18} className="text-gray-500" />
@@ -106,7 +99,6 @@ const ProductList = () => {
           </div>
         </div>
 
-        {/* Product Grid */}
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 animate-pulse">
             {[...Array(8)].map((_, i) => (
@@ -120,7 +112,6 @@ const ProductList = () => {
                 key={product._id}
                 className="group bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden flex flex-col"
               >
-                {/* Image */}
                 <div className="relative aspect-[4/3] bg-gray-100 overflow-hidden">
                   <img
                     src={
@@ -133,7 +124,6 @@ const ProductList = () => {
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
                 </div>
 
-                {/* Content */}
                 <div className="p-5 flex flex-col flex-grow">
                   <div className="mb-4">
                     <h3 className="text-lg font-bold text-gray-900 mb-1 line-clamp-1">
@@ -166,7 +156,6 @@ const ProductList = () => {
           </div>
         )}
 
-        {/* Empty State */}
         {!loading && items.length === 0 && (
           <div className="text-center py-20">
             <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -181,15 +170,10 @@ const ProductList = () => {
           </div>
         )}
 
-        {/* Pagination */}
         {!loading && items.length > 0 && (
-          <div className="flex justify-center">
-            <Pagination
-             pagination={pagination}
-              page={page}
-              setPage={setPage}    
-            />
-          </div>
+        
+            <Pagination pagination={pagination} page={page} setPage={setPage} />
+        
         )}
       </div>
     </div>

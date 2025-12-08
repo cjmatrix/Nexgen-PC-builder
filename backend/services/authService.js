@@ -1,13 +1,14 @@
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
 const sendEmail = require("../utils/sendEmail");
+const crypto = require("crypto");
 
 const generateTokens = async (userId) => {
   const accessToken = jwt.sign(
     { id: userId },
     process.env.ACCESS_TOKEN_SECRET,
     {
-      expiresIn: "15m", // Production standard
+      expiresIn: "15m",
     }
   );
 
@@ -35,19 +36,14 @@ const registerUser = async (userData) => {
 
   const userExists = await User.findOne({ email });
   if (userExists) {
-    // If user exists but not verified, we can resend OTP or update details
     if (!userExists.isVerified) {
-      // Logic to handle unverified existing user could go here,
-      // but for now we'll throw error or just update the existing unverified user
-      // Let's update the existing unverified user with new OTP
     } else {
       throw new Error("User already exists");
     }
   }
 
-  // Generate OTP
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  const otpExpires = Date.now() + 10 * 60 * 1000; // 10 mins
+  const otpExpires = Date.now() + 10 * 60 * 1000;
 
   let user = await User.findOne({ email });
   if (user) {
@@ -67,7 +63,6 @@ const registerUser = async (userData) => {
     });
   }
 
-  // Send Email
   try {
     await sendEmail({
       email: user.email,
@@ -75,7 +70,6 @@ const registerUser = async (userData) => {
       message: `Your verification code is: ${otp}. It expires in 10 minutes.`,
     });
   } catch (error) {
-    // If email fails, we might want to delete the user or handle it
     console.error("Email send failed:", error);
     throw new Error("Email could not be sent");
   }
@@ -91,7 +85,7 @@ const verifyOTP = async (email, otp) => {
   }
 
   if (user.isVerified) {
-    return { message: "User already verified" }; // Or just login
+    return { message: "User already verified" };
   }
 
   if (!user.otp || !user.otpExpires) {
@@ -174,7 +168,6 @@ const logoutUser = async (incomingRefreshToken) => {
     if (decoded) {
       const user = await User.findById(decoded.id).select("+refreshTokens");
       if (user) {
-        // Remove the specific token from the array
         user.refreshTokens = user.refreshTokens.filter(
           (t) => t !== incomingRefreshToken
         );
@@ -222,6 +215,67 @@ const refreshAccessToken = async (incomingRefreshToken) => {
   return { newAccessToken, newRefreshToken };
 };
 
+const forgotPassword = async (email) => {
+  const user = await User.findOne({ email });
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  const resetToken = crypto.randomBytes(20).toString("hex");
+
+  user.resetPasswordToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
+
+  user.resetPasswordExpire = Date.now() + 10 * 60 * 1000;
+
+  await user.save();
+
+  const resetUrl = `http://localhost:5173/reset-password/${resetToken}`;
+
+  const message = `You are receiving this email because you (or someone else) has requested the reset of a password. Please make a PUT request to: \n\n ${resetUrl}`;
+
+  try {
+    await sendEmail({
+      email: user.email,
+      subject: "Password Reset Token",
+      message,
+    });
+
+    return { message: "Email sent" };
+  } catch (error) {
+    console.error("Send Email Error:", error);
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+    await user.save();
+    throw new Error("Email could not be sent");
+  }
+};
+
+const resetPassword = async (resetToken, password) => {
+  const resetPasswordToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
+
+  const user = await User.findOne({
+    resetPasswordToken,
+    resetPasswordExpire: { $gt: Date.now() },
+  });
+
+  if (!user) {
+    throw new Error("Invalid token");
+  }
+
+  user.password = password;
+  user.resetPasswordToken = undefined;
+  user.resetPasswordExpire = undefined;
+  await user.save();
+
+  return { message: "Password updated success" };
+};
+
 module.exports = {
   registerUser,
   loginUser,
@@ -229,4 +283,7 @@ module.exports = {
   refreshAccessToken,
   verifyOTP,
   resendOTP,
+  forgotPassword,
+  resetPassword,
+  generateTokens,
 };

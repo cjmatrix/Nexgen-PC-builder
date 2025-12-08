@@ -1,8 +1,7 @@
-
 const User = require("../models/User");
 
-const getAllUsers = async (page, limit, search) => {
-  const query = { isDeleted: { $ne: true } }; // Handle soft delete check
+const getAllUsers = async (page, limit, search, status, sort) => {
+  const query = { isDeleted: { $ne: true } };
 
   if (search) {
     query.$or = [
@@ -11,11 +10,23 @@ const getAllUsers = async (page, limit, search) => {
     ];
   }
 
+  if (status) {
+    query.status = status;
+  }
+
+  let sortOptions = { createdAt: -1 };
+
+  if (sort === "oldest") {
+    sortOptions = { createdAt: 1 };
+  } else if (sort === "newest") {
+    sortOptions = { createdAt: -1 };
+  }
+
   const totalUsers = await User.countDocuments(query);
   const totalPages = Math.ceil(totalUsers / limit);
 
   const users = await User.find(query)
-    .sort({ createdAt: -1 })
+    .sort(sortOptions)
     .skip((page - 1) * limit)
     .limit(limit)
     .select("-password");

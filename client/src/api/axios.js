@@ -5,7 +5,6 @@ const api = axios.create({
   withCredentials: true,
 });
 
-// --- CONCURRENCY LOCK VARIABLES ---
 let isRefreshing = false;
 let failedQueue = [];
 
@@ -25,22 +24,16 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // 1. SKIP INTERCEPTOR FOR SPECIFIC ROUTES
-    // If the error comes from Login, Logout, or Refresh, simply reject it.
-    // We don't want to try refreshing in these cases.
     if (
       originalRequest.url.includes("/auth/login") ||
       originalRequest.url.includes("/auth/logout") ||
-      originalRequest.url.includes("/auth/refresh") ||
-      originalRequest.url.includes("/auth/profile")
+      originalRequest.url.includes("/auth/refresh")
     ) {
       return Promise.reject(error);
     }
 
-
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
-       
         return new Promise(function (resolve, reject) {
           failedQueue.push({ resolve, reject });
         })
@@ -56,27 +49,17 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        // Attempt Refresh
         await api.post("/auth/refresh");
 
-        // Success! Process the queue
         processQueue(null);
         isRefreshing = false;
 
         return api(originalRequest);
       } catch (refreshError) {
-        // Failure! Log out user
         processQueue(refreshError, null);
         isRefreshing = false;
 
-        console.log("Session expired. Logging out...");
-        // Cleanup local state
         localStorage.removeItem("user");
-        // Redirect to login
-        // Redirect to login
-        // window.location.href = '/login'; // DISABLED: Causing infinite loop on profile fetch
-
-        return Promise.reject(refreshError);
 
         return Promise.reject(refreshError);
       }
