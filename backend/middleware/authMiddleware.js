@@ -8,7 +8,6 @@ const protect = async (req, res, next) => {
 
   if (token) {
     try {
-      
       const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
 
       req.user = await User.findById(decoded.id);
@@ -30,7 +29,7 @@ const protect = async (req, res, next) => {
 
 const admin = (req, res, next) => {
   if (req.user && req.user.role === "admin") {
-    console.log(req.user.name)
+    console.log(req.user.name);
     next();
   } else {
     res.status(403).json({ message: "Not authorized as an admin" });

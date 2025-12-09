@@ -63,18 +63,6 @@ const userSchema = new mongoose.Schema(
       set: (v) => Math.round(v),
     },
 
-    addresses: [
-      {
-        fullName: { type: String, required: true },
-        street: { type: String, required: true },
-        city: { type: String, required: true },
-        state: { type: String, required: true },
-        postalCode: { type: String, required: true },
-        phone: { type: String, required: true },
-        isDefault: { type: Boolean, default: false },
-      },
-    ],
-
     status: {
       type: String,
       enum: ["active", "suspended", "banned"],

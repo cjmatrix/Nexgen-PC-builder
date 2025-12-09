@@ -46,11 +46,7 @@ const UserManagement = () => {
     return () => clearTimeout(delayDebounceFn);
   }, [searchInput, dispatch]);
 
-  const handleLogout = () => {
-    dispatch(logout());
-    dispatch(authReset());
-    navigate("/login");
-  };
+ 
 
   const handleBlock = (id, currentStatus) => {
     if (
@@ -68,12 +64,7 @@ const UserManagement = () => {
     <div className="p-8 bg-gray-100 min-h-screen font-sans">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-2xl font-bold text-gray-800">User Management</h1>
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded transition"
-        >
-          <FaSignOutAlt /> Logout
-        </button>
+        
       </div>
 
       <div className="bg-white p-4 rounded-xl shadow-sm mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">

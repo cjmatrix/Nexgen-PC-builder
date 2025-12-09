@@ -84,7 +84,7 @@ const getComponents = async (req, res) => {
       const cpu = await Component.findById(req.query.cpuId);
       if (cpu) {
         filters.socket = cpu.specs.socket; 
-        
+  
         
         filters.maxTier = cpu.tier_level + 1; 
       }
