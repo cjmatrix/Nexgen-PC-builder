@@ -1,15 +1,17 @@
-import { configureStore } from '@reduxjs/toolkit';
-import authReducer from './slices/authSlice';
-import userReducer from './slices/userSlice';
-import componentReducer from './slices/componentSlice'
-import builderReducer from './slices/builderSlice';
-import productReducer from './slices/productSlice'
+import { configureStore } from "@reduxjs/toolkit";
+import authReducer from "./slices/authSlice";
+import userReducer from "./slices/userSlice";
+import componentReducer from "./slices/componentSlice";
+import builderReducer from "./slices/builderSlice";
+import productReducer from "./slices/productSlice";
+import aiReducer from "./slices/aiSlice";
 export const store = configureStore({
   reducer: {
     auth: authReducer,
     users: userReducer,
-    components:componentReducer,
+    components: componentReducer,
     builder: builderReducer,
-    products:productReducer,
+    products: productReducer,
+    ai: aiReducer,
   },
 });

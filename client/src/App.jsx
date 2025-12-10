@@ -18,11 +18,12 @@ import CustomerDashboard from "./pages/customer/CustomerDashboard";
 import UserManagement from "./pages/admin/components/UserManagement";
 import CreateComponent from "./pages/admin/components/componentForm";
 import ComponentManagement from "./pages/admin/components/ComponentManagement";
-import PCBuilder from "./pages/admin/components/PCBuilder";
+import PCBuilder from "./pages/customer/PCBuilder";
 import ProductManagement from "./pages/admin/components/ProductManagement";
 import AddProductForm from "./pages/admin/components/ProductForm";
 import ProductList from "./pages/customer/ProductList";
 import ProductDetail from "./pages/customer/ProductDetail";
+import AIPCAssistant from "./pages/customer/AIPCAssistant";
 import AdminRoutes from "./protectedroutes/AdminRoute";
 
 import ProtectedRoute from "./protectedroutes/ProtectedRoute";
@@ -110,6 +111,14 @@ const router = createBrowserRouter([
         path: "/products/:id",
         element: <ProductDetail />,
       },
+      {
+        path: "/ai-assistant",
+        element: <AIPCAssistant />,
+      },
+      {
+        path: "/builder",
+        element: <PCBuilder />,
+      }
     ],
   },
 ]);

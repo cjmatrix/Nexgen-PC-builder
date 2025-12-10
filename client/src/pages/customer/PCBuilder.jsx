@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   fetchComponents,
   selectPart,
-} from "../../../store/slices/builderSlice";
+} from "../../store/slices/builderSlice";
 import {
   ShoppingCart,
   Cpu,

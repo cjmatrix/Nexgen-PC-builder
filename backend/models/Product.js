@@ -95,6 +95,13 @@ const productSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    
+    is_ai_generated: {
+    type: Boolean,
+    default: false,
+    index: true
+    },
+
   },
   {
     timestamps: true,

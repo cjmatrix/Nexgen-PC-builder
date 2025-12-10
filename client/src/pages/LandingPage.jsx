@@ -64,6 +64,12 @@ const LandingPage = () => {
                     Our smart assistant suggests the best components based on
                     your needs and budget.
                   </p>
+                  <Link
+                    to="/ai-assistant"
+                    className="text-blue-600 font-bold hover:text-blue-800 transition-colors"
+                  >
+                    Try AI Assistant &rarr;
+                  </Link>
                 </div>
               </div>
             </div>

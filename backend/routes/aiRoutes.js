@@ -1,12 +1,12 @@
-const express=require('express');
+const express = require("express");
 
-const router=express.Router();
+const router = express.Router();
 
-const {aiController}=require('../controllers/aiController')
-const {protect}=require('../middleware/authMiddleware')
+const { aiController } = require("../controllers/aiController");
+const { protect } = require("../middleware/authMiddleware");
 
-router.use(protect)
+router.use(protect);
 
-router.post('/recommend',aiController);
+router.post("/generate-pc", aiController);
 
-module.exports=router
+module.exports = router;
