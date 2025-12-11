@@ -49,10 +49,10 @@ const ComponentForm = () => {
         .then((data) => {
           reset({
             name: data.name,
-            price: data.price,
+            price: data.price / 100, // Convert Paisa to Rupees
             stock: data.stock,
             category: data.category,
-            tier_level: String(data.tier_level), 
+            tier_level: String(data.tier_level),
             image: data.image,
             specs: data.specs || {},
           });
@@ -69,7 +69,7 @@ const ComponentForm = () => {
     const payload = {
       ...data,
       tier_level: Number(data.tier_level),
-      price: Number(data.price),
+      price: Number(data.price) * 100, // Convert Rupees to Paisa
       stock: Number(data.stock),
     };
 

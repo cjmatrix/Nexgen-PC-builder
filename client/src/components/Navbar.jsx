@@ -12,11 +12,24 @@ import {
 } from "lucide-react";
 import { logout } from "../store/slices/authSlice";
 
+import { useEffect } from "react";
+// ... existing imports ...
+import { fetchCart } from "../store/slices/cartSlice";
+
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
+  const { items } = useSelector((state) => state.cart);
+
+  useEffect(() => {
+    if (user) {
+      dispatch(fetchCart());
+    }
+  }, [dispatch, user]);
+
+  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -108,10 +121,16 @@ const Navbar = () => {
                 </Link>
               </div>
             )}
-
-            <div className="flex items-center justify-center h-10 w-10 rounded-full bg-gray-100 hover:bg-gray-200 cursor-pointer transition-colors">
-              <ShoppingCart className="h-5 w-5 text-gray-600" />
-            </div>
+            <Link to="/cart">
+              <div className="relative flex items-center justify-center h-10 w-10 rounded-full bg-gray-100 hover:bg-gray-200 cursor-pointer transition-colors">
+                <ShoppingCart className="h-5 w-5 text-gray-600" />
+                {totalItems > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center border-2 border-white">
+                    {totalItems}
+                  </span>
+                )}
+              </div>
+            </Link>
           </div>
 
           {/* Mobile Menu Button */}

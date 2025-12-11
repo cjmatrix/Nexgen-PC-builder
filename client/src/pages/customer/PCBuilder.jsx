@@ -1,9 +1,6 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  fetchComponents,
-  selectPart,
-} from "../../store/slices/builderSlice";
+import { fetchComponents, selectPart } from "../../store/slices/builderSlice";
 import {
   ShoppingCart,
   Cpu,
@@ -74,14 +71,42 @@ const PartSelector = ({
   </div>
 );
 
+import { useParams, useNavigate } from "react-router-dom";
+import api from "../../api/axios";
+import { setSelected } from "../../store/slices/builderSlice";
+import { useState } from "react";
+
 const PCBuilder = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { selected, options, totalPrice, estimatedWattage, loading } =
-    useSelector((state) => state.builder);
+
+  const { selected, options, totalPrice, estimatedWattage } = useSelector(
+    (state) => state.builder
+  );
+
+  const [imgArr, setImgArr] = useState([]);
+
+  useEffect(() => {
+    if (id) {
+      const fetchProductConfig = async () => {
+        try {
+          const response = await api.get(`/products/${id}`);
+          console.log(response.data.data, "it is this");
+          if (response.data.success && response.data.data.default_config) {
+            setImgArr(response.data.data.images);
+            dispatch(setSelected(response.data.data.default_config));
+          }
+        } catch (error) {
+          console.error("Failed to load product config", error);
+        }
+      };
+      fetchProductConfig();
+    }
+  }, [id, dispatch]);
 
   useEffect(() => {
     dispatch(fetchComponents({ category: "cpu" }));
-
     dispatch(fetchComponents({ category: "storage" }));
   }, [dispatch]);
 
@@ -215,7 +240,7 @@ const PCBuilder = () => {
             options={options.case}
             selected={selected.case}
             onSelect={handleSelect}
-            disabled={!selected.motherboard}
+            disabled={true}
           />
 
           <PartSelector
@@ -248,7 +273,7 @@ const PCBuilder = () => {
             <div className="aspect-video bg-gray-100 rounded-lg mb-6 flex items-center justify-center overflow-hidden">
               {selected.case ? (
                 <img
-                  src={selected.case.image}
+                  src={imgArr[0]}
                   alt="Case Preview"
                   className="w-full h-full object-cover"
                 />
@@ -284,12 +309,26 @@ const PCBuilder = () => {
               </div>
             </div>
 
-            <button
-              disabled={!selected.psu || !selected.case}
-              className="w-full bg-blue-600 text-white py-3.5 rounded-lg font-semibold hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
-            >
-              <ShoppingCart size={20} /> Add to Cart
-            </button>
+            {id ? (
+              <button
+                disabled={!selected.psu || !selected.case}
+                onClick={() => {
+                  // Navigate to checkout or mock purchase flow
+                  alert("Proceeding to checkout with custom build!");
+                  // In a real app: navigate('/checkout', { state: { customBuild: selected } });
+                }}
+                className="w-full bg-green-600 text-white py-3.5 rounded-lg font-semibold hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+              >
+                <ShoppingCart size={20} /> Buy Now
+              </button>
+            ) : (
+              <button
+                disabled={!selected.psu || !selected.case}
+                className="w-full bg-blue-600 text-white py-3.5 rounded-lg font-semibold hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+              >
+                <ShoppingCart size={20} /> Add to Cart
+              </button>
+            )}
           </div>
         </div>
       </div>

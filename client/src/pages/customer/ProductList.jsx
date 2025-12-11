@@ -5,7 +5,7 @@ import Pagination from "../../components/Pagination";
 import { Search, Filter, ShoppingCart, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-import Navbar from "../../components/Navbar";
+
 
 const ProductList = () => {
   const dispatch = useDispatch();
@@ -34,8 +34,8 @@ const ProductList = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
-      <Navbar />
-    
+
+
       <div className="bg-white border-b border-gray-200 pt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <h1 className="text-4xl font-extrabold text-gray-900 mb-2">
@@ -50,7 +50,6 @@ const ProductList = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-        
           <div className="relative w-full md:w-96">
             <Search
               className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
@@ -171,9 +170,7 @@ const ProductList = () => {
         )}
 
         {!loading && items.length > 0 && (
-        
-            <Pagination pagination={pagination} page={page} setPage={setPage} />
-        
+          <Pagination pagination={pagination} page={page} setPage={setPage} />
         )}
       </div>
     </div>

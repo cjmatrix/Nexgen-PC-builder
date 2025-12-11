@@ -24,7 +24,10 @@ import AddProductForm from "./pages/admin/components/ProductForm";
 import ProductList from "./pages/customer/ProductList";
 import ProductDetail from "./pages/customer/ProductDetail";
 import AIPCAssistant from "./pages/customer/AIPCAssistant";
+import Cart from "./pages/customer/Cart";
 import AdminRoutes from "./protectedroutes/AdminRoute";
+
+import CustomerPage from "./pages/customer/CustomerPage";
 
 import ProtectedRoute from "./protectedroutes/ProtectedRoute";
 
@@ -98,7 +101,10 @@ const router = createBrowserRouter([
   },
   {
     element: <ProtectedRoute />,
-    children: [
+    children:[{
+      path:'/',
+      element:<CustomerPage></CustomerPage>,
+       children: [
       {
         path: "/dashboard",
         element: <CustomerDashboard />,
@@ -118,8 +124,18 @@ const router = createBrowserRouter([
       {
         path: "/builder",
         element: <PCBuilder />,
-      }
+      },
+      {
+        path: "/products/customization/:id",
+        element: <PCBuilder />,
+      },
+      {
+        path: "/cart",
+        element: <Cart />,
+      },
     ],
+    }]
+   
   },
 ]);
 

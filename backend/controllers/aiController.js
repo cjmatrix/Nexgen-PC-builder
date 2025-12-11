@@ -93,6 +93,7 @@ const aiController = async (req, res) => {
     selectedComponents.forEach((c) => (totalPrice += c.price));
 
     const imageUrls = [];
+    console.log(selectedComponents.find((c) => c.category === "case")?.name);
 
     try {
       const basePrompt = `A photorealistic, high-quality image of a custom ${prompt} PC. 
@@ -105,60 +106,45 @@ const aiController = async (req, res) => {
         selectedComponents.find((c) => c.category === "cooler")?.name ||
         "High Performance Cooler"
       }.
-      Cpu:${
-        selectedComponents.find((c) => c.category === "cpu")?.name 
-      }.
+      Cpu:${selectedComponents.find((c) => c.category === "cpu")?.name}.
       
-      Ram:${
-        selectedComponents.find((c) => c.category === "ram")?.name 
-      }.
-      Psu:${
-        selectedComponents.find((c) => c.category === "psu")?.name 
-      }.
+      Ram:${selectedComponents.find((c) => c.category === "ram")?.name}.
+      Psu:${selectedComponents.find((c) => c.category === "psu")?.name}.
       Motherboard:${
-        selectedComponents.find((c) => c.category === "motherboard")?.name 
+        selectedComponents.find((c) => c.category === "motherboard")?.name
       }.
       
-      
-      Lighting: RGB, dramatic.`;
+      Lighting: RGB, dramatic, cinematic, 8k, detailed, realistic`;
 
-      const prompts = [
-        `${basePrompt} View: 3/4 angle, showing internal components through glass panel.`,
-        `${basePrompt} View: Front facing, emphasizing the case design and lighting.`,
-        `${basePrompt} View: Close-up cinematic shot of the internal components and RGB.`,
+      const angles = [
+        "Cinematic 3/4 View",
+        "Front View",
+        "Close-up Internal Components View",
       ];
 
-      const imagePromises = prompts.map((p) =>
-        ai.models.generateContent({
-          model: "gemini-2.5-flash-image",
-          contents: p,
-        })
-      );
+      const imagePromises = angles.map(async (angle) => {
+        const finalPrompt = `${basePrompt}. ${angle}`;
+        const encodedPrompt = encodeURIComponent(finalPrompt);
+        const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?seed=${Math.floor(
+          Math.random() * 1000
+        )}&model=flux`;
 
-      const responses = await Promise.all(imagePromises);
-
-      for (const response of responses) {
-        if (
-          response &&
-          response.candidates &&
-          response.candidates[0] &&
-          response.candidates[0].content &&
-          response.candidates[0].content.parts
-        ) {
-          for (const part of response.candidates[0].content.parts) {
-            if (part.inlineData && part.inlineData.data) {
-              const buffer = Buffer.from(part.inlineData.data, "base64");
-              const url = await uploadToCloudinary(buffer);
-              imageUrls.push(url);
-            }
-          }
+        const response = await fetch(pollinationsUrl);
+        if (!response.ok) {
+          throw new Error(
+            `Pollinations API failed with status: ${response.status}`
+          );
         }
-      }
+
+        const arrayBuffer = await response.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        return uploadToCloudinary(buffer);
+      });
+
+      const urls = await Promise.all(imagePromises);
+      imageUrls.push(...urls);
     } catch (err) {
-      console.warn(
-        "Image generation failed or not supported, using fallback.",
-        err.message
-      );
+      console.warn("Image generation failed, using fallback.", err.message);
 
       const caseComp = selectedComponents.find((c) => c.category === "case");
       if (caseComp && caseComp.image) {

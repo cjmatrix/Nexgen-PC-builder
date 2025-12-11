@@ -1,8 +1,12 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchPublicProductById } from "../../store/slices/productSlice";
-import Navbar from "../../components/Navbar";
+import {
+  fetchProductById,
+  fetchPublicProductById,
+} from "../../store/slices/productSlice";
+import { addToCart } from "../../store/slices/cartSlice";
+
 import { ShoppingCart, Settings, ArrowLeft } from "lucide-react";
 
 const ProductDetail = () => {
@@ -50,7 +54,7 @@ const ProductDetail = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
-      <Navbar />
+   
 
       <div className="pt-24 pb-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <button
@@ -119,11 +123,19 @@ const ProductDetail = () => {
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 mb-12">
-                <button className="flex-1 bg-gray-900 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-gray-800 transition-all shadow-lg shadow-gray-900/20 flex items-center justify-center gap-2">
+                <button
+                  onClick={() =>
+                    navigate(`/products/customization/${product._id}`)
+                  }
+                  className="flex-1 bg-gray-900 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-gray-800 transition-all shadow-lg shadow-gray-900/20 flex items-center justify-center gap-2"
+                >
                   <Settings className="h-5 w-5" />
                   Customize This
                 </button>
-                <button className="flex-1 bg-white text-gray-900 border-2 border-gray-900 px-8 py-4 rounded-xl font-bold text-lg hover:bg-gray-50 transition-all flex items-center justify-center gap-2">
+                <button
+                  onClick={() => dispatch(addToCart({ productId: id }))} // Added onClick to dispatch addToCart
+                  className="flex-1 bg-white text-gray-900 border-2 border-gray-900 px-8 py-4 rounded-xl font-bold text-lg hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
+                >
                   <ShoppingCart className="h-5 w-5" />
                   Add to Cart
                 </button>

@@ -30,6 +30,7 @@ app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/upload", uploadRoutes);
 app.use("/api/v1/products", productRoutes);
 app.use("/api/v1/ai", aiRoutes);
+app.use("/api/v1/cart", require("./routes/cartRoutes"));
 
 const connectDB = async () => {
   try {

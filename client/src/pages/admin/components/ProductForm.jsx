@@ -128,7 +128,7 @@ const AddProductForm = () => {
             name: data.name,
             description: data.description,
             category: data.category,
-            base_price: data.base_price,
+            base_price: data.base_price / 100, // Convert to Rupees
             images: data.images || [],
           });
           dispatch(setSelected(data.default_config));
@@ -222,10 +222,9 @@ const AddProductForm = () => {
       return;
     }
 
-    
     const productPayload = {
       ...data,
-      base_price: data.base_price ? Number(data.base_price) : totalPrice,
+      base_price: data.base_price ? Number(data.base_price) * 100 : totalPrice, // Convert to Paisa
       default_config: {
         cpu: selected.cpu._id,
         motherboard: selected.motherboard._id,
@@ -328,16 +327,21 @@ const AddProductForm = () => {
                       placeholder={`Calculated: ₹${(
                         totalPrice / 100
                       ).toLocaleString()}`}
-                      {...register("base_price" ,{
-                         validate:(value)=>{
-                          if(value)
-                           return value>=totalPrice || "Price should be greater or equal to total cost"
-                         }
-                      })} 
+                      {...register("base_price", {
+                        validate: (value) => {
+                          if (value)
+                            return (
+                              value >= totalPrice / 100 ||
+                              "Price should be greater or equal to total cost"
+                            );
+                        },
+                      })}
                     />
-                    {errors.base_price &&  <p className="text-red-500 text-xs mt-1">
-                      {errors.base_price.message}
-                    </p>}
+                    {errors.base_price && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors.base_price.message}
+                      </p>
+                    )}
                     <p className="text-xs text-gray-500 mt-1">
                       Leave empty to use sum of parts cost.
                     </p>
@@ -439,7 +443,6 @@ const AddProductForm = () => {
               </div>
             </div>
 
-          
             <div className="space-y-6">
               <h2 className="text-xl font-bold text-gray-800">Configuration</h2>
 
