@@ -27,6 +27,10 @@ import AIPCAssistant from "./pages/customer/AIPCAssistant";
 import Cart from "./pages/customer/Cart";
 import AdminRoutes from "./protectedroutes/AdminRoute";
 
+import UserDashboard from "./pages/customer/user profile/UserDashboard";
+
+import ProfileSetting from "./pages/customer/user profile/components/ProfileSetting";
+
 import CustomerPage from "./pages/customer/CustomerPage";
 
 import ProtectedRoute from "./protectedroutes/ProtectedRoute";
@@ -133,6 +137,15 @@ const router = createBrowserRouter([
         path: "/cart",
         element: <Cart />,
       },
+      {
+        path: "/user",
+        element:<UserDashboard></UserDashboard>,
+        
+        children:[{
+          path:'/user/profile',
+          element:<ProfileSetting></ProfileSetting>
+        }]
+      }
     ],
     }]
    

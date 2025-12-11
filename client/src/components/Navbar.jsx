@@ -94,9 +94,11 @@ const Navbar = () => {
 
             {user ? (
               <div className="flex items-center space-x-3">
-                <div className="flex items-center justify-center h-10 w-10 rounded-full bg-gray-100 hover:bg-gray-200 cursor-pointer transition-colors">
-                  <User className="h-5 w-5 text-gray-600" />
-                </div>
+                <Link to="/user/profile">
+                    <div className="flex items-center justify-center h-10 w-10 rounded-full bg-gray-100 hover:bg-gray-200 cursor-pointer transition-colors">
+                      <User className="h-5 w-5 text-gray-600" />
+                    </div>
+                 </Link>
                 <button
                   onClick={handleLogout}
                   className="p-2 text-gray-500 hover:text-red-600 transition-colors"

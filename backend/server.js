@@ -32,6 +32,8 @@ app.use("/api/v1/products", productRoutes);
 app.use("/api/v1/ai", aiRoutes);
 app.use("/api/v1/cart", require("./routes/cartRoutes"));
 
+// app.use("/api/v1/users/profile")
+
 const connectDB = async () => {
   try {
     const conn = await mongoose.connect(process.env.MONGO_URI);
