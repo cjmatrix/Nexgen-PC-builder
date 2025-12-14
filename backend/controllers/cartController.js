@@ -1,28 +1,28 @@
-const Cart = require("../models/Cart");
-const Product = require("../models/Product");
-
+import Cart from "../models/Cart.js";
+import Product from "../models/Product.js";
 
 const calculateSummary = (items) => {
   const subtotal = items.reduce(
-    (sum, item) => sum + (item.product?.base_price || 0) * Number(item.quantity),
+    (sum, item) =>
+      sum + (item.product?.base_price || 0) * Number(item.quantity),
     0
   );
-  console.log(subtotal,'priceeeeeeee')
+  console.log(subtotal, "priceeeeeeee");
 
   const shipping = 0;
   const discount = 0;
   const total = subtotal + shipping - discount;
 
   return {
-    subtotal:subtotal/100,
-    shipping:50,
+    subtotal: subtotal / 100,
+    shipping: 50,
     discount,
     tax: 0,
-    total:total/100,
+    total: total / 100,
   };
 };
 
-exports.getCart = async (req, res) => {
+export const getCart = async (req, res) => {
   try {
     let cart = await Cart.findOne({ user: req.user._id }).populate({
       path: "items.product",
@@ -33,7 +33,6 @@ exports.getCart = async (req, res) => {
       cart = await Cart.create({ user: req.user._id, items: [] });
     }
 
-   
     const validItems = cart.items.filter((item) => item.product !== null);
     if (validItems.length !== cart.items.length) {
       cart.items = validItems;
@@ -41,15 +40,15 @@ exports.getCart = async (req, res) => {
     }
 
     const summary = calculateSummary(cart.items);
-    
-    res.status(200).json({ success: true, cart,summary });
+
+    res.status(200).json({ success: true, cart, summary });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: "Server Error" });
   }
 };
 
-exports.addToCart = async (req, res) => {
+export const addToCart = async (req, res) => {
   try {
     const { productId, quantity = 1 } = req.body;
 
@@ -64,16 +63,13 @@ exports.addToCart = async (req, res) => {
     );
 
     if (itemIndex > -1) {
-     
       cart.items[itemIndex].quantity += quantity;
     } else {
-      
       cart.items.push({ product: productId, quantity });
     }
 
     await cart.save();
 
-   
     const populatedCart = await Cart.findById(cart._id).populate({
       path: "items.product",
       select: "name base_price images category description",
@@ -81,14 +77,14 @@ exports.addToCart = async (req, res) => {
 
     const summary = calculateSummary(populatedCart.items);
 
-    res.status(200).json({ success: true, cart: populatedCart ,summary});
+    res.status(200).json({ success: true, cart: populatedCart, summary });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: "Server Error" });
   }
 };
 
-exports.removeFromCart = async (req, res) => {
+export const removeFromCart = async (req, res) => {
   try {
     const { productId } = req.params;
 
@@ -112,14 +108,14 @@ exports.removeFromCart = async (req, res) => {
     });
 
     const summary = calculateSummary(populatedCart.items);
-    res.status(200).json({ success: true, cart: populatedCart,summary });
+    res.status(200).json({ success: true, cart: populatedCart, summary });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: "Server Error" });
   }
 };
 
-exports.updateQuantity = async (req, res) => {
+export const updateQuantity = async (req, res) => {
   try {
     const { productId, quantity } = req.body;
 
@@ -150,7 +146,7 @@ exports.updateQuantity = async (req, res) => {
 
       const summary = calculateSummary(populatedCart.items);
 
-      res.status(200).json({ success: true, cart: populatedCart,summary });
+      res.status(200).json({ success: true, cart: populatedCart, summary });
     } else {
       res
         .status(404)

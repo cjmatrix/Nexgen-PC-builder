@@ -1,4 +1,4 @@
-const productService = require("../services/productService");
+import * as productService from "../services/productService.js";
 
 const createProduct = async (req, res) => {
   try {
@@ -15,29 +15,38 @@ const getAdminProducts = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const { search, category, status } = req.query;
 
-    const result = await productService.getAdminProducts(page, limit, search, category, status);
+    const result = await productService.getAdminProducts(
+      page,
+      limit,
+      search,
+      category,
+      status
+    );
     res.status(200).json({ success: true, ...result });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-const getPublicProducts=async(req,res)=>{
+const getPublicProducts = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const { search, category, sort } = req.query;
 
-  try{
-    const page=parseInt(req.query.page)||1
-     const limit = parseInt(req.query.limit) || 10;
-    const { search, category,sort } = req.query;
+    const result = await productService.getPublicProducts({
+      page,
+      limit,
+      search,
+      category,
+      sort,
+    });
 
-    const result=await productService.getPublicProducts({page,limit,search,category,sort})
-
-    res.status(200).json({success:true,...result})
-  }
-  catch (error) {
+    res.status(200).json({ success: true, ...result });
+  } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
-
-}
+};
 
 const getProductById = async (req, res) => {
   try {
@@ -59,14 +68,16 @@ const updateProduct = async (req, res) => {
 
 const deleteProduct = async (req, res) => {
   try {
-   const result= await productService.deleteProduct(req.params.id);
-    res.status(200).json({ success: true, message: "Product deactivated" ,data:result});
+    const result = await productService.deleteProduct(req.params.id);
+    res
+      .status(200)
+      .json({ success: true, message: "Product deactivated", data: result });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-module.exports = {
+export {
   createProduct,
   getAdminProducts,
   getProductById,

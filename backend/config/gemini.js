@@ -1,6 +1,6 @@
 const apiKey = process.env.GEMINI_API_KEY;
 
-const { GoogleGenAI } = require("@google/genai");
+import { GoogleGenAI } from "@google/genai";
 
 const ai = new GoogleGenAI(apiKey);
 
@@ -12,4 +12,4 @@ async function generateResponse(prompt) {
   return response.text;
 }
 
-module.exports = { generateResponse, ai };
+export { generateResponse, ai };

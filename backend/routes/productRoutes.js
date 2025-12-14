@@ -1,13 +1,16 @@
-const express=require('express');
+import express from "express";
 
-const router=express.Router();
+const router = express.Router();
 
-const { getPublicProducts, getProductById } = require("../controllers/productController");
-const {protect}=require('../middleware/authMiddleware')
+import {
+  getPublicProducts,
+  getProductById,
+} from "../controllers/productController.js";
+import { protect } from "../middleware/authMiddleware.js";
 
-router.use(protect)
+router.use(protect);
 
 router.get("/", getPublicProducts);
-router.get("/:id", getProductById); 
+router.get("/:id", getProductById);
 
-module.exports = router;
+export default router;

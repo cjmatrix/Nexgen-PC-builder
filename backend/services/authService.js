@@ -1,7 +1,7 @@
-const User = require("../models/User");
-const jwt = require("jsonwebtoken");
-const sendEmail = require("../utils/sendEmail");
-const crypto = require("crypto");
+import User from "../models/User.js";
+import jwt from "jsonwebtoken";
+import sendEmail from "../utils/sendEmail.js";
+import crypto from "crypto";
 
 const generateTokens = async (userId) => {
   const accessToken = jwt.sign(
@@ -78,14 +78,11 @@ const registerUser = async (userData) => {
 };
 
 const verifyOTP = async (email, otp) => {
-  const user = await User.findOne({ email }).select("+otp +otpExpires");
-
+  const user = await User.findOne({
+    $or: [{ email: email }, { tempEmail: email }],
+  }).select("+otp +otpExpires +tempEmail");
   if (!user) {
     throw new Error("User not found");
-  }
-
-  if (user.isVerified) {
-    return { message: "User already verified" };
   }
 
   if (!user.otp || !user.otpExpires) {
@@ -100,6 +97,13 @@ const verifyOTP = async (email, otp) => {
     throw new Error("OTP expired");
   }
 
+  if (user.otp === otp) {
+    if (user.tempEmail) {
+      user.email = user.tempEmail;
+      user.tempEmail = undefined;
+    }
+  }
+
   user.isVerified = true;
   user.otp = undefined;
   user.otpExpires = undefined;
@@ -110,16 +114,16 @@ const verifyOTP = async (email, otp) => {
 };
 
 const resendOTP = async (email) => {
-  const user = await User.findOne({ email });
-
+  const user = await User.findOne({
+    $or: [{ email: email }, { tempEmail: email }],
+  });
   if (!user) {
     throw new Error("User not found");
   }
 
-  if (user.isVerified) {
-    throw new Error("User already verified");
-  }
+  console.log(email, "this wone");
 
+  console.log(user, "this");
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   const otpExpires = Date.now() + 10 * 60 * 1000;
 
@@ -128,7 +132,7 @@ const resendOTP = async (email) => {
   await user.save();
 
   await sendEmail({
-    email: user.email,
+    email: email,
     subject: "NexGen PC Builder - Resend Verification Code",
     message: `Your new verification code is: ${otp}. It expires in 10 minutes.`,
   });
@@ -276,7 +280,26 @@ const resetPassword = async (resetToken, password) => {
   return { message: "Password updated success" };
 };
 
-module.exports = {
+const changePassword = async (userId, currentPassword, newPassword) => {
+  const user = await User.findById(userId).select("+password");
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  const isMatch = await user.matchPassword(currentPassword);
+  if (!isMatch) {
+    throw new Error("Invalid current password");
+  }
+
+  user.password = newPassword;
+  user.passwordChangedAt= Date.now();
+  await user.save();
+
+  return { message: "Password changed successfully" };
+};
+
+export {
   registerUser,
   loginUser,
   logoutUser,
@@ -285,5 +308,6 @@ module.exports = {
   resendOTP,
   forgotPassword,
   resetPassword,
+  changePassword,
   generateTokens,
 };

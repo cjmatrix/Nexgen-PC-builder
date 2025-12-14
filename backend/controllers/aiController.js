@@ -1,8 +1,8 @@
-const { generateResponse, ai } = require("../config/gemini");
-const Component = require("../models/Component");
-const Product = require("../models/Product");
-const cloudinary = require("../config/cloudinary");
-const streamifier = require("streamifier");
+import { generateResponse, ai } from "../config/gemini.js";
+import Component from "../models/Component.js";
+import Product from "../models/Product.js";
+import cloudinary from "../config/cloudinary.js";
+import streamifier from "streamifier";
 
 const uploadToCloudinary = (buffer) => {
   return new Promise((resolve, reject) => {
@@ -190,4 +190,4 @@ const aiController = async (req, res) => {
   }
 };
 
-module.exports = { aiController };
+export { aiController };

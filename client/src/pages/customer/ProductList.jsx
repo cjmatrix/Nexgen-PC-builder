@@ -5,8 +5,6 @@ import Pagination from "../../components/Pagination";
 import { Search, Filter, ShoppingCart, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-
-
 const ProductList = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -19,14 +17,17 @@ const ProductList = () => {
   });
   const [page, setPage] = useState(1);
 
-  const [seatchInput, setseatchInput] = useState("");
+  const [searchInput, setsearchInput] = useState("");
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      setFilters((prev) => ({ ...prev, search: seatchInput, page: 1 }));
+      setFilters((prev) => {
+        if (prev.search === searchInput) return prev;
+        return { ...prev, search: searchInput, page: 1 };
+      });
     }, 500);
     return () => clearTimeout(timer);
-  }, [seatchInput]);
+  }, [searchInput]);
 
   useEffect(() => {
     dispatch(fetchPublicProducts({ ...filters, page }));
@@ -34,8 +35,6 @@ const ProductList = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
-
-
       <div className="bg-white border-b border-gray-200 pt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <h1 className="text-4xl font-extrabold text-gray-900 mb-2">
@@ -59,8 +58,8 @@ const ProductList = () => {
               type="text"
               placeholder="Search PCs..."
               className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-              value={seatchInput}
-              onChange={(e) => setseatchInput(e.target.value)}
+              value={searchInput}
+              onChange={(e) => setsearchInput(e.target.value)}
             />
           </div>
 

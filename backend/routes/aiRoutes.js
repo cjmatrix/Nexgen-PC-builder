@@ -1,12 +1,12 @@
-const express = require("express");
+import express from "express";
 
 const router = express.Router();
 
-const { aiController } = require("../controllers/aiController");
-const { protect } = require("../middleware/authMiddleware");
+import { aiController } from "../controllers/aiController.js";
+import { protect } from "../middleware/authMiddleware.js";
 
 router.use(protect);
 
 router.post("/generate-pc", aiController);
 
-module.exports = router;
+export default router;

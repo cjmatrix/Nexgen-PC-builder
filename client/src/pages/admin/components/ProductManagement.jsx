@@ -15,6 +15,7 @@ import {
   ToggleRight,
   RefreshCw,
 } from "lucide-react";
+import Swal from "sweetalert2";
 import Pagination from "../../../components/Pagination";
 
 const ProductManagement = () => {
@@ -39,14 +40,33 @@ const ProductManagement = () => {
         data: { is_featured_community_build: !currentStatus },
       })
     );
-
   };
 
   const handleDelete = (id, isActive) => {
-    const action = isActive ? "deactivate" : "restore";
-    if (window.confirm(`Are you sure you want to ${action} this product?`)) {
-      dispatch(deleteProduct(id));
-    }
+    Swal.fire({
+      title: "Are you sure?",
+      text: `You are about to ${
+        isActive ? "deactivate" : "restore"
+      } this product!`,
+      icon: "question",
+      iconColor: "#3B82F6",
+      showCancelButton: true,
+      confirmButtonText: `Yes, ${isActive ? "deactivate" : "restore"} it!`,
+      buttonsStyling: false,
+      customClass: {
+        popup: "rounded-2xl shadow-2xl font-sans border border-gray-100",
+        title: "text-xl font-bold text-gray-900",
+        htmlContainer: "text-gray-600",
+        confirmButton:
+          "bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 m-2",
+        cancelButton:
+          "bg-white hover:bg-gray-50 text-gray-700 font-bold py-3 px-8 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 focus:ring-2 focus:ring-gray-200 focus:ring-offset-2 m-2",
+      },
+    }).then((result) => {
+      if (result.isConfirmed) {
+        dispatch(deleteProduct(id)); 
+      }
+    });
   };
 
   return (

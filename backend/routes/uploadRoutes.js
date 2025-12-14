@@ -1,10 +1,10 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const upload = require("../middleware/uploadMiddleware");
+import upload from "../middleware/uploadMiddleware.js";
 
-const streamifier = require("streamifier");
+import streamifier from "streamifier";
 
-const cloudinary = require("../config/cloudinary");
+import cloudinary from "../config/cloudinary.js";
 
 router.post("/", upload.single("image"), (req, res) => {
   if (!req.file) {
@@ -31,4 +31,4 @@ router.post("/", upload.single("image"), (req, res) => {
   streamifier.createReadStream(req.file.buffer).pipe(uploadStream);
 });
 
-module.exports = router;
+export default router;

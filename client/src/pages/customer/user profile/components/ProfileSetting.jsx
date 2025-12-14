@@ -1,96 +1,326 @@
-import React from 'react';
-import { useForm } from 'react-hook-form';
+import React, { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-// Mock data for saved addresses, as seen in the image.
-const mockAddresses = [
-  {
-    id: 1,
-    name: 'Alex Johnson',
-    street: '123 Tech Lane, Apt 4B',
-    cityStateZip: 'Silicon Valley, CA 94043',
-    country: 'United States',
-  },
-  {
-    id: 2,
-    name: 'Alex Johnson',
-    street: '88 Work Drive',
-    cityStateZip: 'San Francisco, CA 94105',
-    country: 'United States',
-  },
-];
+import api from "../../../../api/axios";
+import AddAddressModal from "./AddAddressModal";
+import ChangePasswordModal from "./ChangePasswordModal";
 
-const ProfileSetting= () => {
-  // Initialize the useForm hook for managing the Personal Information form.
+const OTPModal = ({ isOpen, onClose, onVerify, email, onResend }) => {
+  const [otp, setOtp] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [timer, setTimer] = useState(30);
+
+  useEffect(() => {
+    if (!isOpen || timer <= 0) return;
+
+    const timeoutId = setTimeout(() => {
+      setTimer(timer - 1);
+    }, 1000);
+
+    return () => clearTimeout(timeoutId);
+  }, [isOpen, timer]);
+
+  const handleVerify = async () => {
+    setIsVerifying(true);
+    try {
+      await onVerify(otp);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const handleResend = async () => {
+    setTimer(30); // Reset timer
+    setIsVerifying(true);
+    try {
+      await onResend(otp);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-all">
+      <div
+        className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="text-xl font-bold mb-4 text-center">Verify Email</h2>
+        <p className="text-sm text-gray-500 mb-6 text-center">
+          Enter the verification code sent to{" "}
+          <span className="font-semibold">{email}</span>
+        </p>
+        <input
+          type="text"
+          className="w-full px-4 py-3 text-center text-2xl tracking-[0.5em] font-bold border border-gray-300 rounded-lg mb-6 focus:ring-2 focus:ring-blue-500 outline-none uppercase"
+          maxLength={6}
+          value={otp}
+          onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, ""))}
+        />
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            className="flex-1 py-2 rounded-lg border border-gray-200 text-gray-700 font-medium hover:bg-gray-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleVerify}
+            disabled={otp.length !== 6 || isVerifying}
+            className="flex-1 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isVerifying ? "Verifying..." : "Verify"}
+          </button>
+        </div>
+        <div className="text-center mt-4">
+          <p className="text-sm text-gray-500">
+            Didn't receive code?{" "}
+            {timer > 0 ? (
+              <span className="text-gray-400">Resend in {timer}s</span>
+            ) : (
+              <button
+                onClick={handleResend}
+                className="text-blue-600 font-semibold hover:underline"
+              >
+                Resend OTP
+              </button>
+            )}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ProfileSetting = () => {
+  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+  const [editingAddress, setEditingAddress] = useState("");
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [isOTPModalOpen, setIsOTPModalOpen] = useState(false);
+  const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] =
+    useState(false);
+  const [pendingEmail, setPendingEmail] = useState("");
+  const queryClient = useQueryClient();
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm({
     defaultValues: {
-      fullName: '', // Initial value can be set here if editing existing data
-      email: '',
+      fullName: "",
+      email: "",
     },
   });
 
-  // Function to handle the submission of the Personal Information form.
-  const onSubmitPersonalInfo = (data) => {
-    console.log('Personal Information Submitted:', data);
-    // In a real application, you would send this data to your backend API.
-    alert('Personal information changes saved!');
+  const { data: addressData, isLoading: isAddressLoading } = useQuery({
+    queryKey: ["userAddresses"],
+    queryFn: async () => {
+      const response = await api.get("/user/address");
+      return response.data.addresses;
+    },
+  });
+
+  const handleAddAddress = () => {
+    setIsAddressModalOpen(false);
   };
 
+  // useEffect(() => {
+  //   const fetchProfile = async () => {
+  //     try {
+  //      const response= await api.get('/user/profile');
+  //      const userData = response.data.profile
+  //      setProfile(userData);
+  //         reset({
+  //           fullName:userData.name,
+  //           email:userData.email
+  //         })
+
+  //     }
+  //      catch (error) {
+  //       console.error("Failed to fetch profile", error);
+  //     }
+  //   };
+
+  //   fetchProfile();
+  // }, [reset]);
+
+  const {
+    data: profile,
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ["userProfile"],
+    queryFn: async () => {
+      const response = await api.get("/user/profile");
+      reset({
+        fullName: response.data.profile.name,
+        email: response.data.profile.email,
+      });
+      return response.data.profile;
+    },
+  });
+  // Profile Update Mutation
+  const updateProfileMutation = useMutation({
+    mutationFn: async (data) => {
+      const response = await api.put("/user/profile", data);
+      return response.data;
+    },
+    onSuccess: (data) => {
+      if (data.emailChanged) {
+        setPendingEmail(data.pendingMail || data.user.email);
+        console.log(data.user.email);
+      } else {
+        queryClient.invalidateQueries(["userProfile"]);
+        alert("Profile updated successfully");
+      }
+    },
+    onError: (error) => {
+      console.error("Update failed:", error);
+      alert(error.response?.data?.message || "Failed to update profile");
+    },
+  });
+
+  const verifyOTPMutation = useMutation({
+    mutationFn: async (otp) => {
+      const response = await api.post("/auth/verify-otp", {
+        email: pendingEmail,
+        otp,
+      });
+      return response.data;
+    },
+    onSuccess: () => {
+      setIsOTPModalOpen(false);
+      queryClient.invalidateQueries(["userProfile"]);
+      alert("Email verified successfully");
+    },
+    onError: (error) => {
+      console.error("Verification failed:", error);
+      alert(error.response?.data?.message || "Invalid OTP");
+    },
+  });
+
+  const resendOTPMutation = useMutation({
+    mutationFn: async () => {
+      await api.post("/auth/resend-otp", { email: pendingEmail });
+    },
+    onSuccess: () => alert("OTP resent successfully"),
+    onError: (err) => alert(err.message),
+  });
+
+  const onSubmitPersonalInfo = (data) => {
+    // Map fullName to name for backend
+    const payload = {
+      ...data,
+      name: data.fullName,
+    };
+    setIsOTPModalOpen(true);
+    updateProfileMutation.mutate(payload);
+  };
+
+  const handleVerifyOTP = async (otp) => {
+    await verifyOTPMutation.mutateAsync(otp);
+  };
+
+  const handleResendOTP = async (otp) => {
+    await resendOTPMutation.mutateAsync(otp);
+  };
+
+  const deleteAddressMutation = useMutation({
+    mutationFn: async (id) => {
+      await api.delete(`/user/address/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["userAddresses"]);
+      alert("Address deleted successfully");
+    },
+    onError: (error) => {
+      console.error("Delete failed:", error);
+      alert(error.response?.data?.message || "Failed to delete address");
+    },
+  });
+
+  const handleDeleteAddress = (id) => {
+    if (window.confirm("Are you sure you want to delete this address?")) {
+      deleteAddressMutation.mutate(id);
+    }
+  };
   return (
     <div className="bg-gray-100 min-h-screen p-8 font-sans">
       <div className="max-w-5xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Account Settings</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-8">
+          Account Settings
+        </h1>
 
         <div className="space-y-8">
           {/* --- Personal Information Section --- */}
           <section className="bg-white p-8 rounded-xl shadow-sm">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">Personal Information</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">
+              Personal Information
+            </h2>
             <form onSubmit={handleSubmit(onSubmitPersonalInfo)}>
               <div className="space-y-6">
                 {/* Full Name Field */}
                 <div>
-                  <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label
+                    htmlFor="fullName"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
                     Full Name
                   </label>
                   <input
                     id="fullName"
                     type="text"
                     // Register the field with useForm and add validation rules.
-                    {...register('fullName', { required: 'Full Name is required' })}
+                    {...register("fullName", {
+                      required: "Full Name is required",
+                    })}
                     className={`w-full p-3 border ${
-                      errors.fullName ? 'border-red-500' : 'border-gray-300'
+                      errors.fullName ? "border-red-500" : "border-gray-300"
                     } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-shadow`}
                   />
                   {errors.fullName && (
-                    <p className="mt-2 text-sm text-red-600">{errors.fullName.message}</p>
+                    <p className="mt-2 text-sm text-red-600">
+                      {errors.fullName.message}
+                    </p>
                   )}
                 </div>
 
                 {/* Email Address Field */}
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label
+                    htmlFor="email"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
                     Email Address
                   </label>
                   <input
                     id="email"
                     type="email"
                     // Register with email pattern validation.
-                    {...register('email', {
-                      required: 'Email is required',
+                    {...register("email", {
+                      required: "Email is required",
                       pattern: {
                         value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                        message: 'Invalid email address',
+                        message: "Invalid email address",
                       },
                     })}
                     className={`w-full p-3 border ${
-                      errors.email ? 'border-red-500' : 'border-gray-300'
+                      errors.email ? "border-red-500" : "border-gray-300"
                     } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-shadow`}
                   />
                   {errors.email && (
-                    <p className="mt-2 text-sm text-red-600">{errors.email.message}</p>
+                    <p className="mt-2 text-sm text-red-600">
+                      {errors.email.message}
+                    </p>
                   )}
                 </div>
               </div>
@@ -110,13 +340,23 @@ const ProfileSetting= () => {
           {/* --- Login & Security Section --- */}
           <section className="bg-white p-8 rounded-xl shadow-sm flex justify-between items-center">
             <div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">Login & Security</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                Login & Security
+              </h2>
               <div>
                 <p className="text-base font-medium text-gray-900">Password</p>
-                <p className="text-sm text-gray-500">Last changed on Sep 1, 2025</p>
+                <p className="text-sm text-gray-500">
+                  Last change password at :{" "}
+                  {profile?.passwordChangedAt
+                    ? new Date(profile.passwordChangedAt).toLocaleDateString()
+                    : "Never changed"}
+                </p>
               </div>
             </div>
-            <button className="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors focus:outline-none underline-offset-2 hover:underline">
+            <button
+              onClick={() => setIsChangePasswordModalOpen(true)}
+              className="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors focus:outline-none underline-offset-2 hover:underline"
+            >
               Change Password
             </button>
           </section>
@@ -124,32 +364,96 @@ const ProfileSetting= () => {
           {/* --- Saved Addresses Section --- */}
           <section className="bg-white p-8 rounded-xl shadow-sm">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-semibold text-gray-900">Saved Addresses</h2>
-              <button className="px-4 py-2 bg-[#1e293b] text-white text-sm font-medium rounded-lg hover:bg-[#334155] transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1e293b]">
+              <h2 className="text-xl font-semibold text-gray-900">
+                Saved Addresses
+              </h2>
+              <button
+                onClick={() => setIsAddressModalOpen(true)}
+                className="px-4 py-2 bg-[#1e293b] text-white text-sm font-medium rounded-lg hover:bg-[#334155] transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1e293b]"
+              >
                 Add New Address
               </button>
             </div>
 
             {/* List of Saved Addresses */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {mockAddresses.map((address) => (
-                <div key={address.id} className="border border-gray-200 rounded-xl p-6 flex justify-between bg-gray-50/50">
-                  <div className="text-sm text-gray-700 space-y-1">
-                    <p className="font-bold text-gray-900 text-base">{address.name}</p>
-                    <p>{address.street}</p>
-                    <p>{address.cityStateZip}</p>
-                    <p>{address.country}</p>
+              {isAddressLoading ? (
+                <p>Loading addresses...</p>
+              ) : addressData && addressData.length > 0 ? (
+                addressData.map((address) => (
+                  <div
+                    key={address._id}
+                    className="border border-gray-200 rounded-xl p-6 flex justify-between bg-gray-50/50"
+                  >
+                    <div className="text-sm text-gray-700 space-y-1">
+                      <p className="font-bold text-gray-900 text-base">
+                        {address.fullName}{" "}
+                        <span className="text-xs font-normal text-gray-500">
+                          ({address.type})
+                        </span>
+                      </p>
+                      <p>{address.street}</p>
+                      <p>
+                        {address.city}, {address.state} {address.postalCode}
+                      </p>
+                      <p>{address.country}</p>
+                      {address.isDefault && (
+                        <span className="text-blue-600 text-xs font-semibold">
+                          Default
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex flex-col space-y-2 text-sm font-medium text-gray-400">
+                      <button
+                        className="hover:text-gray-700 transition-colors text-left focus:outline-none"
+                        onClick={() => {
+                          setEditingAddress(address);
+                          setIsEditMode(true);
+                          setIsAddressModalOpen(true);
+                        }}
+                      >
+                        edit
+                      </button>
+                      <button
+                        onClick={() => handleDeleteAddress(address._id)}
+                        className="hover:text-red-600 transition-colors text-left focus:outline-none"
+                      >
+                        delete
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex flex-col space-y-2 text-sm font-medium text-gray-400">
-                    <button className="hover:text-gray-700 transition-colors text-left focus:outline-none">edit</button>
-                    <button className="hover:text-red-600 transition-colors text-left focus:outline-none">delete</button>
-                  </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                <p className="text-gray-500">No addresses found.</p>
+              )}
             </div>
           </section>
         </div>
       </div>
+
+      <AddAddressModal
+        isOpen={isAddressModalOpen}
+        onClose={() => {
+          setIsEditMode(false);
+          setIsAddressModalOpen(false);
+        }}
+        onSubmit={handleAddAddress}
+        isEditMode={isEditMode}
+        addressToEdit={editingAddress}
+      />
+
+      <OTPModal
+        isOpen={isOTPModalOpen}
+        onClose={() => setIsOTPModalOpen(false)}
+        onVerify={handleVerifyOTP}
+        email={pendingEmail}
+        onResend={handleResendOTP}
+      />
+
+      <ChangePasswordModal
+        isOpen={isChangePasswordModalOpen}
+        onClose={() => setIsChangePasswordModalOpen(false)}
+      />
     </div>
   );
 };

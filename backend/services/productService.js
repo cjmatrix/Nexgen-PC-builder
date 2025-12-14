@@ -1,4 +1,4 @@
-const Product = require("../models/Product");
+import Product from "../models/Product.js";
 
 const createProduct = async (productData) => {
   if (!productData.slug) {
@@ -25,7 +25,7 @@ const getAdminProducts = async (page, limit, search, category, status) => {
   const total = await Product.countDocuments(query);
 
   const products = await Product.find(query)
-    .populate("default_config.cpu", "name") 
+    .populate("default_config.cpu", "name")
     .sort({ createdAt: -1 })
     .limit(limit)
     .skip((page - 1) * limit);
@@ -123,7 +123,7 @@ const deleteProduct = async (id) => {
   return product;
 };
 
-module.exports = {
+export {
   createProduct,
   getAdminProducts,
   getProductById,

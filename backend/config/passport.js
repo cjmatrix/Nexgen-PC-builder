@@ -1,6 +1,6 @@
-const passport = require("passport");
-const GoogleStrategy = require("passport-google-oauth20").Strategy;
-const User = require("../models/User");
+import passport from "passport";
+import { Strategy as GoogleStrategy } from "passport-google-oauth20";
+import User from "../models/User.js";
 
 passport.use(
   new GoogleStrategy(
@@ -11,11 +11,9 @@ passport.use(
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-     
         let user = await User.findOne({ googleId: profile.id });
         if (user) return done(null, user);
 
-       
         user = await User.findOne({ email: profile.emails[0].value });
         if (user) {
           user.googleId = profile.id;
@@ -23,13 +21,11 @@ passport.use(
           return done(null, user);
         }
 
-    
         user = await User.create({
           googleId: profile.id,
           name: profile.displayName,
           email: profile.emails[0].value,
           isVerified: true,
-         
         });
         done(null, user);
       } catch (err) {
@@ -39,4 +35,4 @@ passport.use(
   )
 );
 
-module.exports = passport;
+export default passport;

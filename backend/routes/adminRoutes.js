@@ -1,29 +1,29 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const {
+import {
   getUsers,
   blockUser,
   updateUser,
-} = require("../controllers/adminController");
+} from "../controllers/adminController.js";
 
-const {
+import {
   createComponent,
   getAdminComponents,
   deleteComponent,
   getComponentById,
   updateComponent,
   getComponents,
-} = require("../controllers/componentController");
+} from "../controllers/componentController.js";
 
-const {
+import {
   createProduct,
   getAdminProducts,
   getProductById,
   updateProduct,
   deleteProduct,
-} = require("../controllers/productController");
+} from "../controllers/productController.js";
 
-const { protect, admin } = require("../middleware/authMiddleware");
+import { protect, admin } from "../middleware/authMiddleware.js";
 
 router.get("/componentspublic", getComponents);
 
@@ -46,4 +46,4 @@ router.get("/products/:id", getProductById);
 router.put("/products/:id", updateProduct);
 router.patch("/products/:id", deleteProduct);
 
-module.exports = router;
+export default router;

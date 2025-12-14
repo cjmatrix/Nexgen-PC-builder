@@ -1,5 +1,6 @@
-const jwt = require("jsonwebtoken");
-const User = require("../models/User");
+import jwt from "jsonwebtoken";
+import User from "../models/User.js";
+
 const generateTokens = async (res, userId) => {
   const accessToken = jwt.sign(
     { id: userId },
@@ -30,7 +31,7 @@ const generateTokens = async (res, userId) => {
 
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
-    secure:false,
+    secure: false,
     sameSite: "strict",
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
@@ -43,4 +44,4 @@ const clearTokens = (res) => {
   res.cookie("refreshToken", "", { httpOnly: true, expires: new Date(0) });
 };
 
-module.exports = { generateTokens, clearTokens };
+export { generateTokens, clearTokens };

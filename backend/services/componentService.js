@@ -1,4 +1,4 @@
-const Component = require("../models/Component");
+import Component from "../models/Component.js";
 
 const createComponent = async (componentData) => {
   const component = await Component.create(componentData);
@@ -136,7 +136,7 @@ const getPublicComponents = async (filters, page, limit, sort) => {
   };
 };
 
-module.exports = {
+export {
   createComponent,
   getAdminComponents,
   deleteComponent,

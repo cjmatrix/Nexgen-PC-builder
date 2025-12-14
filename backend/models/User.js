@@ -1,5 +1,5 @@
-const mongoose = require("mongoose");
-const bcrypt = require("bcryptjs");
+import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
 
 const userSchema = new mongoose.Schema(
   {
@@ -27,6 +27,7 @@ const userSchema = new mongoose.Schema(
       minlength: 6,
       select: false,
     },
+    passwordChangedAt: Date,
     googleId: {
       type: String,
       unique: true,
@@ -51,6 +52,7 @@ const userSchema = new mongoose.Schema(
       type: Date,
       select: false,
     },
+    tempEmail: { type: String, select: false },
     resetPasswordToken: String,
     resetPasswordExpire: Date,
 
@@ -102,4 +104,4 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
-module.exports = mongoose.model("User", userSchema);
+export default mongoose.model("User", userSchema);

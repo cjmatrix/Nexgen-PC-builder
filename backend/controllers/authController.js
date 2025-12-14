@@ -1,25 +1,24 @@
-
-const authService = require("../services/authService");
+import * as authService from "../services/authService.js";
 
 const setCookies = (res, accessToken, refreshToken) => {
   res.cookie("accessToken", accessToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
-    maxAge: 15 * 60 * 1000, 
+    maxAge: 15 * 60 * 1000,
   });
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
-    maxAge: 7 * 24 * 60 * 60 * 1000, 
+    maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 };
 
 const register = async (req, res) => {
   try {
     const result = await authService.registerUser(req.body);
-    res.status(200).json(result); 
+    res.status(200).json(result);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
@@ -142,7 +141,21 @@ const resetPassword = async (req, res) => {
   }
 };
 
-module.exports = {
+const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const result = await authService.changePassword(
+      req.user._id,
+      currentPassword,
+      newPassword
+    );
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+export {
   register,
   login,
   logout,
@@ -152,4 +165,5 @@ module.exports = {
   getProfile,
   forgotPassword,
   resetPassword,
+  changePassword,
 };

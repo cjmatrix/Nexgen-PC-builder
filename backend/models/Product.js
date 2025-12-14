@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const productSchema = new mongoose.Schema(
   {
@@ -95,13 +95,12 @@ const productSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
-    
-    is_ai_generated: {
-    type: Boolean,
-    default: false,
-    index: true
-    },
 
+    is_ai_generated: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
   },
   {
     timestamps: true,
@@ -115,4 +114,4 @@ productSchema.pre("save", function () {
   this.slug = this.name.toLowerCase().split(" ").join("-");
 });
 
-module.exports = mongoose.model("Product", productSchema);
+export default mongoose.model("Product", productSchema);
