@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { Minus, Plus, Trash2, ArrowRight } from "lucide-react";
@@ -7,7 +7,6 @@ import {
   removeFromCart,
   updateQuantity,
 } from "../../store/slices/cartSlice";
-
 
 const Cart = () => {
   const dispatch = useDispatch();
@@ -18,9 +17,18 @@ const Cart = () => {
     dispatch(fetchCart());
   }, [dispatch]);
 
-  const handleUpdateQuantity = (productId, newQuantity) => {
+  const [errors, setErrors] = useState({});
+
+  const handleUpdateQuantity = async (productId, newQuantity) => {
     if (newQuantity < 1) return;
-    dispatch(updateQuantity({ productId, quantity: newQuantity }));
+    try {
+      await dispatch(
+        updateQuantity({ productId, quantity: newQuantity })
+      ).unwrap();
+      setErrors((prev) => ({ ...prev, [productId]: null }));
+    } catch (error) {
+      setErrors((prev) => ({ ...prev, [productId]: error }));
+    }
   };
 
   const handleRemove = (productId) => {
@@ -29,17 +37,14 @@ const Cart = () => {
 
   if (loading && items.length === 0) {
     return (
-      
       <div className="min-h-screen pt-24 pb-12 flex justify-center items-center">
         <p className="text-gray-500">Loading cart...</p>
       </div>
     );
   }
- console.log('heyy')
+  console.log("heyy");
   return (
     <>
-    
-     
       <div className="min-h-screen bg-gray-50 pt-24 pb-12 px-4 sm:px-6 lg:px-8 font-sans">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-3xl font-extrabold text-gray-900 mb-8">
@@ -110,33 +115,40 @@ const Cart = () => {
                           {item.product?.base_price / 100?.toLocaleString()}
                         </div>
 
-                        <div className="flex items-center gap-3 bg-gray-50 rounded-lg p-1">
-                          <button
-                            onClick={() =>
-                              handleUpdateQuantity(
-                                item.product?._id,
-                                item.quantity - 1
-                              )
-                            }
-                            className="p-2 text-gray-600 hover:text-gray-900 hover:bg-white rounded-md transition-all shadow-sm disabled:opacity-50"
-                            disabled={item.quantity <= 1}
-                          >
-                            <Minus className="h-4 w-4" />
-                          </button>
-                          <span className="text-sm font-semibold w-8 text-center">
-                            {item.quantity}
-                          </span>
-                          <button
-                            onClick={() =>
-                              handleUpdateQuantity(
-                                item.product?._id,
-                                item.quantity + 1
-                              )
-                            }
-                            className="p-2 text-gray-600 hover:text-gray-900 hover:bg-white rounded-md transition-all shadow-sm"
-                          >
-                            <Plus className="h-4 w-4" />
-                          </button>
+                        <div className="flex flex-col items-end gap-1">
+                          <div className="flex items-center gap-3 bg-gray-50 rounded-lg p-1">
+                            <button
+                              onClick={() =>
+                                handleUpdateQuantity(
+                                  item.product?._id,
+                                  item.quantity - 1
+                                )
+                              }
+                              className="p-2 text-gray-600 hover:text-gray-900 hover:bg-white rounded-md transition-all shadow-sm disabled:opacity-50"
+                              disabled={item.quantity <= 1}
+                            >
+                              <Minus className="h-4 w-4" />
+                            </button>
+                            <span className="text-sm font-semibold w-8 text-center">
+                              {item.quantity}
+                            </span>
+                            <button
+                              onClick={() =>
+                                handleUpdateQuantity(
+                                  item.product?._id,
+                                  item.quantity + 1
+                                )
+                              }
+                              className="p-2 text-gray-600 hover:text-gray-900 hover:bg-white rounded-md transition-all shadow-sm"
+                            >
+                              <Plus className="h-4 w-4" />
+                            </button>
+                          </div>
+                          {errors[item.product?._id] && (
+                            <p className="text-red-500 text-xs font-medium">
+                              {errors[item.product?._id]}
+                            </p>
+                          )}
                         </div>
                       </div>
                     </div>

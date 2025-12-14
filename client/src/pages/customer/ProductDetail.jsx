@@ -9,6 +9,8 @@ import { addToCart } from "../../store/slices/cartSlice";
 
 import { ShoppingCart, Settings, ArrowLeft } from "lucide-react";
 
+import Swal from "sweetalert2";
+
 const ProductDetail = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
@@ -34,6 +36,12 @@ const ProductDetail = () => {
     );
   }
 
+  const isOutOfStock =
+    product?.default_config &&
+    Object.values(product.default_config).some(
+      (component) => component?.stock < 1
+    );
+
   console.log(product);
   const images =
     product.images && product.images.length > 0
@@ -50,6 +58,24 @@ const ProductDetail = () => {
     const x = ((e.clientX - left) / width) * 100;
     const y = ((e.clientY - top) / height) * 100;
     setZoomPosition({ x, y });
+  };
+
+  const handleAddToCart = async () => {
+    try {
+      await dispatch(addToCart({ productId: id })).unwrap();
+      Swal.fire({
+        icon: "success",
+        title: "Added to Cart",
+        showConfirmButton: false,
+        timer: 1500,
+      });
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Failed to Add",
+        text: error, // This will be the message from backend: "Not enough stock..."
+      });
+    }
   };
 
   return (
@@ -131,11 +157,16 @@ const ProductDetail = () => {
                   Customize This
                 </button>
                 <button
-                  onClick={() => dispatch(addToCart({ productId: id }))} // Added onClick to dispatch addToCart
-                  className="flex-1 bg-white text-gray-900 border-2 border-gray-900 px-8 py-4 rounded-xl font-bold text-lg hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
+                  onClick={() => handleAddToCart(id)}
+                  disabled={isOutOfStock}
+                  className={`flex-1 px-8 py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-all ${
+                    isOutOfStock
+                      ? "bg-gray-300 text-gray-500 cursor-not-allowed border-2 border-gray-300"
+                      : "bg-white text-gray-900 border-2 border-gray-900 hover:bg-gray-50"
+                  }`}
                 >
                   <ShoppingCart className="h-5 w-5" />
-                  Add to Cart
+                  {isOutOfStock ? "Out of Stock" : "Add to Cart"}
                 </button>
               </div>
             </div>

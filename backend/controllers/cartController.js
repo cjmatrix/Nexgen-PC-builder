@@ -1,5 +1,6 @@
 import Cart from "../models/Cart.js";
 import Product from "../models/Product.js";
+import Component from "../models/Component.js";
 
 const calculateSummary = (items) => {
   const subtotal = items.reduce(
@@ -51,7 +52,82 @@ export const getCart = async (req, res) => {
 export const addToCart = async (req, res) => {
   try {
     const { productId, quantity = 1 } = req.body;
+   
+    const product = await Product.findById(productId).populate({
+      path: "default_config.cpu default_config.gpu default_config.motherboard default_config.ram default_config.storage default_config.case default_config.psu default_config.cooler",
+    });
 
+    if (!product) return res.status(404).json({ message: "Product not found" });
+
+   
+    const cartForValidation = await Cart.findOne({
+      user: req.user._id,
+    }).populate({
+      path: "items.product",
+      populate: {
+        path: "default_config.cpu default_config.gpu default_config.motherboard default_config.ram default_config.storage default_config.case default_config.psu default_config.cooler",
+      },
+    });
+
+   
+    const requiredStock = {};
+    const addToMap = (compId, qty) => {
+      if (!compId) return;
+      const id = compId.toString();
+      requiredStock[id] = (requiredStock[id] || 0) + Number(qty);
+    };
+
+   
+    if (cartForValidation) {
+      cartForValidation.items.forEach((item) => {
+        const p = item.product;
+        if (p && p.default_config) {
+          const allComps = [
+            p.default_config.cpu,
+            p.default_config.gpu,
+            p.default_config.motherboard,
+            p.default_config.ram,
+            p.default_config.storage,
+            p.default_config.case,
+            p.default_config.psu,
+            p.default_config.cooler,
+          ];
+          allComps.forEach((c) => {
+            if (c && c._id) addToMap(c._id, item.quantity);
+          });
+        }
+      });
+    }
+
+ 
+    if (product.default_config) {
+      const newComps = [
+        product.default_config.cpu,
+        product.default_config.gpu,
+        product.default_config.motherboard,
+        product.default_config.ram,
+        product.default_config.storage,
+        product.default_config.case,
+        product.default_config.psu,
+        product.default_config.cooler,
+      ];
+      newComps.forEach((c) => {
+        if (c && c._id) addToMap(c._id, quantity);
+      });
+    }
+
+  
+    for (const [compId, totalNeeded] of Object.entries(requiredStock)) {
+      const component = await Component.findById(compId);
+      if (component && component.stock < totalNeeded) {
+        return res.status(400).json({
+          success: false,
+          message: `Stock Limit Exceeded: You need ${totalNeeded} of ${component.name} (Cart + New), but we only have ${component.stock} left.`,
+        });
+      }
+    }
+
+   
     let cart = await Cart.findOne({ user: req.user._id });
 
     if (!cart) {
@@ -123,13 +199,74 @@ export const updateQuantity = async (req, res) => {
       return res.status(400).json({ message: "Quantity must be at least 1" });
     }
 
-    let cart = await Cart.findOne({ user: req.user._id });
+ 
+    const cartForValidation = await Cart.findOne({
+      user: req.user._id,
+    }).populate({
+      path: "items.product",
+      populate: {
+        path: "default_config.cpu default_config.gpu default_config.motherboard default_config.ram default_config.storage default_config.case default_config.psu default_config.cooler",
+      },
+    });
 
-    if (!cart) {
+    if (!cartForValidation) {
       return res
         .status(404)
         .json({ success: false, message: "Cart not found" });
     }
+
+  
+    const requiredStock = {};
+    const addToMap = (compId, qty) => {
+      if (!compId) return;
+      const id = compId.toString();
+      requiredStock[id] = (requiredStock[id] || 0) + Number(qty);
+    };
+
+    let itemFound = false;
+    cartForValidation.items.forEach((item) => {
+      const p = item.product;
+      const qtyToCount =
+        item.product._id.toString() === productId ? quantity : item.quantity;
+
+      if (item.product._id.toString() === productId) itemFound = true;
+
+      if (p && p.default_config) {
+        const allComps = [
+          p.default_config.cpu,
+          p.default_config.gpu,
+          p.default_config.motherboard,
+          p.default_config.ram,
+          p.default_config.storage,
+          p.default_config.case,
+          p.default_config.psu,
+          p.default_config.cooler,
+        ];
+        allComps.forEach((c) => {
+          if (c && c._id) addToMap(c._id, qtyToCount);
+        });
+      }
+    });
+
+    if (!itemFound) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Item not found in cart" });
+    }
+
+    
+    for (const [compId, totalNeeded] of Object.entries(requiredStock)) {
+      const component = await Component.findById(compId);
+      if (component && component.stock < totalNeeded) {
+        return res.status(400).json({
+          success: false,
+          message: `Stock Limit Exceeded: You need ${totalNeeded} of ${component.name} (Cart + Update), but we only have ${component.stock} left.`,
+        });
+      }
+    }
+
+    
+    let cart = await Cart.findOne({ user: req.user._id });
 
     const itemIndex = cart.items.findIndex(
       (item) => item.product.toString() === productId
