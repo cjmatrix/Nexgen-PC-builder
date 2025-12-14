@@ -14,7 +14,7 @@ const navItems = [
   { name: "Dashboard Home", icon: LayoutDashboard, link: "" },
   { name: "Component Management", icon: Layers, link: "/admin/components" },
   { name: "Product Management", icon: Package, link: "/admin/products" },
-  { name: "Order Management", icon: ShoppingCart, link: "" },
+  { name: "Order Management", icon: ShoppingCart, link: "/admin/orders" },
   { name: "User Management", icon: Users, link: "/admin" },
   { name: "Sales & Reporting", icon: BarChart2, link: "" },
   { name: "Coupon Management", icon: Ticket, link: "" },

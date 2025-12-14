@@ -8,17 +8,17 @@ import passport from "passport";
 import authRoutes from "./routes/authRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
+import orderRoutes from "./routes/orderRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import aiRoutes from "./routes/aiRoutes.js";
 import cartRoutes from "./routes/cartRoutes.js";
 
-import userRoutes from './routes/userRoutes.js'
+import userRoutes from "./routes/userRoutes.js";
 
 import morgan from "morgan";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
- 
 
 app.use(express.json());
 app.use(cookieParser());
@@ -35,10 +35,11 @@ app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/upload", uploadRoutes);
 app.use("/api/v1/products", productRoutes);
-app.use("/api/v1/ai", aiRoutes);
 app.use("/api/v1/cart", cartRoutes);
+app.use("/api/v1/orders", orderRoutes); // Register Order Routes
+app.use("/api/v1/ai", aiRoutes);
 
-app.use("/api/v1/user",userRoutes)
+app.use("/api/v1/user", userRoutes);
 
 const connectDB = async () => {
   try {

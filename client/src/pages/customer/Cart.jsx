@@ -218,7 +218,10 @@ const Cart = () => {
                       </span>
                     </div>
 
-                    <button className="w-full bg-gray-900 text-white py-3.5 rounded-lg font-bold hover:bg-gray-800 transition-all shadow-lg shadow-gray-900/10 flex items-center justify-center gap-2">
+                    <button
+                      onClick={() => navigate("/checkout")}
+                      className="w-full bg-gray-900 text-white py-3.5 rounded-lg font-bold hover:bg-gray-800 transition-all shadow-lg shadow-gray-900/10 flex items-center justify-center gap-2"
+                    >
                       Proceed to Checkout <ArrowRight className="h-5 w-5" />
                     </button>
                   </div>

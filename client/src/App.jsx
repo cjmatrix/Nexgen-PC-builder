@@ -20,11 +20,13 @@ import CreateComponent from "./pages/admin/components/componentForm";
 import ComponentManagement from "./pages/admin/components/ComponentManagement";
 import PCBuilder from "./pages/customer/PCBuilder";
 import ProductManagement from "./pages/admin/components/ProductManagement";
+import OrderManagement from "./pages/admin/components/OrderManagement";
 import AddProductForm from "./pages/admin/components/ProductForm";
 import ProductList from "./pages/customer/ProductList";
 import ProductDetail from "./pages/customer/ProductDetail";
 import AIPCAssistant from "./pages/customer/AIPCAssistant";
 import Cart from "./pages/customer/Cart";
+import Checkout from "./pages/customer/Checkout";
 import AdminRoutes from "./protectedroutes/AdminRoute";
 
 import UserDashboard from "./pages/customer/user profile/UserDashboard";
@@ -88,6 +90,10 @@ const router = createBrowserRouter([
             element: <ProductManagement />,
           },
           {
+            path: "/admin/orders",
+            element: <OrderManagement />,
+          },
+          {
             path: "/admin/products/bui",
             element: <PCBuilder />,
           },
@@ -105,50 +111,57 @@ const router = createBrowserRouter([
   },
   {
     element: <ProtectedRoute />,
-    children:[{
-      path:'/',
-      element:<CustomerPage></CustomerPage>,
-       children: [
+    children: [
       {
-        path: "/dashboard",
-        element: <CustomerDashboard />,
+        path: "/",
+        element: <CustomerPage></CustomerPage>,
+        children: [
+          {
+            path: "/dashboard",
+            element: <CustomerDashboard />,
+          },
+          {
+            path: "/products",
+            element: <ProductList />,
+          },
+          {
+            path: "/products/:id",
+            element: <ProductDetail />,
+          },
+          {
+            path: "/ai-assistant",
+            element: <AIPCAssistant />,
+          },
+          {
+            path: "/builder",
+            element: <PCBuilder />,
+          },
+          {
+            path: "/products/customization/:id",
+            element: <PCBuilder />,
+          },
+          {
+            path: "/cart",
+            element: <Cart />,
+          },
+          {
+            path: "/checkout",
+            element: <Checkout />,
+          },
+          {
+            path: "/user",
+            element: <UserDashboard></UserDashboard>,
+
+            children: [
+              {
+                path: "/user/profile",
+                element: <ProfileSetting></ProfileSetting>,
+              },
+            ],
+          },
+        ],
       },
-      {
-        path: "/products",
-        element: <ProductList />,
-      },
-      {
-        path: "/products/:id",
-        element: <ProductDetail />,
-      },
-      {
-        path: "/ai-assistant",
-        element: <AIPCAssistant />,
-      },
-      {
-        path: "/builder",
-        element: <PCBuilder />,
-      },
-      {
-        path: "/products/customization/:id",
-        element: <PCBuilder />,
-      },
-      {
-        path: "/cart",
-        element: <Cart />,
-      },
-      {
-        path: "/user",
-        element:<UserDashboard></UserDashboard>,
-        
-        children:[{
-          path:'/user/profile',
-          element:<ProfileSetting></ProfileSetting>
-        }]
-      }
     ],
-    }]
-   
   },
 ]);
 
