@@ -32,6 +32,7 @@ import AdminRoutes from "./protectedroutes/AdminRoute";
 import UserDashboard from "./pages/customer/user profile/UserDashboard";
 
 import ProfileSetting from "./pages/customer/user profile/components/ProfileSetting";
+import OrderHistory from "./pages/customer/user profile/components/OrderHistory";
 
 import CustomerPage from "./pages/customer/CustomerPage";
 
@@ -156,6 +157,10 @@ const router = createBrowserRouter([
               {
                 path: "/user/profile",
                 element: <ProfileSetting></ProfileSetting>,
+              },
+              {
+                path: "/user/orders",
+                element: <OrderHistory />,
               },
             ],
           },

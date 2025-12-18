@@ -87,10 +87,13 @@ const Navbar = () => {
 
           {/* Right: Actions */}
           <div className="hidden md:flex items-center space-x-4">
+            <Link to='/ai-assistant'>
+            
             <button className="flex items-center space-x-2 bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors">
               <Sparkles className="h-4 w-4" />
               <span>AI Assistant</span>
             </button>
+            </Link>
 
             {user ? (
               <div className="flex items-center space-x-3">

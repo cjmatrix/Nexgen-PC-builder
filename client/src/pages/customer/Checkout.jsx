@@ -29,14 +29,14 @@ const Checkout = () => {
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const isSubmittingRef = useRef(false); // Ref to prevent double-click race conditions
+  const isSubmittingRef = useRef(false); 
 
-  // Fetch Cart on Mount
+ 
   useEffect(() => {
     dispatch(fetchCart());
   }, [dispatch]);
 
-  // Fetch Addresses
+ 
   const { data: addresses, isLoading: isAddressLoading } = useQuery({
     queryKey: ["userAddresses"],
     queryFn: async () => {
@@ -45,15 +45,16 @@ const Checkout = () => {
     },
   });
 
-  // Create Order Mutation
+
+
   const createOrderMutation = useMutation({
     mutationFn: async (orderData) => {
       const response = await api.post("/orders", orderData);
       return response.data;
     },
     onSuccess: () => {
-      setStep(3); // Go to Success Step
-      dispatch(fetchCart()); // Refresh cart (should be empty)
+      setStep(3); 
+      dispatch(fetchCart());
     },
     onError: (error) => {
       alert(error.response?.data?.message || "Failed to place order");
@@ -63,17 +64,17 @@ const Checkout = () => {
   });
 
   const handlePlaceOrder = () => {
-    if (isSubmittingRef.current) return; // Immediate lock check
+    if (isSubmittingRef.current) return; 
     if (!selectedAddress) return alert("Please select a shipping address");
 
     isSubmittingRef.current = true;
     setIsProcessing(true);
 
     const orderData = {
-      // items are now built by backend from cart source-of-truth
+      
       shippingAddress: {
         fullName: selectedAddress.fullName,
-        address: selectedAddress.street, // Map 'street' to 'address' as per Schema
+        address: selectedAddress.street, 
         city: selectedAddress.city,
         postalCode: selectedAddress.postalCode,
         country: selectedAddress.country,
@@ -88,7 +89,7 @@ const Checkout = () => {
     createOrderMutation.mutate(orderData);
   };
 
-  // Auto-select default address
+
   useEffect(() => {
     if (addresses && addresses.length > 0 && !selectedAddress) {
       const defaultAddr = addresses.find((a) => a.isDefault);
@@ -104,7 +105,7 @@ const Checkout = () => {
     );
   }
 
-  // Step 1: Address Selection
+ 
   const renderStep1 = () => (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -120,7 +121,10 @@ const Checkout = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {addresses?.map((addr) => (
+        {addresses?.map((addr) => {
+
+          return(
+
           <div
             key={addr._id}
             onClick={() => setSelectedAddress(addr)}
@@ -145,7 +149,7 @@ const Checkout = () => {
               <p className="mt-2 text-gray-500">{addr.phone}</p>
             </div>
           </div>
-        ))}
+        )})}
 
         {(!addresses || addresses.length === 0) && (
           <div className="col-span-full py-8 text-center bg-gray-50 rounded-xl border border-dashed border-gray-300">
@@ -251,7 +255,7 @@ const Checkout = () => {
             <div className="flex justify-between text-sm text-gray-600">
               <span>Tax (Included)</span>
               <span>₹0</span>
-              {/* Note: User plan said Tax is optional/visual. Keeping logic simple for now */}
+            
             </div>
             <div className="pt-3 border-t border-gray-100 flex justify-between items-center">
               <span className="font-bold text-lg text-gray-900">Total</span>
@@ -292,7 +296,7 @@ const Checkout = () => {
     </div>
   );
 
-  // Step 3: Success
+  // Step 3
   const renderStep3 = () => (
     <div className="max-w-xl mx-auto text-center pt-12 pb-20">
       <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -412,7 +416,7 @@ const Checkout = () => {
           setIsAddressModalOpen(false);
           queryClient.invalidateQueries(["userAddresses"]);
         }}
-        isEditMode={false} // Default add mode
+        isEditMode={false}
       />
     </div>
   );

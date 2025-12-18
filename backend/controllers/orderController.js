@@ -17,7 +17,6 @@ export const createOrder = async (req, res) => {
       totalPrice,
     } = req.body;
 
-    // 1. Fetch User's Cart (PASS SESSION)
     const cart = await Cart.findOne({ user: req.user._id })
       .populate({
         path: "items.product",
@@ -33,9 +32,8 @@ export const createOrder = async (req, res) => {
       return res.status(400).json({ message: "Cart is empty" });
     }
 
-    // 2. Prepare Data (Same logic, no DB calls here)
     const orderItems = [];
-    const stockToDecrement = {}; // Map of compId -> totalQty
+    const stockToDecrement = {};
 
     const addToStockMap = (compId, qty) => {
       if (!compId) return;
@@ -92,36 +90,38 @@ export const createOrder = async (req, res) => {
       });
     }
 
-    // 3. ATOMIC CHECK & DECREMENT (Concurrency Fix)
-    // We combine Validation + Decrement into one atomic step per item.
-    // If ANY item fails, the Transaction forces a rollback of everything.
     for (const [compId, totalNeeded] of Object.entries(stockToDecrement)) {
       const updatedComponent = await Component.findOneAndUpdate(
         {
           _id: compId,
-          stock: { $gte: totalNeeded }, // <--- CRITICAL LOCK: Only update if stock >= needed
+          stock: { $gte: totalNeeded },
         },
         { $inc: { stock: -totalNeeded } },
-        { new: true, session } // Pass SESSION
+        { new: true, session }
       );
 
       if (!updatedComponent) {
-        // Failed! Stock was insufficient concurrently.
         throw new Error(
           `Stock insufficient for component ID: ${compId}. Found while processing.`
         );
       }
     }
 
-    // 4. Create Order (PASS SESSION)
-    // Recalculate strictly to avoid floating point errors
     const itemsPrice = orderItems.reduce(
       (acc, item) => acc + item.price * item.qty,
       0
     );
 
+    const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+    const randomStr = Math.random().toString(36).substring(2, 6).toUpperCase();
+    const orderId = `ORD-${dateStr}-${randomStr}`;
+
     const order = new Order({
       user: req.user._id,
+      userName: req.user.name,
+      userEmail: req.user.email,
+      orderId,
+
       orderItems: orderItems,
       shippingAddress: {
         fullName: shippingAddress.fullName,
@@ -132,25 +132,22 @@ export const createOrder = async (req, res) => {
         phone: shippingAddress.phone,
       },
       paymentMethod,
-      itemsPrice, // Use calculated value
+      itemsPrice,
       taxPrice,
       shippingPrice,
-      totalPrice: itemsPrice + shippingPrice + taxPrice, // Recalculate total
+      totalPrice: itemsPrice + shippingPrice + taxPrice,
     });
 
     const createdOrder = await order.save({ session });
 
-    // 5. Clear Cart (PASS SESSION)
     cart.items = [];
     await cart.save({ session });
 
-    // COMMIT
     await session.commitTransaction();
     session.endSession();
 
     res.status(201).json(createdOrder);
   } catch (error) {
-    // ROLLBACK on any error
     await session.abortTransaction();
     session.endSession();
     console.error(error);
@@ -163,7 +160,18 @@ export const createOrder = async (req, res) => {
 
 export const getMyOrders = async (req, res) => {
   try {
-    const orders = await Order.find({ user: req.user._id }).sort({
+    const { search } = req.query;
+    let query = { user: req.user._id };
+
+    if (search) {
+      query.$or = [
+        { orderId: { $regex: search, $options: "i" } },
+
+        // { "orderItems.name": { $regex: search, $options: "i" } }
+      ];
+    }
+
+    const orders = await Order.find(query).sort({
       createdAt: -1,
     });
     res.json(orders);
@@ -173,9 +181,6 @@ export const getMyOrders = async (req, res) => {
   }
 };
 
-// @desc    Get all orders (Admin)
-// @route   GET /api/v1/orders
-// @access  Private/Admin
 export const getAllOrders = async (req, res) => {
   try {
     const pageSize = Number(req.query.limit) || 10;
@@ -189,33 +194,37 @@ export const getAllOrders = async (req, res) => {
                 ? req.query.search
                 : null,
             },
-            // We will handle user search separately below
           ].filter(Boolean),
         }
       : {};
 
-    // Advanced Filter for Status and Date
     if (req.query.status && req.query.status !== "All") {
       keyword.status = req.query.status;
     }
 
-    // Date Filtering Logic (e.g., 'today', 'week', 'month') can be added here if needed
-    // For now assuming client sends date range or simple filter if implemented explicitly
+    // if (req.query.search && !keyword.$or?.length) {
 
-    // User Search Handling
-    if (req.query.search && !keyword.$or?.length) {
-      // If query is not an ID, search Users
-      const users = await User.find({
-        $or: [
-          { name: { $regex: req.query.search, $options: "i" } },
-          { email: { $regex: req.query.search, $options: "i" } },
-        ],
-      }).select("_id");
+    //   const users = await User.find({
+    //     $or: [
+    //       { name: { $regex: req.query.search, $options: "i" } },
+    //       { email: { $regex: req.query.search, $options: "i" } },
+    //     ],
+    //   }).select("_id");
 
-      const userIds = users.map((u) => u._id);
-      keyword.user = { $in: userIds };
+    //   const userIds = users.map((u) => u._id);
+    //   keyword.user = { $in: userIds };
+    // }
+
+    if (req.query.search) {
+      keyword.$or.push({
+        userName: { $regex: req.query.search, $options: "i" },
+      });
+      keyword.$or.push({
+        userEmail: { $regex: req.query.search, $options: "i" },
+      });
     }
 
+    console.log(keyword);
     const count = await Order.countDocuments({ ...keyword });
     const orders = await Order.find({ ...keyword })
       .populate("user", "id name email")
@@ -235,9 +244,6 @@ export const getAllOrders = async (req, res) => {
   }
 };
 
-// @desc    Update order status
-// @route   PUT /api/v1/orders/:id/status
-// @access  Private/Admin
 export const updateOrderStatus = async (req, res) => {
   try {
     const { status } = req.body;
@@ -247,15 +253,11 @@ export const updateOrderStatus = async (req, res) => {
       return res.status(404).json({ message: "Order not found" });
     }
 
-    // Cascade Logic Validation
     if (order.status === "Delivered" || order.status === "Cancelled") {
       return res
         .status(400)
         .json({ message: `Cannot change status of a ${order.status} order.` });
     }
-
-    // specific transitions check if needed, but for now allowing flexibility except for final states
-    // 'Pending' -> 'Processing' -> 'Shipped' -> 'Out for Delivery' -> 'Delivered'
 
     order.status = status;
 
@@ -265,7 +267,6 @@ export const updateOrderStatus = async (req, res) => {
     }
 
     if (status === "Paid") {
-      // Manual override if needed
       order.isPaid = true;
       order.paidAt = Date.now();
     }
@@ -277,3 +278,203 @@ export const updateOrderStatus = async (req, res) => {
     res.status(500).json({ message: "Server Error" });
   }
 };
+
+export const cancelOrder = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    const { itemId, reason } = req.body;
+    const order = await Order.findById(req.params.id).session(session);
+
+    if (!order) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    if (
+      order.status === "Shipped" ||
+      order.status === "Delivered" ||
+      order.status === "Cancelled"
+    ) {
+      await session.abortTransaction();
+      session.endSession();
+      return res
+        .status(400)
+        .json({ message: `Cannot cancel order with status: ${order.status}` });
+    }
+
+    const restoreStock = async (item) => {
+      if (item.status === "Cancelled") return;
+
+      const compList = [
+        item.components.cpu.componentId,
+        item.components.gpu.componentId,
+        item.components.motherboard.componentId,
+        item.components.ram.componentId,
+        item.components.storage.componentId,
+        item.components.case.componentId,
+        item.components.psu.componentId,
+        item.components.cooler.componentId,
+      ];
+
+      for (const compId of compList) {
+        if (compId) {
+          await Component.findByIdAndUpdate(compId, {
+            $inc: { stock: item.qty },
+          }).session(session);
+        }
+      }
+    };
+
+    if (itemId) {
+      const item = order.orderItems.find((i) => i._id.toString() === itemId);
+      if (!item) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(404).json({ message: "Item not found in order" });
+      }
+
+      if (item.status === "Cancelled") {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({ message: "Item already cancelled" });
+      }
+
+      await restoreStock(item);
+      item.status = "Cancelled";
+      item.cancellationReason = reason;
+
+      const allCancelled = order.orderItems.every(
+        (i) => i.status === "Cancelled"
+      );
+      if (allCancelled) {
+        order.status = "Cancelled";
+        order.cancellationReason = "All items cancelled";
+      }
+    } else {
+      for (const item of order.orderItems) {
+        if (item.status !== "Cancelled") {
+          await restoreStock(item);
+          item.status = "Cancelled";
+          item.cancellationReason = reason;
+        }
+      }
+      order.status = "Cancelled";
+      order.cancellationReason = reason;
+    }
+
+    const updatedOrder = await order.save({ session });
+    await session.commitTransaction();
+    session.endSession();
+
+    res.json(updatedOrder);
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    console.error(error);
+    res.status(500).json({ message: "Server Error: " + error.message });
+  }
+};
+
+export const returnOrder = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    const { itemId, reason } = req.body;
+    if (!reason) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ message: "Return reason is mandatory" });
+    }
+
+    const order = await Order.findById(req.params.id).session(session);
+
+    if (!order) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    if (order.status !== "Delivered") {
+      await session.abortTransaction();
+      session.endSession();
+      return res
+        .status(400)
+        .json({ message: "Can only return delivered orders" });
+    }
+
+    const restoreStock = async (item) => {
+      if (item.status === "Returned" || item.status === "Cancelled") return;
+
+      const compList = [
+        item.components.cpu.componentId,
+        item.components.gpu.componentId,
+        item.components.motherboard.componentId,
+        item.components.ram.componentId,
+        item.components.storage.componentId,
+        item.components.case.componentId,
+        item.components.psu.componentId,
+        item.components.cooler.componentId,
+      ];
+
+      for (const compId of compList) {
+        if (compId) {
+          await Component.findByIdAndUpdate(compId, {
+            $inc: { stock: item.qty },
+          }).session(session);
+        }
+      }
+    };
+
+    if (itemId) {
+      const item = order.orderItems.find((i) => i._id.toString() === itemId);
+      if (!item) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(404).json({ message: "Item not found" });
+      }
+
+      if (item.status === "Returned") {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({ message: "Item already returned" });
+      }
+
+      await restoreStock(item);
+      item.status = "Returned";
+      item.returnReason = reason;
+
+      const allReturned = order.orderItems.every(
+        (i) => i.status === "Returned" || i.status === "Cancelled"
+      );
+      if (allReturned) {
+        order.status = "Returned";
+        order.isReturned = true;
+      }
+    } else {
+      for (const item of order.orderItems) {
+        if (item.status !== "Returned" && item.status !== "Cancelled") {
+          await restoreStock(item);
+          item.status = "Returned";
+          item.returnReason = reason;
+        }
+      }
+      order.status = "Returned";
+      order.isReturned = true;
+      order.returnReason = reason;
+    }
+
+    const updatedOrder = await order.save({ session });
+    await session.commitTransaction();
+    session.endSession();
+
+    res.json(updatedOrder);
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    console.error(error);
+    res.status(500).json({ message: "Server Error: " + error.message });
+  }
+};
+

@@ -52,7 +52,7 @@ const Component = mongoose.model("Component", componentSchema);
 
 const CpuSchema = new mongoose.Schema({
   specs: {
-    socket: { type: String, required: true },
+    socket: { type: String, required: true, uppercase: true, trim: true },
     cores: { type: Number, required: true },
     threads: { type: Number, required: true },
     wattage: { type: Number, required: true },
@@ -67,24 +67,24 @@ const GpuSchema = new mongoose.Schema({
     wattage: { type: Number, required: true },
     recommendedPsuWattage: { type: Number, required: true },
     boostClock_mhz: { type: Number },
-    pcieStandard: { type: String },
+    pcieStandard: { type: String, uppercase: true, trim: true },
   },
 });
 
 const MotherboardSchema = new mongoose.Schema({
   specs: {
-    socket: { type: String, required: true }, // Must match CPU
-    formFactor: { type: String, enum: ["ATX", "mATX", "ITX"], required: true },
-    ramType: { type: String, enum: ["DDR4", "DDR5"], required: true },
+    socket: { type: String, required: true, uppercase: true, trim: true }, // Must match CPU
+    formFactor: { type: String, required: true,},
+    ramType: { type: String, required: true, uppercase: true, trim: true },
     ramSlots: { type: Number, required: true },
-    chipset: { type: String }, // e.g. "Z790"
+    chipset: { type: String, uppercase: true, trim: true }, // e.g. "Z790"
     wifi: { type: Boolean, default: false },
   },
 });
 
 const RamSchema = new mongoose.Schema({
   specs: {
-    ramType: { type: String, enum: ["DDR4", "DDR5"], required: true },
+    ramType: { type: String, required: true, trim: true },
     capacity_gb: { type: Number, required: true },
     speed_mhz: { type: Number, required: true },
     modules: { type: String, required: true },
@@ -96,8 +96,9 @@ const StorageSchema = new mongoose.Schema({
   specs: {
     storageType: {
       type: String,
-      enum: ["SSD-NVME", "SSD-SATA", "HDD"],
       required: true,
+      uppercase: true,
+      trim: true,
     },
     capacity_gb: { type: Number, required: true },
     readSpeed_mbps: { type: Number },
@@ -106,42 +107,39 @@ const StorageSchema = new mongoose.Schema({
 
 const CaseSchema = new mongoose.Schema({
   specs: {
-    formFactor: { type: String, enum: ["ATX", "mATX", "ITX"], required: true }, // Max size supported
+    formFactor: { type: String, required: true,},
     maxGpuLength_mm: { type: Number, required: true },
     maxCpuCoolerHeight_mm: { type: Number },
-    powerSupplySupport: { type: String, enum: ["ATX", "SFX"], default: "ATX" },
+    powerSupplySupport: {
+      type: String,
+      default: "ATX",
+      uppercase: true,
+      trim: true,
+    },
 
     image_air_cooler: { type: String },
     image_liquid_cooler: { type: String },
   },
 });
 
-// --- PSU Schema ---
 const PsuSchema = new mongoose.Schema({
   specs: {
     wattage: { type: Number, required: true },
     efficiencyRating: {
       type: String,
-      enum: ["Bronze", "Silver", "Gold", "Platinum", "Titanium"],
     },
-    modular: { type: String, enum: ["Full", "Semi", "Non"] },
+    modular: { type: String },
   },
 });
 
-// --- Cooler Schema ---
 const CoolerSchema = new mongoose.Schema({
   specs: {
-    coolerType: { type: String, enum: ["Air", "Liquid"], required: true },
-    radiatorSize_mm: { type: Number }, // e.g., 240, 360 (0 if Air)
+    coolerType: { type: String, required: true, uppercase: true, trim: true },
+    radiatorSize_mm: { type: Number },
     fanSize_mm: { type: Number },
-    compatibleSockets: [{ type: String }], // Array: ["LGA1700", "AM5"]
+    compatibleSockets: [{ type: String }],
   },
 });
-
-// ======================================================
-// 4. Register Discriminators
-// ======================================================
-// This maps the 'category' string to the specific schema
 
 Component.discriminator("cpu", CpuSchema);
 Component.discriminator("gpu", GpuSchema);

@@ -1,178 +1,295 @@
+import { useRef } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Cpu, ShieldCheck, Zap, Monitor } from "lucide-react";
+import {
+  ArrowRight,
+  Cpu,
+  ShieldCheck,
+  Zap,
+  Monitor,
+  Settings,
+  PenTool,
+  Truck,
+  CheckCircle,
+  Gamepad2,
+  Briefcase,
+  ChevronRight,
+} from "lucide-react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+gsap.registerPlugin(ScrollTrigger);
 
 const LandingPage = () => {
+  const containerRef = useRef(null);
+  const heroRef = useRef(null);
+  const featuresRef = useRef(null);
+  const categoriesRef = useRef(null);
+  const howItWorksRef = useRef(null);
+
+  useGSAP(
+    () => {
+      const tl = gsap.timeline();
+
+     
+      tl.from(".hero-content > *", {
+        y: 100,
+        opacity: 0,
+        duration: 1.2,
+        stagger: 0.2,
+        ease: "power4.out",
+      });
+
+  
+      gsap.from(".feature-card", {
+        scrollTrigger: {
+          trigger: featuresRef.current,
+          start: "top 80%",
+        },
+        y: 50,
+        opacity: 0,
+        duration: 0.8,
+        stagger: 0.15,
+        ease: "power3.out",
+      });
+
+   
+      gsap.from(".category-card", {
+        scrollTrigger: {
+          trigger: categoriesRef.current,
+          start: "top 75%",
+        },
+        scale: 0.9,
+        opacity: 0,
+        duration: 1,
+        stagger: 0.2,
+        ease: "back.out(1.7)",
+      });
+
+     
+      gsap.from(".step-item", {
+        scrollTrigger: {
+          trigger: howItWorksRef.current,
+          start: "top 75%",
+        },
+        x: -50,
+        opacity: 0,
+        duration: 0.8,
+        stagger: 0.2,
+        ease: "power2.out",
+      });
+    },
+    { scope: containerRef }
+  );
+
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
+    <div
+      ref={containerRef}
+      className="min-h-screen bg-gray-50 text-gray-900 font-sans selection:bg-blue-500 selection:text-white"
+    >
       <Navbar />
 
       {/* Hero Section */}
-      <div className="relative pt-16 pb-32 flex content-center items-center justify-center min-h-screen-75">
+      <div
+        ref={heroRef}
+        className="relative h-screen flex items-center justify-center overflow-hidden"
+      >
+        {/* Background Image with Overlay */}
         <div
-          className="absolute top-0 w-full h-full bg-center bg-cover"
+          className="absolute inset-0 z-0"
           style={{
             backgroundImage:
-              "url('https://images.unsplash.com/photo-1587202372775-e229f172b9d7?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80')",
+              "url('https://images.unsplash.com/photo-1624705002806-5d72df19c3ad?q=80&w=2832&auto=format&fit=crop')",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
           }}
         >
-          <span
-            id="blackOverlay"
-            className="w-full h-full absolute opacity-75 bg-black"
-          ></span>
+          {/* Light overlay for better text contrast/readability on light theme, or keep dark if text is white?
+              User wants "white theme". Usually this means background is white.
+              If hero has image, overlay should be white-ish if we want dark text, or we keep hero dark.
+              Let's make overlay white-ish and text dark for "white theme" fidelity.
+           */}
+          <div className="absolute inset-0 bg-gradient-to-b from-white/90 via-white/70 to-gray-50 z-10"></div>
         </div>
-        <div className="container relative mx-auto ">
-          <div className="items-center flex flex-wrap">
-            <div className="w-full lg:w-6/12 px-4 ml-auto mr-auto text-center">
-              <div className="pr-12">
-                <h1 className="text-white font-semibold text-5xl">
-                  Craft Your Perfect Machine
-                </h1>
-                <p className="mt-4 text-lg text-gray-200">
-                  Experience unparalleled performance with custom-built PCs
-                  tailored to your needs. Quality components, expert support.
-                </p>
-                <div className="mt-8">
-                  <Link
-                    to="/products"
-                    className="bg-gray-900 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-gray-800 transition duration-300 ease-in-out transform hover:-translate-y-1 hover:scale-110"
-                  >
-                    Build Your Dream PC
-                  </Link>
-                </div>
-              </div>
-            </div>
+
+        <div className="container relative z-20 px-4 mx-auto text-center hero-content">
+          <div className="inline-block px-4 py-2 mb-6 border border-blue-500/30 rounded-full bg-blue-50/50 backdrop-blur-sm">
+            <span className="text-blue-600 font-medium tracking-wide uppercase text-xs md:text-sm">
+              Next Generation Performance
+            </span>
+          </div>
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-gray-900 mb-6 leading-tight tracking-tight">
+            BUILD YOUR <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+              LEGACY
+            </span>
+          </h1>
+          <p className="max-w-2xl mx-auto text-lg md:text-xl text-gray-600 md:leading-relaxed mb-10 font-light">
+            Experience the pinnacle of custom PC engineering. Meticulously
+            crafted for gamers, creators, and professionals who demand nothing
+            but the best.
+          </p>
+          <div className="flex flex-col md:flex-row gap-5 justify-center">
+            <Link
+              to="/products"
+              className="group relative px-8 py-4 bg-gray-900 text-white font-bold text-lg rounded-xl overflow-hidden shadow-2xl hover:shadow-blue-500/20 transition-all duration-300 transform hover:-translate-y-1"
+            >
+              <span className="relative z-10 flex items-center gap-2">
+                Start Your Build{" "}
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </span>
+              <div className="absolute inset-0 bg-gray-800 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300"></div>
+            </Link>
+            <Link
+              to="/ai-assistant"
+              className="group px-8 py-4 bg-transparent border border-gray-300 text-gray-900 font-bold text-lg rounded-xl hover:bg-white/50 backdrop-blur-sm transition-all duration-300 flex items-center justify-center gap-2"
+            >
+              <Zap className="w-5 h-5 text-yellow-500" /> AI Recommendation
+            </Link>
           </div>
         </div>
       </div>
 
-      {/* Features Section */}
-      <section className="pb-20 bg-gray-50 -mt-24 z-10">
+      {/* The Nexgen Advantage Section */}
+      <section ref={featuresRef} className="py-24 bg-gray-50 relative">
         <div className="container mx-auto px-4">
-          <div className="flex flex-wrap">
-            <div className="lg:pt-12 pt-6 w-full md:w-4/12 px-4 text-center">
-              <div className="relative flex flex-col min-w-0 break-words bg-white w-full mb-8 shadow-lg rounded-lg">
-                <div className="px-4 py-5 flex-auto">
-                  <div className="text-white p-3 text-center inline-flex items-center justify-center w-12 h-12 mb-5 shadow-lg rounded-full bg-gray-900">
-                    <Zap className="w-6 h-6" />
-                  </div>
-                  <h6 className="text-xl font-semibold">
-                    AI-Powered Recommendations
-                  </h6>
-                  <p className="mt-2 mb-4 text-gray-500">
-                    Our smart assistant suggests the best components based on
-                    your needs and budget.
-                  </p>
-                  <Link
-                    to="/ai-assistant"
-                    className="text-blue-600 font-bold hover:text-blue-800 transition-colors"
-                  >
-                    Try AI Assistant &rarr;
-                  </Link>
-                </div>
-              </div>
-            </div>
+          <div className="text-center mb-20">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              The Nexgen Advantage
+            </h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              We don't just assemble parts. We engineer performance systems
+              designed to last.
+            </p>
+          </div>
 
-            <div className="w-full md:w-4/12 px-4 text-center">
-              <div className="relative flex flex-col min-w-0 break-words bg-white w-full mb-8 shadow-lg rounded-lg">
-                <div className="px-4 py-5 flex-auto">
-                  <div className="text-white p-3 text-center inline-flex items-center justify-center w-12 h-12 mb-5 shadow-lg rounded-full bg-gray-900">
-                    <ShieldCheck className="w-6 h-6" />
-                  </div>
-                  <h6 className="text-xl font-semibold">
-                    Real-Time Compatibility
-                  </h6>
-                  <p className="mt-2 mb-4 text-gray-500">
-                    Instantly verify that all your chosen parts work together
-                    seamlessly.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-6 w-full md:w-4/12 px-4 text-center">
-              <div className="relative flex flex-col min-w-0 break-words bg-white w-full mb-8 shadow-lg rounded-lg">
-                <div className="px-4 py-5 flex-auto">
-                  <div className="text-white p-3 text-center inline-flex items-center justify-center w-12 h-12 mb-5 shadow-lg rounded-full bg-gray-900">
-                    <Monitor className="w-6 h-6" />
-                  </div>
-                  <h6 className="text-xl font-semibold">
-                    Expert Support & Guidance
-                  </h6>
-                  <p className="mt-2 mb-4 text-gray-500">
-                    Get help from our team of experienced builders every step of
-                    the way.
-                  </p>
-                </div>
-              </div>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <FeatureCard
+              icon={<Cpu className="w-8 h-8 text-blue-600" />}
+              title="Premium Components"
+              desc="We strictly strictly use Tier-A components from trusted brands like ASUS, Corsair, and Samsung. No cheap knock-offs."
+            />
+            <FeatureCard
+              icon={<Settings className="w-8 h-8 text-purple-600" />}
+              title="Pro Assembly"
+              desc="Expert cable management and thermal paste application ensures optimal airflow and lower temperatures."
+            />
+            <FeatureCard
+              icon={<Monitor className="w-8 h-8 text-green-600" />}
+              title="Stress Tested"
+              desc="Every build undergoes a 24-hour rigorous burn-in test to guarantee stability under heavy loads."
+            />
+            <FeatureCard
+              icon={<ShieldCheck className="w-8 h-8 text-red-600" />}
+              title="2-Year Warranty"
+              desc="Comprehensive coverage for parts and labor. We stand behind our craftsmanship 100%."
+            />
           </div>
         </div>
       </section>
 
-      
-      <section className="py-20 bg-white">
+      {/* Build Categories */}
+      <section ref={categoriesRef} className="py-24 bg-white">
         <div className="container mx-auto px-4">
-          <div className="flex flex-wrap items-center mt-16">
-            <div className="w-full md:w-5/12 px-4 mr-auto ml-auto">
-              <div className="text-gray-500 p-3 text-center inline-flex items-center justify-center w-16 h-16 mb-6 shadow-lg rounded-full bg-gray-100">
-                <Cpu className="w-8 h-8 text-gray-900" />
-              </div>
-              <h3 className="text-3xl mb-2 font-semibold leading-normal">
-                Not Ready to Build? Discover Your Perfect PC.
-              </h3>
-              <p className="text-lg font-light leading-relaxed mt-4 mb-4 text-gray-600">
-                Explore our curated selection of high-performance pre-built
-                systems or get inspired by builds from our community.
-              </p>
-              <div className="flex gap-4 mt-8">
-                <Link
-                  to="/products"
-                  className="bg-gray-900 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-gray-800 transition duration-300"
-                >
-                  Explore Pre-Built
-                </Link>
-                <Link
-                  to="/community"
-                  className="bg-gray-200 text-gray-800 font-bold py-3 px-6 rounded-lg shadow-md hover:bg-gray-300 transition duration-300"
-                >
-                  See Community Builds
-                </Link>
-              </div>
-            </div>
-
-            <div className="w-full md:w-4/12 px-4 mr-auto ml-auto">
-              <div className="relative flex flex-col min-w-0 break-words w-full mb-6 shadow-lg rounded-lg bg-gray-900">
-                <img
-                  alt="..."
-                  src="https://images.unsplash.com/photo-1593640408182-31c70c8268f5?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
-                  className="w-full align-middle rounded-t-lg"
-                />
-                <blockquote className="relative p-8 mb-4">
-                  <svg
-                    preserveAspectRatio="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 583 95"
-                    className="absolute left-0 w-full block h-95-px top-28"
-                  >
-                    <polygon
-                      points="-30,95 583,95 583,65"
-                      className="text-gray-100 fill-current"
-                    ></polygon>
-                  </svg>
-                  <h4 className="text-xl font-bold text-white">
-                    Top Notch Services
-                  </h4>
-                  <p className="text-md font-light mt-2 text-white">
-                    The Arctic Ocean freezes every winter and much of the
-                    sea-ice then thaws every summer, and that process will
-                    continue whatever happens.
-                  </p>
-                </blockquote>
-              </div>
-            </div>
+          <div className="mb-16">
+            <span className="text-purple-600 font-semibold tracking-wider uppercase text-sm">
+              Choose your weapon
+            </span>
+            <h2 className="text-4xl font-bold text-gray-900 mt-2">
+              Tailored for Every User
+            </h2>
           </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <CategoryCard
+              title="The Pro Gamer"
+              subtitle="Dominate the Leaderboard"
+              icon={<Gamepad2 className="w-12 h-12 text-white" />}
+              desc="Optimized for high refresh rates and ray-tracing. Experience your favorite AAA titles at ultra settings without dropping a frame."
+              image="https://images.unsplash.com/photo-1593640408182-31c70c8268f5?w=800&auto=format&fit=crop"
+              accent="from-blue-600 to-cyan-500"
+            />
+            <CategoryCard
+              title="The Creator"
+              subtitle="Render Reality"
+              icon={<PenTool className="w-12 h-12 text-white" />}
+              desc="Multitasking beasts with high-core counts and massive RAM. Perfect for video editing, 3D modeling, and compiling code."
+              image="https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&auto=format&fit=crop"
+              accent="from-purple-600 to-pink-500"
+            />
+            <CategoryCard
+              title="The Office Core"
+              subtitle="Efficient Reliability"
+              icon={<Briefcase className="w-12 h-12 text-white" />}
+              desc="Silent, energy-efficient, and reliable. Built to handle productivity tasks, spreadsheets, and meetings with zero downtime."
+              image="https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=800&auto=format&fit=crop"
+              accent="from-emerald-600 to-teal-500"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works */}
+      <section
+        ref={howItWorksRef}
+        className="py-24 bg-gray-50 border-t border-gray-200"
+      >
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-20">
+            <h2 className="text-4xl font-bold text-gray-900">How It Works</h2>
+          </div>
+
+          <div className="flex flex-col md:flex-row justify-between items-center relative space-y-12 md:space-y-0">
+            {/* Connecting Line (Desktop) */}
+            <div className="hidden md:block absolute top-1/2 left-0 w-full h-1 bg-gray-200 -translate-y-1/2 z-0"></div>
+
+            <StepItem
+              n="1"
+              title="Pick Your Parts"
+              desc="Choose from our curated list or use our Builder."
+              icon={<Cpu />}
+            />
+            <StepItem
+              n="2"
+              title="AI Optimization"
+              desc="Our AI ensures 100% compatibility and value."
+              icon={<Zap />}
+            />
+            <StepItem
+              n="3"
+              title="We Build"
+              desc="Our experts assemble and test your machine."
+              icon={<Settings />}
+            />
+            <StepItem
+              n="4"
+              title="Ship to You"
+              desc="Securely packed and delivered to your doorstep."
+              icon={<Truck />}
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Footer-ish */}
+      <section className="py-20 relative overflow-hidden bg-white">
+        <div className="absolute inset-0 bg-blue-50/50"></div>
+        <div className="container mx-auto px-4 text-center relative z-10">
+          <h2 className="text-4xl md:text-5xl font-black text-gray-900 mb-8">
+            Ready to Ascend?
+          </h2>
+          <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto">
+            Join thousands of satisfied builders who have elevated their setup
+            with Nexgen.
+          </p>
+          <Link
+            to="/products"
+            className="inline-flex items-center gap-3 px-10 py-5 bg-gray-900 text-white font-bold text-xl rounded-full shadow-xl hover:bg-gray-800 transform hover:scale-105 transition-all duration-300"
+          >
+            Start Your Configuration <ChevronRight className="w-6 h-6" />
+          </Link>
         </div>
       </section>
 
@@ -180,5 +297,70 @@ const LandingPage = () => {
     </div>
   );
 };
+
+// Sub-components
+const FeatureCard = ({ icon, title, desc }) => (
+  <div className="feature-card p-8 rounded-2xl bg-white border border-gray-100 shadow-lg hover:shadow-xl hover:border-blue-100 transition-all duration-300">
+    <div className="mb-6 bg-gray-50 w-16 h-16 rounded-2xl flex items-center justify-center">
+      {icon}
+    </div>
+    <h3 className="text-xl font-bold text-gray-900 mb-3">{title}</h3>
+    <p className="text-gray-600 leading-relaxed">{desc}</p>
+  </div>
+);
+
+const CategoryCard = ({ title, subtitle, icon, desc, image, accent }) => (
+  <div className="category-card group relative h-[500px] rounded-3xl overflow-hidden cursor-pointer shadow-lg">
+    <div className="absolute inset-0">
+      <img
+        src={image}
+        alt={title}
+        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent opacity-80"></div>
+    </div>
+    <div className="absolute inset-0 p-8 flex flex-col justify-end">
+      <div
+        className={
+          "w-16 h-16 rounded-2xl bg-gradient-to-br " +
+          accent +
+          " flex items-center justify-center mb-6 transform group-hover:-translate-y-2 transition-transform duration-300 shadow-lg"
+        }
+      >
+        {icon}
+      </div>
+      <h3 className="text-3xl font-bold text-white mb-1 group-hover:translate-x-2 transition-transform duration-300 drop-shadow-md">
+        {title}
+      </h3>
+      <p
+        className={
+          "text-lg bg-clip-text text-transparent bg-gradient-to-r " +
+          accent +
+          " font-medium mb-4 drop-shadow-sm"
+        }
+      >
+        {subtitle}
+      </p>
+      <p className="text-gray-200 transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 ease-out delay-100 font-medium drops-shadow-sm">
+        {desc}
+      </p>
+    </div>
+  </div>
+);
+
+const StepItem = ({ n, title, desc, icon }) => (
+  <div className="step-item relative z-10 flex flex-col items-center text-center max-w-[250px]">
+    <div className="w-16 h-16 rounded-full bg-white border-4 border-gray-100 shadow-lg flex items-center justify-center text-gray-900 mb-6 group-hover:border-blue-500 transition-colors">
+      {icon}
+    </div>
+    <div className="text-5xl font-black text-gray-200 absolute -top-10 -right-4 z-0 opacity-50 select-none">
+      0{n}
+    </div>
+    <h3 className="text-xl font-bold text-gray-900 mb-2 relative z-10">
+      {title}
+    </h3>
+    <p className="text-sm text-gray-600 relative z-10">{desc}</p>
+  </div>
+);
 
 export default LandingPage;

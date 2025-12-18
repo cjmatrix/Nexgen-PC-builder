@@ -2,18 +2,17 @@ import mongoose from "mongoose";
 
 const cartSchema = new mongoose.Schema(
   {
-    // Link this cart to a specific user
+  
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      unique: true, // Ensures 1 Cart per User
+      unique: true, 
     },
 
     items: [
       {
-        // We ONLY reference the Product collection.
-        // No need for 'custom_build' fields since those go straight to Checkout.
+       
         product: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "Product",

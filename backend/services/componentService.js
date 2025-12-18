@@ -92,7 +92,7 @@ const getPublicComponents = async (filters, page, limit, sort) => {
     query["specs.ramType"] = filters.ramType;
   }
 
-  if (filters.formFactor && filters.category === "case") {
+ if (filters.formFactor && filters.category === "case") {
     if (filters.formFactor === "ITX") {
       query["specs.formFactor"] = { $in: ["ATX", "mATX", "ITX"] };
     } else if (filters.formFactor === "mATX") {

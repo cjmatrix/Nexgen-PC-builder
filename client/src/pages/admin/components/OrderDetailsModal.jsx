@@ -1,12 +1,12 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { X, Package, User, MapPin, Monitor } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../../../api/axios";
 const OrderDetailsModal = ({ isOpen, onClose, order }) => {
   const queryClient = useQueryClient();
   const modalRef = useRef(null);
+  const [currentStatus, setCurrentStatus] = useState("");
 
-  // Close on outside click
   const handleBackdropClick = (e) => {
     if (modalRef.current && !modalRef.current.contains(e.target)) {
       onClose();
@@ -20,7 +20,6 @@ const OrderDetailsModal = ({ isOpen, onClose, order }) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(["adminOrders"]);
-      // Optional: don't close, just update local state or let query refresh handle it
     },
     onError: (err) => {
       alert(err.response?.data?.message || "Failed to update status");
@@ -70,11 +69,10 @@ const OrderDetailsModal = ({ isOpen, onClose, order }) => {
         ref={modalRef}
         className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-200"
       >
-        {/* Header */}
         <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">
-              Order Details: #{order._id.slice(-6).toUpperCase()}
+              Order Details: {order.orderId}
             </h2>
             <p className="text-sm text-gray-500 mt-1">ID: {order._id}</p>
           </div>
@@ -86,7 +84,6 @@ const OrderDetailsModal = ({ isOpen, onClose, order }) => {
           </button>
         </div>
 
-        {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto p-8 space-y-8">
           {/* Top Summary Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -128,7 +125,6 @@ const OrderDetailsModal = ({ isOpen, onClose, order }) => {
             </div>
           </div>
 
-          {/* Customer & Shipping */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-4">
               <h3 className="font-bold text-lg text-gray-900 flex items-center gap-2">
@@ -160,7 +156,6 @@ const OrderDetailsModal = ({ isOpen, onClose, order }) => {
 
           <hr className="border-gray-100" />
 
-          {/* Order Items / PC Specs */}
           <div>
             <h3 className="font-bold text-lg text-gray-900 flex items-center gap-2 mb-6">
               <Monitor className="w-5 h-5 text-gray-500" /> Configured PC
@@ -173,7 +168,6 @@ const OrderDetailsModal = ({ isOpen, onClose, order }) => {
                   key={index}
                   className="border border-gray-200 rounded-xl overflow-hidden flex flex-col md:flex-row"
                 >
-                  {/* Image Section */}
                   <div className="bg-gray-100 w-full md:w-48 h-48 flex-shrink-0 flex items-center justify-center">
                     <img
                       src={item.image}
@@ -182,7 +176,6 @@ const OrderDetailsModal = ({ isOpen, onClose, order }) => {
                     />
                   </div>
 
-                  {/* Details Section */}
                   <div className="p-6 flex-1">
                     <div className="flex justify-between items-start mb-4">
                       <div>
@@ -201,7 +194,6 @@ const OrderDetailsModal = ({ isOpen, onClose, order }) => {
                       </div>
                     </div>
 
-                    {/* Components Grid */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-2 text-sm">
                       {Object.entries(item.components || {}).map(
                         ([key, comp]) =>
@@ -230,7 +222,6 @@ const OrderDetailsModal = ({ isOpen, onClose, order }) => {
           </div>
         </div>
 
-        {/* Footer Actions */}
         <div className="p-6 border-t border-gray-100 flex justify-between bg-gray-50">
           <div className="flex gap-3">
             <button
@@ -242,14 +233,13 @@ const OrderDetailsModal = ({ isOpen, onClose, order }) => {
             >
               Cancel Order
             </button>
-            {/* Placeholders for future features mentioned in mock */}
+
             <button className="hidden sm:block px-6 py-2.5 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-100 transition-colors">
               Generate Invoice
             </button>
           </div>
 
           <div className="flex gap-3">
-            {/* Status Change Buttons (Simplified for now, can be a dropdown) */}
             {order.status !== "Delivered" && order.status !== "Cancelled" && (
               <button
                 onClick={() => {
@@ -261,6 +251,7 @@ const OrderDetailsModal = ({ isOpen, onClose, order }) => {
                     "Delivered",
                   ];
                   const nextIdx = flow.indexOf(order.status) + 1;
+                  setCurrentStatus(flow[nextIdx]);
                   if (nextIdx < flow.length) handleStatusChange(flow[nextIdx]);
                 }}
                 className="px-6 py-2.5 rounded-lg bg-gray-900 text-white font-bold hover:bg-gray-800 shadow-lg shadow-gray-900/10 transition-all flex items-center gap-2"

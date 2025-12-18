@@ -85,7 +85,7 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
             )}
           </div>
 
-          {/* New Password */}
+    
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               New Password
@@ -111,7 +111,7 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
             )}
           </div>
 
-          {/* Confirm New Password */}
+          
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Confirm New Password

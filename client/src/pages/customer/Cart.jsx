@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { Minus, Plus, Trash2, ArrowRight } from "lucide-react";
+import api from "../../api/axios";
 import {
   fetchCart,
   removeFromCart,
@@ -35,6 +36,21 @@ const Cart = () => {
     dispatch(removeFromCart(productId));
   };
 
+  const handleCheckout=async()=>{
+
+    try{
+      
+      const response=await api.get("/cart/validate");
+      navigate('/checkout')
+      
+    }
+    catch(error){
+      alert(error.response.data.message)
+      return
+    }
+
+  }
+
   if (loading && items.length === 0) {
     return (
       <div className="min-h-screen pt-24 pb-12 flex justify-center items-center">
@@ -65,7 +81,7 @@ const Cart = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Cart Items List */}
+            
               <div className="lg:col-span-2 space-y-6">
                 {items.map((item) => (
                   <div
@@ -84,18 +100,17 @@ const Cart = () => {
                       />
                     </div>
 
-                    {/* Details */}
+                    
                     <div className="flex-1 flex flex-col justify-between">
                       <div>
                         <div className="flex justify-between items-start mb-2">
                           <h3 className="text-xl font-bold text-gray-900">
                             {item.product?.name}
                           </h3>
-                          {/* Price */}
-                          {/* Removing price from top right as per design, usually price is bottom or near qty, design puts it bottom left contextually, let's follow standard flow or design */}
+                          
                         </div>
 
-                        {/* Description / Specs Stub */}
+        
                         <p className="text-sm text-gray-500 line-clamp-2 mb-4">
                           {item.product?.description}
                         </p>
@@ -219,7 +234,7 @@ const Cart = () => {
                     </div>
 
                     <button
-                      onClick={() => navigate("/checkout")}
+                      onClick={() => handleCheckout()}
                       className="w-full bg-gray-900 text-white py-3.5 rounded-lg font-bold hover:bg-gray-800 transition-all shadow-lg shadow-gray-900/10 flex items-center justify-center gap-2"
                     >
                       Proceed to Checkout <ArrowRight className="h-5 w-5" />

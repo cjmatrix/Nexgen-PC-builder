@@ -2,15 +2,15 @@ import mongoose from "mongoose";
 
 const addressSchema = new mongoose.Schema(
   {
-    // Link to the User who owns this address
+   
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      index: true, // Index for faster queries (e.g., "Find all addresses for User X")
+      index: true, 
     },
 
-    // Contact Info for this specific address (might differ from account name)
+  
     fullName: {
       type: String,
       required: [true, "Please add a recipient name"],
@@ -21,7 +21,7 @@ const addressSchema = new mongoose.Schema(
       required: [true, "Please add a contact phone number"],
     },
 
-    // Location Details
+ 
     street: {
       type: String,
       required: [true, "Please add street address"],
@@ -40,10 +40,10 @@ const addressSchema = new mongoose.Schema(
     },
     country: {
       type: String,
-      default: "India", // or required if you ship internationally
+      default: "India",
     },
 
-    // Logic Flags
+    
     isDefault: {
       type: Boolean,
       default: false,
@@ -66,9 +66,5 @@ const addressSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
-
-// Optional: Ensure a user only has one default address?
-// This logic is usually best handled in the Controller (set all others to false before saving this one),
-// but the Schema is ready for it.
 
 export default mongoose.model("Address", addressSchema);

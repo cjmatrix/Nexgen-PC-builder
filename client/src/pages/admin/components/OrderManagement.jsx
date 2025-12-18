@@ -27,19 +27,19 @@ const OrderManagement = () => {
     queryFn: async () => {
       const params = {
         page,
-        limit: 10,
+        limit: 2,
         search: search || undefined,
         status: statusFilter !== "All" ? statusFilter : undefined,
       };
       const response = await api.get("/orders", { params });
       return response.data;
     },
-    keepPreviousData: true, // Keep old data while fetching new page
+    keepPreviousData: true,
   });
 
   const handleSearchChange = (e) => {
     setSearch(e.target.value);
-    setPage(1); // Reset to page 1 on search
+    setPage(1);
   };
 
   const handleStatusChange = (e) => {
@@ -206,15 +206,15 @@ const OrderManagement = () => {
                     className="hover:bg-gray-50/60 transition-colors group"
                   >
                     <td className="py-4 px-6 text-sm font-medium text-gray-900">
-                      #{order._id.slice(-6).toUpperCase()}
+                      {order.orderId || "#" + order._id.slice(-6).toUpperCase()}
                     </td>
                     <td className="py-4 px-6">
                       <div>
                         <p className="text-sm font-medium text-gray-900">
-                          {order.user?.name || order.shippingAddress.fullName}
+                          {order.userName || order.shippingAddress.fullName}
                         </p>
                         <p className="text-xs text-gray-500">
-                          {order.user?.email}
+                          {order.userEmail}
                         </p>
                       </div>
                     </td>

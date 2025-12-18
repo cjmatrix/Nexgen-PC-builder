@@ -25,7 +25,10 @@ app.use(cookieParser());
 app.use(passport.initialize());
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: [
+      "http://localhost:5173",
+      "https://bdghml9c-5173.euw.devtunnels.ms",
+    ],
     credentials: true,
   })
 );
@@ -36,9 +39,9 @@ app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/upload", uploadRoutes);
 app.use("/api/v1/products", productRoutes);
 app.use("/api/v1/cart", cartRoutes);
-app.use("/api/v1/orders", orderRoutes); // Register Order Routes
+app.use("/api/v1/orders", orderRoutes);
 app.use("/api/v1/ai", aiRoutes);
-
+// app.use("api/v1/attributes")
 app.use("/api/v1/user", userRoutes);
 
 const connectDB = async () => {
