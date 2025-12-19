@@ -160,7 +160,7 @@ export const createOrder = async (req, res) => {
 
 export const getMyOrders = async (req, res) => {
   try {
-    const { search } = req.query;
+    const { search, page = 1, limit = 5 } = req.query;
     let query = { user: req.user._id };
 
     if (search) {
@@ -171,10 +171,39 @@ export const getMyOrders = async (req, res) => {
       ];
     }
 
-    const orders = await Order.find(query).sort({
-      createdAt: -1,
-    });
-    res.json(orders);
+    const totalDocument = await Order.countDocuments();
+    const totalPages = Math.ceil(totalDocument / limit);
+
+    const orders = await Order.find(query)
+      .sort({
+        createdAt: -1,
+      })
+      .limit(limit)
+      .skip(limit * (page - 1));
+
+    res
+      .status(200)
+      .json({ orders, pagination: { totalDocument, totalPages, page } });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server Error" });
+  }
+};
+
+export const getOrderById = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id)
+      .populate("user", "name email")
+      .populate({
+        path: "orderItems.product",
+        select: "name images",
+      });
+
+    if (order) {
+      res.json(order);
+    } else {
+      res.status(404).json({ message: "Order not found" });
+    }
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server Error" });
@@ -377,7 +406,7 @@ export const cancelOrder = async (req, res) => {
   }
 };
 
-export const returnOrder = async (req, res) => {
+export const requestReturn = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
@@ -396,17 +425,88 @@ export const returnOrder = async (req, res) => {
       return res.status(404).json({ message: "Order not found" });
     }
 
-    if (order.status !== "Delivered") {
+    if (order.status !== "Delivered" && order.status !== "Return Requested") {
       await session.abortTransaction();
       session.endSession();
       return res
         .status(400)
-        .json({ message: "Can only return delivered orders" });
+        .json({ message: "Can only request return for delivered orders" });
+    }
+
+    if (itemId) {
+      const item = order.orderItems.find((i) => i._id.toString() === itemId);
+      if (!item) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(404).json({ message: "Item not found" });
+      }
+
+      if (
+        item.status === "Returned" ||
+        item.status === "Return Requested" ||
+        item.status === "Return Approved"
+      ) {
+        await session.abortTransaction();
+        session.endSession();
+        return res
+          .status(400)
+          .json({ message: "Return already requested or processed for item" });
+      }
+
+      item.status = "Return Requested";
+      item.returnReason = reason;
+
+      const allRequested = order.orderItems.every(
+        (i) =>
+          i.status === "Return Requested" ||
+          i.status === "Cancelled" ||
+          i.status === "Returned"
+      );
+      if (allRequested) {
+        order.status = "Return Requested";
+      }
+    } else {
+      for (const item of order.orderItems) {
+        if (
+          item.status !== "Returned" &&
+          item.status !== "Cancelled" &&
+          item.status !== "Return Requested"
+        ) {
+          item.status = "Return Requested";
+          item.returnReason = reason;
+        }
+      }
+      order.status = "Return Requested";
+      order.returnReason = reason;
+    }
+
+    const updatedOrder = await order.save({ session });
+    await session.commitTransaction();
+    session.endSession();
+
+    res.json(updatedOrder);
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    console.error(error);
+    res.status(500).json({ message: "Server Error: " + error.message });
+  }
+};
+
+export const approveReturn = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    const { itemId } = req.body;
+    const order = await Order.findById(req.params.id).session(session);
+
+    if (!order) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).json({ message: "Order not found" });
     }
 
     const restoreStock = async (item) => {
-      if (item.status === "Returned" || item.status === "Cancelled") return;
-
       const compList = [
         item.components.cpu.componentId,
         item.components.gpu.componentId,
@@ -435,34 +535,53 @@ export const returnOrder = async (req, res) => {
         return res.status(404).json({ message: "Item not found" });
       }
 
-      if (item.status === "Returned") {
+      if (item.status !== "Return Requested") {
         await session.abortTransaction();
         session.endSession();
-        return res.status(400).json({ message: "Item already returned" });
+        return res
+          .status(400)
+          .json({ message: "Item is not in Return Requested state" });
       }
 
       await restoreStock(item);
-      item.status = "Returned";
-      item.returnReason = reason;
+      item.status = "Return Approved"; 
 
       const allReturned = order.orderItems.every(
-        (i) => i.status === "Returned" || i.status === "Cancelled"
+        (i) => i.status === "Return Approved" || i.status === "Cancelled"
       );
       if (allReturned) {
-        order.status = "Returned";
+        order.status = "Return Approved"; 
         order.isReturned = true;
       }
     } else {
-      for (const item of order.orderItems) {
-        if (item.status !== "Returned" && item.status !== "Cancelled") {
-          await restoreStock(item);
-          item.status = "Returned";
-          item.returnReason = reason;
+      if (order.status !== "Return Requested") {
+       
+        const hasRequestedItems = order.orderItems.some(
+          (i) => i.status === "Return Requested"
+        );
+        if (!hasRequestedItems) {
+          await session.abortTransaction();
+          session.endSession();
+          return res
+            .status(400)
+            .json({ message: "Order is not in Return Requested state" });
         }
       }
-      order.status = "Returned";
-      order.isReturned = true;
-      order.returnReason = reason;
+
+      for (const item of order.orderItems) {
+        if (item.status === "Return Requested") {
+          await restoreStock(item);
+          item.status = "Return Approved";
+        }
+      }
+ 
+      const allReturned = order.orderItems.every(
+        (i) => i.status === "Return Approved" || i.status === "Cancelled"
+      );
+      if (allReturned) {
+        order.status = "Return Approved";
+        order.isReturned = true;
+      }
     }
 
     const updatedOrder = await order.save({ session });
@@ -478,3 +597,66 @@ export const returnOrder = async (req, res) => {
   }
 };
 
+export const rejectReturn = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    const { itemId } = req.body;
+    const order = await Order.findById(req.params.id).session(session);
+
+    if (!order) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    if (itemId) {
+      const item = order.orderItems.find((i) => i._id.toString() === itemId);
+      if (!item) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(404).json({ message: "Item not found" });
+      }
+
+      if (item.status !== "Return Requested") {
+        await session.abortTransaction();
+        session.endSession();
+        return res
+          .status(400)
+          .json({ message: "Item is not in Return Requested state" });
+      }
+
+      item.status = "Return Rejected";
+      
+      if (order.status === "Return Requested") {
+        const otherRequested = order.orderItems.some(
+          (i) => i.status === "Return Requested" && i._id.toString() !== itemId
+        );
+        if (!otherRequested) {
+          order.status = "Delivered"; 
+        }
+      }
+    } else {
+     
+      for (const item of order.orderItems) {
+        if (item.status === "Return Requested") {
+          item.status = "Return Rejected";
+        }
+      }
+      if (order.status === "Return Requested") {
+        order.status = "Delivered";
+      }
+    }
+
+    const updatedOrder = await order.save({ session });
+    await session.commitTransaction();
+    session.endSession();
+
+    res.json(updatedOrder);
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    console.error(error);
+    res.status(500).json({ message: "Server Error: " + error.message });
+  }
+};

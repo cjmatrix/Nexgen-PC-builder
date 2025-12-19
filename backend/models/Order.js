@@ -1,16 +1,13 @@
 import mongoose from "mongoose";
 
-
 const componentSnapshotSchema = new mongoose.Schema(
   {
-   
     componentId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Component",
       required: true,
     },
 
-    
     name: { type: String, required: true },
     price: { type: Number, required: true },
     image: { type: String, required: true },
@@ -38,7 +35,14 @@ const orderSchema = new mongoose.Schema(
       {
         status: {
           type: String,
-          enum: ["Active", "Cancelled", "Returned"],
+          enum: [
+            "Active",
+            "Cancelled",
+            "Returned",
+            "Return Requested",
+            "Return Approved",
+            "Return Rejected",
+          ],
           default: "Active",
         },
         cancellationReason: { type: String },
@@ -54,7 +58,6 @@ const orderSchema = new mongoose.Schema(
           ref: "Product",
         },
 
-      
         components: {
           cpu: { type: componentSnapshotSchema, required: true },
           gpu: { type: componentSnapshotSchema, required: true },
@@ -108,7 +111,9 @@ const orderSchema = new mongoose.Schema(
         "Out for Delivery",
         "Delivered",
         "Cancelled",
-        "Returned"
+        "Return Requested",
+        "Return Approved",
+        "Return Rejected",
       ],
       default: "Pending",
     },

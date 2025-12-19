@@ -11,6 +11,7 @@ import api from "../../../../api/axios";
 import UserOrderDetails from "./UserOrderDetails";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import Pagination from "../../../../components/Pagination";
 
 const OrderHistory = () => {
   const [page, setPage] = useState(1);
@@ -19,11 +20,17 @@ const OrderHistory = () => {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["myOrders", search],
-    queryFn: async () => {
-      const response = await api.get(`/orders/myorders?search=${search || ""}`);
-      return response.data;
+    queryKey: ["myOrders", search,page],
+   queryFn: async () => {
+  const response = await api.get("/orders/myorders", {
+    params: {
+      search: search || "",
+      page: page,
+      limit: 10,
     },
+  });
+  return response.data;
+}
   });
 
   const handleViewDetails = (order) => {
@@ -153,7 +160,7 @@ const OrderHistory = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {data.map((order) => (
+                  {data.orders.map((order) => (
                     <tr
                       key={order._id}
                       className="hover:bg-gray-50 transition-colors group"
@@ -204,6 +211,11 @@ const OrderHistory = () => {
           />
         </div>
       </div>
+      {
+        !isLoading&&<Pagination pagination={data.pagination} page={page} setPage={setPage}>
+
+      </Pagination>
+      }
     </div>
   );
 };

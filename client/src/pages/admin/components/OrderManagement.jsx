@@ -80,6 +80,21 @@ const OrderManagement = () => {
         color = "bg-red-100 text-red-800";
         icon = <XCircle className="w-3 h-3" />;
         break;
+      case "Cancelled":
+        color = "bg-red-100 text-red-800";
+        icon = <XCircle className="w-3 h-3" />;
+        break;
+      case "Return Requested":
+        color = "bg-orange-100 text-orange-800";
+        break;
+      case "Return Approved":
+        color = "bg-green-100 text-green-800";
+        icon = <CheckCircle className="w-3 h-3" />;
+        break;
+      case "Return Rejected":
+        color = "bg-red-100 text-red-800";
+        icon = <XCircle className="w-3 h-3" />;
+        break;
       default:
         break;
     }
@@ -130,8 +145,13 @@ const OrderManagement = () => {
               <option value="Out for Delivery">Out For Delivery</option>
               <option value="Delivered">Delivered</option>
               <option value="Cancelled">Cancelled</option>
+              <option value="Delivered">Delivered</option>
+              <option value="Cancelled">Cancelled</option>
+              <option value="Return Requested">Return Requested</option>
+              <option value="Return Approved">Return Approved</option>
+              <option value="Return Rejected">Return Rejected</option>
             </select>
-            {/* Custom Arrow for select */}
+
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
               <svg className="h-4 w-4 fill-current" viewBox="0 0 20 20">
                 <path
@@ -142,13 +162,9 @@ const OrderManagement = () => {
               </svg>
             </div>
           </div>
-
-          {/* Date Filter (Placeholder for now) */}
-          {/* <select className="..."> ... </select> */}
         </div>
       </div>
 
-      {/* Table */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">

@@ -1,7 +1,15 @@
 import React, { useState } from "react";
-import { X, CornerUpLeft, Ban, Package, AlertTriangle } from "lucide-react";
+import {
+  X,
+  CornerUpLeft,
+  Ban,
+  Package,
+  AlertTriangle,
+  Eye,
+} from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../../../../api/axios";
+import ItemDetailsModal from "./ItemDetailsModal";
 
 const UserOrderDetails = ({ isOpen, onClose, order }) => {
   const queryClient = useQueryClient();
@@ -9,6 +17,9 @@ const UserOrderDetails = ({ isOpen, onClose, order }) => {
   const [isActionModalOpen, setIsActionModalOpen] = useState(false);
   const [actionType, setActionType] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
+
+  const [viewDetailItem, setViewDetailItem] = useState(null);
+  const [isItemDetailsOpen, setIsItemDetailsOpen] = useState(false);
 
   const returnMutation = useMutation({
     mutationFn: async (data) => {
@@ -19,7 +30,7 @@ const UserOrderDetails = ({ isOpen, onClose, order }) => {
       queryClient.invalidateQueries(["myOrders"]);
       handleCloseAction();
       onClose();
-      alert("Return processed successfully");
+      alert("Return requested successfully. Waiting for admin approval.");
     },
     onError: (err) => {
       alert(err.response?.data?.message || "Return failed");
@@ -84,14 +95,22 @@ const UserOrderDetails = ({ isOpen, onClose, order }) => {
     )
       return false;
 
-    
-    if (itemStatus && (itemStatus === "Cancelled" || itemStatus === "Returned"))
+    if (
+      itemStatus &&
+      (itemStatus === "Cancelled" ||
+        itemStatus === "Returned" ||
+        itemStatus === "Return Requested" ||
+        itemStatus === "Return Approved")
+    )
       return false;
 
-    
     if (!itemStatus) {
       const hasActiveItems = order.orderItems.some(
-        (item) => item.status !== "Cancelled" && item.status !== "Returned"
+        (item) =>
+          item.status !== "Cancelled" &&
+          item.status !== "Returned" &&
+          item.status !== "Return Requested" &&
+          item.status !== "Return Approved"
       );
       if (!hasActiveItems) return false;
     }
@@ -102,13 +121,23 @@ const UserOrderDetails = ({ isOpen, onClose, order }) => {
   const canReturn = (itemStatus) => {
     if (order.status !== "Delivered") return false;
 
-    if (itemStatus && (itemStatus === "Cancelled" || itemStatus === "Returned"))
+    if (
+      itemStatus &&
+      (itemStatus === "Cancelled" ||
+        itemStatus === "Returned" ||
+        itemStatus === "Return Requested" ||
+        itemStatus === "Return Rejected" ||
+        itemStatus === "Return Approved")
+    )
       return false;
 
-  
     if (!itemStatus) {
       const hasActiveItems = order.orderItems.some(
-        (item) => item.status !== "Cancelled" && item.status !== "Returned"
+        (item) =>
+          item.status !== "Cancelled" &&
+          item.status !== "Returned" &&
+          item.status !== "Return Requested" &&
+          item.status !== "Return Approved"
       );
       if (!hasActiveItems) return false;
     }
@@ -145,19 +174,26 @@ const UserOrderDetails = ({ isOpen, onClose, order }) => {
             {order.orderItems.map((item, idx) => (
               <div
                 key={idx}
-                className="flex gap-4 p-4 border border-gray-100 rounded-xl hover:border-gray-200 transition-colors"
+                className="flex gap-4 p-4 border border-gray-100 rounded-xl hover:border-gray-200 transition-colors cursor-pointer group"
+                onClick={() => {
+                  setViewDetailItem(item);
+                  setIsItemDetailsOpen(true);
+                }}
               >
-                <div className="w-20 h-20 bg-gray-100 rounded-lg flex-shrink-0 flex items-center justify-center">
+                <div className="w-20 h-20 bg-gray-100 rounded-lg flex-shrink-0 flex items-center justify-center relative overflow-hidden">
                   <img
                     src={item.image}
                     alt={item.name}
                     className="w-16 h-16 object-contain mix-blend-multiply"
                   />
+                  <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <Eye className="w-6 h-6 text-gray-700" />
+                  </div>
                 </div>
                 <div className="flex-1">
                   <div className="flex justify-between items-start">
                     <div>
-                      <h4 className="font-bold text-gray-900 text-sm">
+                      <h4 className="font-bold text-gray-900 text-sm group-hover:text-blue-600 transition-colors">
                         {item.name}
                       </h4>
                       <p className="text-xs text-gray-500 mt-1">
@@ -172,17 +208,24 @@ const UserOrderDetails = ({ isOpen, onClose, order }) => {
                   <div className="mt-3 flex items-center justify-between">
                     <span
                       className={`text-xs px-2 py-1 rounded-md font-medium ${
-                        item.status === "Cancelled"
+                        item.status === "Cancelled" ||
+                        item.status === "Return Rejected"
                           ? "bg-red-50 text-red-600"
-                          : item.status === "Returned"
+                          : item.status === "Returned" ||
+                            item.status === "Return Approved"
+                          ? "bg-green-50 text-green-600"
+                          : item.status === "Return Requested"
                           ? "bg-orange-50 text-orange-600"
-                          : "bg-green-50 text-green-600"
+                          : "bg-blue-50 text-blue-600" // Default/Active
                       }`}
                     >
                       {item.status || "Active"}
                     </span>
 
-                    <div className="flex gap-2">
+                    <div
+                      className="flex gap-2"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       {canCancel(item.status) && (
                         <button
                           onClick={() => handleActionClick("cancel", item)}
@@ -283,12 +326,21 @@ const UserOrderDetails = ({ isOpen, onClose, order }) => {
                     : "bg-orange-600 hover:bg-orange-700 shadow-orange-900/10"
                 }`}
               >
-                Confirm {actionType === "cancel" ? "Cancellation" : "Return"}
+                Confirm{" "}
+                {actionType === "cancel" ? "Cancellation" : "Return Request"}
               </button>
             </div>
           </div>
         </div>
       )}
+
+      {/* Item Details Modal */}
+      <ItemDetailsModal
+        isOpen={isItemDetailsOpen}
+        onClose={() => setIsItemDetailsOpen(false)}
+        item={viewDetailItem}
+        order={order}
+      />
     </div>
   );
 };
