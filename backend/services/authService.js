@@ -34,9 +34,9 @@ const registerUser = async (userData) => {
     throw new Error("Please add all fields");
   }
 
-  const userExists = await User.findOne({ email });
-  if (userExists) {
-    if (!userExists.isVerified) {
+  let user = await User.findOne({ email });
+  if (user) {
+    if (!user.isVerified) {
     } else {
       throw new Error("User already exists");
     }
@@ -45,7 +45,7 @@ const registerUser = async (userData) => {
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   const otpExpires = Date.now() + 10 * 60 * 1000;
 
-  let user = await User.findOne({ email });
+ 
   if (user) {
     user.name = name;
     user.password = password;

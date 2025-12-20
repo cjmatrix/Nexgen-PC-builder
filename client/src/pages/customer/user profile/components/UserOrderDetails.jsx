@@ -197,7 +197,7 @@ const UserOrderDetails = ({ isOpen, onClose, order }) => {
                         {item.name}
                       </h4>
                       <p className="text-xs text-gray-500 mt-1">
-                        Quantity: {item.qty} | ₹{item.price.toLocaleString()}
+                        Quantity: {item.qty} | ₹{(item.price/100).toLocaleString()}
                       </p>
                     </div>
                     <p className="font-bold text-gray-900 text-sm">
@@ -334,7 +334,7 @@ const UserOrderDetails = ({ isOpen, onClose, order }) => {
         </div>
       )}
 
-      {/* Item Details Modal */}
+      
       <ItemDetailsModal
         isOpen={isItemDetailsOpen}
         onClose={() => setIsItemDetailsOpen(false)}

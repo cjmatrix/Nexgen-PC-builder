@@ -65,8 +65,8 @@ const OrderHistory = () => {
       const itemData = [
         item.name,
         item.qty,
-        `${item.price.toLocaleString()}`,
-        `${(item.price * item.qty).toLocaleString()}`,
+        `${(item.price/100).toLocaleString()}`,
+        `${((item.price * item.qty)/100).toLocaleString()}`,
       ];
       tableRows.push(itemData);
     });
@@ -79,7 +79,7 @@ const OrderHistory = () => {
 
     const finalY = doc.lastAutoTable.finalY || 90;
     doc.text(
-      `Total Amount: ${order.totalPrice.toLocaleString()}`,
+      `Total Amount: ${(order.totalPrice/100).toLocaleString()}`,
       14,
       finalY + 10
     );
@@ -175,7 +175,7 @@ const OrderHistory = () => {
                         <StatusBadge status={order.status} />
                       </td>
                       <td className="px-6 py-4 text-right font-medium text-gray-900">
-                        ₹{order.totalPrice.toLocaleString()}
+                        ₹{(order.totalPrice/100).toLocaleString()}
                       </td>
                       <td className="px-6 py-4 text-center">
                         <button

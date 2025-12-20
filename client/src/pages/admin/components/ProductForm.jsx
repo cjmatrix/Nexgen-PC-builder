@@ -1,4 +1,5 @@
-import React, { useEffect } from "react";
+import React, { useEffect ,useState} from "react";
+import { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useForm } from "react-hook-form";
 import {
@@ -8,6 +9,8 @@ import {
   setSelected,
 } from "../../../store/slices/builderSlice";
 
+import Cropper from "react-easy-crop";
+import getCroppedImg from "../../../utils/cropUtils";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   createProduct,
@@ -15,7 +18,6 @@ import {
   fetchProductById,
 } from "../../../store/slices/productSlice";
 import {
-  ShoppingCart,
   Cpu,
   HardDrive,
   Monitor,
@@ -25,6 +27,9 @@ import {
   Save,
   ArrowLeft,
   Upload,
+  X,
+  Check,
+  ZoomIn
 } from "lucide-react";
 import api from "../../../api/axios";
 
@@ -119,6 +124,64 @@ const AddProductForm = () => {
   const images = watch("images");
   const basePrice = watch("base_price");
 
+
+
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [isCropOpen, setIsCropOpen] = useState(false);
+  const [imageSrc, setImageSrc] = useState(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const onFileChange = async (e, index) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.addEventListener("load", () => {
+        setImageSrc(reader.result);
+        setCurrentImageIndex(index);
+        setIsCropOpen(true);
+        setZoom(1);
+      });
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const onCropComplete = useCallback((croppedArea, croppedAreaPixels) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  }, []);
+
+  const showCroppedImage = async () => {
+    try {
+      setIsUploading(true);
+      const croppedImageBlob = await getCroppedImg(imageSrc, croppedAreaPixels);
+      
+      // Upload the CROPPED blob instead of original file
+      const uploadData = new FormData();
+      uploadData.append("image", croppedImageBlob);
+
+      const res = await api.post("/upload", uploadData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      const currentImages = images || [];
+      const newImages = [...currentImages];
+      newImages[currentImageIndex] = res.data.imageUrl;
+      setValue("images", newImages);
+      
+      // Close Modal
+      setIsCropOpen(false);
+      setIsUploading(false);
+      setImageSrc(null);
+    } catch (e) {
+      console.error(e);
+      alert("Something went wrong uploading the image");
+      setIsUploading(false);
+    }
+  };
+
+  
   useEffect(() => {
     if (isEditMode) {
       dispatch(fetchProductById(id))
@@ -407,32 +470,7 @@ const AddProductForm = () => {
                           <input
                             type="file"
                             accept="image/*"
-                            onChange={async (e) => {
-                              const file = e.target.files[0];
-                              if (!file) return;
-
-                              const uploadData = new FormData();
-                              uploadData.append("image", file);
-
-                              try {
-                                const res = await api.post(
-                                  "/upload",
-                                  uploadData,
-                                  {
-                                    headers: {
-                                      "Content-Type": "multipart/form-data",
-                                    },
-                                  }
-                                );
-                                const currentImages = images || [];
-                                const newImages = [...currentImages];
-                                newImages[index] = res.data.imageUrl;
-                                setValue("images", newImages);
-                              } catch (error) {
-                                console.error("Upload failed", error);
-                                alert("Image upload failed");
-                              }
-                            }}
+                            onChange={(e) => onFileChange(e, index)}
                             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                           />
                         </>
@@ -586,6 +624,70 @@ const AddProductForm = () => {
           </div>
         </form>
       </div>
+      {isCropOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+          <div className="bg-white w-full max-w-2xl rounded-2xl overflow-hidden shadow-2xl flex flex-col h-[80vh]">
+            <div className="p-4 border-b flex justify-between items-center bg-gray-50">
+              <h3 className="font-bold text-lg text-gray-800">Adjust Image</h3>
+              <button onClick={() => setIsCropOpen(false)} className="text-gray-500 hover:text-gray-800">
+                <X size={24} />
+              </button>
+            </div>
+            
+            <div className="relative flex-1 bg-gray-900">
+              <Cropper
+                image={imageSrc}
+                crop={crop}
+                zoom={zoom}
+                aspect={1} // 1:1 Square aspect ratio
+                onCropChange={setCrop}
+                onCropComplete={onCropComplete}
+                onZoomChange={setZoom}
+              />
+            </div>
+
+            <div className="p-6 bg-white border-t space-y-4">
+              <div className="flex items-center gap-4">
+                <ZoomIn className="text-gray-400" size={20} />
+                <input
+                  type="range"
+                  value={zoom}
+                  min={1}
+                  max={3}
+                  step={0.1}
+                  aria-labelledby="Zoom"
+                  onChange={(e) => setZoom(e.target.value)}
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                />
+              </div>
+              
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsCropOpen(false)}
+                  className="px-6 py-2.5 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={showCroppedImage}
+                  disabled={isUploading}
+                  className="px-6 py-2.5 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition flex items-center gap-2"
+                >
+                  {isUploading ? (
+                    <span>Uploading...</span>
+                  ) : (
+                    <>
+                      <Check size={18} /> Apply & Upload
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
