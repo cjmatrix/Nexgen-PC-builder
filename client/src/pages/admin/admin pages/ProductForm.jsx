@@ -9,8 +9,6 @@ import {
   setSelected,
 } from "../../../store/slices/builderSlice";
 import { useQuery } from "@tanstack/react-query";
-import Cropper from "react-easy-crop";
-import getCroppedImg from "../../../utils/cropUtils";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   createProduct,
@@ -32,6 +30,8 @@ import {
   ZoomIn,
 } from "lucide-react";
 import api from "../../../api/axios";
+import CustomModal from "../../../components/CustomModal";
+import ImageCropperModal from "../../../components/ImageCropperModal";
 
 const PartSelector = ({
   category,
@@ -124,13 +124,21 @@ const AddProductForm = () => {
   const images = watch("images");
   const basePrice = watch("base_price");
 
-  const [crop, setCrop] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
   const [isCropOpen, setIsCropOpen] = useState(false);
   const [imageSrc, setImageSrc] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(null);
-  const [isUploading, setIsUploading] = useState(false);
+
+  const [modal, setModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "info",
+    onConfirm: null,
+  });
+
+  const closeModal = () => {
+    setModal((prev) => ({ ...prev, isOpen: false }));
+  };
 
   const onFileChange = async (e, index) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -140,22 +148,13 @@ const AddProductForm = () => {
         setImageSrc(reader.result);
         setCurrentImageIndex(index);
         setIsCropOpen(true);
-        setZoom(1);
       });
       reader.readAsDataURL(file);
     }
   };
 
-  const onCropComplete = useCallback((croppedArea, croppedAreaPixels) => {
-    setCroppedAreaPixels(croppedAreaPixels);
-  }, []);
-
-  const showCroppedImage = async () => {
+  const handleCropConfirm = async (croppedImageBlob) => {
     try {
-      setIsUploading(true);
-      const croppedImageBlob = await getCroppedImg(imageSrc, croppedAreaPixels);
-
-      // Upload the CROPPED blob instead of original file
       const uploadData = new FormData();
       uploadData.append("image", croppedImageBlob);
 
@@ -168,14 +167,16 @@ const AddProductForm = () => {
       newImages[currentImageIndex] = res.data.imageUrl;
       setValue("images", newImages);
 
-      // Close Modal
       setIsCropOpen(false);
-      setIsUploading(false);
       setImageSrc(null);
     } catch (e) {
       console.error(e);
-      alert("Something went wrong uploading the image");
-      setIsUploading(false);
+      setModal({
+        isOpen: true,
+        title: "Error",
+        message: "Something went wrong uploading the image",
+        type: "error",
+      });
     }
   };
 
@@ -188,15 +189,20 @@ const AddProductForm = () => {
             name: data.name,
             description: data.description,
             category: data.category,
-            base_price: data.base_price / 100, // Convert to Rupees
+            base_price: data.base_price / 100, 
             images: data.images || [],
           });
           dispatch(setSelected(data.default_config));
         })
         .catch((err) => {
           console.error("Failed to fetch component:", err);
-          alert("Failed to fetch product details");
-          navigate("/admin/products");
+          setModal({
+            isOpen: true,
+            title: "Error",
+            message: "Failed to fetch product details",
+            type: "error",
+            onConfirm: () => navigate("/admin/products"),
+          });
         });
     }
   }, [isEditMode, id, navigate, dispatch, reset]);
@@ -276,9 +282,14 @@ const AddProductForm = () => {
     const missingParts = requiredParts.filter((part) => !selected[part]);
 
     if (missingParts.length > 0) {
-      alert(
-        `Please select all components. Missing: ${missingParts.join(", ")}`
-      );
+      setModal({
+        isOpen: true,
+        title: "Validation Error",
+        message: `Please select all components. Missing: ${missingParts.join(
+          ", "
+        )}`,
+        type: "error",
+      });
       return;
     }
 
@@ -302,15 +313,30 @@ const AddProductForm = () => {
     try {
       if (isEditMode) {
         await dispatch(updateProduct({ id, data: productPayload })).unwrap();
-        alert("Product Updated Successfully!");
+        setModal({
+          isOpen: true,
+          title: "Success",
+          message: "Product Updated Successfully!",
+          type: "success",
+          onConfirm: () => navigate("/admin/products"),
+        });
       } else {
         await dispatch(createProduct(productPayload)).unwrap();
-        alert("Product Created Successfully!");
+        setModal({
+          isOpen: true,
+          title: "Success",
+          message: "Product Created Successfully!",
+          type: "success",
+          onConfirm: () => navigate("/admin/products"),
+        });
       }
-
-      navigate("/admin/products");
     } catch (error) {
-      alert(`Error creating product: ${error}`);
+      setModal({
+        isOpen: true,
+        title: "Error",
+        message: `Error creating product: ${error}`,
+        type: "error",
+      });
     }
   };
 
@@ -327,12 +353,19 @@ const AddProductForm = () => {
     },
   });
 
-  useEffect(()=>{
-    if(categories && !isEditMode)
-      setValue("category","Gaming")
-  },[categories,isEditMode])
+  useEffect(() => {
+    if (categories && !isEditMode) setValue("category", "Gaming");
+  }, [categories, isEditMode]);
   return (
     <div className="min-h-screen bg-gray-50 pt-10 pb-12 px-4 sm:px-6 lg:px-8 font-sans">
+      <CustomModal
+        isOpen={modal.isOpen}
+        onClose={closeModal}
+        onConfirm={modal.onConfirm}
+        title={modal.title}
+        message={modal.message}
+        type={modal.type}
+      />
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
@@ -385,19 +418,20 @@ const AddProductForm = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Category
                     </label>
-                    {categories && <select
-                      className="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                      {...register("category")}
-                    >
-                      {
-                        categories.map((category) => {
+                    {categories && (
+                      <select
+                        className="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                        {...register("category")}
+                      >
+                        {categories.map((category) => {
                           return (
                             <option value={category.name} key={category._id}>
                               {category.name}
                             </option>
                           );
                         })}
-                    </select>}
+                      </select>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -643,73 +677,12 @@ const AddProductForm = () => {
           </div>
         </form>
       </div>
-      {isCropOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
-          <div className="bg-white w-full max-w-2xl rounded-2xl overflow-hidden shadow-2xl flex flex-col h-[80vh]">
-            <div className="p-4 border-b flex justify-between items-center bg-gray-50">
-              <h3 className="font-bold text-lg text-gray-800">Adjust Image</h3>
-              <button
-                onClick={() => setIsCropOpen(false)}
-                className="text-gray-500 hover:text-gray-800"
-              >
-                <X size={24} />
-              </button>
-            </div>
-
-            <div className="relative flex-1 bg-gray-900">
-              <Cropper
-                image={imageSrc}
-                crop={crop}
-                zoom={zoom}
-                aspect={1} // 1:1 Square aspect ratio
-                onCropChange={setCrop}
-                onCropComplete={onCropComplete}
-                onZoomChange={setZoom}
-              />
-            </div>
-
-            <div className="p-6 bg-white border-t space-y-4">
-              <div className="flex items-center gap-4">
-                <ZoomIn className="text-gray-400" size={20} />
-                <input
-                  type="range"
-                  value={zoom}
-                  min={1}
-                  max={3}
-                  step={0.1}
-                  aria-labelledby="Zoom"
-                  onChange={(e) => setZoom(e.target.value)}
-                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                />
-              </div>
-
-              <div className="flex justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => setIsCropOpen(false)}
-                  className="px-6 py-2.5 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={showCroppedImage}
-                  disabled={isUploading}
-                  className="px-6 py-2.5 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition flex items-center gap-2"
-                >
-                  {isUploading ? (
-                    <span>Uploading...</span>
-                  ) : (
-                    <>
-                      <Check size={18} /> Apply & Upload
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <ImageCropperModal
+        isOpen={isCropOpen}
+        onClose={() => setIsCropOpen(false)}
+        imageSrc={imageSrc}
+        onCropConfirm={handleCropConfirm}
+      />
     </div>
   );
 };

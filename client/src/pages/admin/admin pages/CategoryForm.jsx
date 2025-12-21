@@ -4,12 +4,26 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Save } from "lucide-react";
 import api from "../../../api/axios";
+import CustomModal from "../../../components/CustomModal";
+import { useState } from "react";
 
 const CategoryForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const isEditMode = !!id;
+
+  const [modal, setModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "info",
+    onConfirm: null,
+  });
+
+  const closeModal = () => {
+    setModal((prev) => ({ ...prev, isOpen: false }));
+  };
 
   const {
     register,
@@ -22,7 +36,7 @@ const CategoryForm = () => {
     },
   });
 
-  const {data}=useQuery({
+  const { data } = useQuery({
     queryKey: ["category", id],
     queryFn: async () => {
       if (!isEditMode) return null;
@@ -31,24 +45,31 @@ const CategoryForm = () => {
       return res.data;
     },
     enabled: isEditMode,
-    
   });
 
-  useEffect(()=>{
-    if(data)
-    setValue("name",data.name)
-
-  },[data])
+  useEffect(() => {
+    if (data) setValue("name", data.name);
+  }, [data]);
 
   const createMutation = useMutation({
     mutationFn: (data) => api.post("/admin/category", data),
     onSuccess: () => {
       queryClient.invalidateQueries(["adminCategory"]);
-      alert("Category created successfully");
-      navigate("/admin/categories");
+      setModal({
+        isOpen: true,
+        title: "Success",
+        message: "Category created successfully",
+        type: "success",
+        onConfirm: () => navigate("/admin/categories"),
+      });
     },
     onError: (error) => {
-      alert(error.response?.data?.message || "Failed to create category");
+      setModal({
+        isOpen: true,
+        title: "Error",
+        message: error.response?.data?.message || "Failed to create category",
+        type: "error",
+      });
     },
   });
 
@@ -56,11 +77,21 @@ const CategoryForm = () => {
     mutationFn: (data) => api.put(`/admin/category/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries(["adminCategory"]);
-      alert("Category updated successfully");
-      navigate("/admin/categories");
+      setModal({
+        isOpen: true,
+        title: "Success",
+        message: "Category updated successfully",
+        type: "success",
+        onConfirm: () => navigate("/admin/categories"),
+      });
     },
     onError: (error) => {
-      alert(error.response?.data?.message || "Failed to update category");
+      setModal({
+        isOpen: true,
+        title: "Error",
+        message: error.response?.data?.message || "Failed to update category",
+        type: "error",
+      });
     },
   });
 
@@ -74,6 +105,14 @@ const CategoryForm = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pt-10 pb-12 px-4 sm:px-6 lg:px-8 font-sans">
+      <CustomModal
+        isOpen={modal.isOpen}
+        onClose={closeModal}
+        onConfirm={modal.onConfirm}
+        title={modal.title}
+        message={modal.message}
+        type={modal.type}
+      />
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center gap-4 mb-8">
           <button

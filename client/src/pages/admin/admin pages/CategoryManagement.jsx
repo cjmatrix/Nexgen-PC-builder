@@ -4,36 +4,48 @@ import { Link } from "react-router-dom";
 import { Edit, Trash2, Plus, Search } from "lucide-react";
 import api from "../../../api/axios";
 import { RefreshCcw } from "lucide-react";
+import CustomModal from "../../../components/CustomModal";
 
 const CategoryManagement = () => {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
+  const [modal, setModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "info",
+    onConfirm: null,
+  });
 
-  const [searchInput,setSearchInput]=useState("")
+  const closeModal = () => {
+    setModal((prev) => ({ ...prev, isOpen: false }));
+  };
+
+  const [searchInput, setSearchInput] = useState("");
 
   const {
     data: categories = [],
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["adminCategory",searchInput],
+    queryKey: ["adminCategory", searchInput],
     queryFn: async () => {
-      const response = await api.get("/admin/category",{params:{
-        search:searchInput
-      }});
+      const response = await api.get("/admin/category", {
+        params: {
+          search: searchInput,
+        },
+      });
       return response.data;
     },
   });
 
+  useEffect(() => {
+    let id = setTimeout(() => {
+      setSearchInput(searchTerm);
+    }, 500);
 
-  useEffect(()=>{
-
-    let id=setTimeout(()=>{
-        setSearchInput(searchTerm)
-    },500)
-
-    return ()=>clearTimeout(id)
-  })
+    return () => clearTimeout(id);
+  });
 
   const deleteMutation = useMutation({
     mutationFn: async (id) => {
@@ -43,22 +55,39 @@ const CategoryManagement = () => {
       queryClient.invalidateQueries(["adminCategory"]);
     },
     onError: (error) => {
-      alert(error.response?.data?.message || "Failed to delete category");
+      setModal({
+        isOpen: true,
+        title: "Error",
+        message: error.response?.data?.message || "Failed to delete category",
+        type: "error",
+      });
     },
   });
 
   const handleDelete = (id) => {
-    if (window.confirm("Are you sure you want to deactivate this category?")) {
-      deleteMutation.mutate(id);
-    }
+    setModal({
+      isOpen: true,
+      title: "Confirm Action",
+      message: "Are you sure you want to deactivate this category?",
+      type: "confirmation",
+      onConfirm: () => deleteMutation.mutate(id),
+    });
   };
 
-//   const filteredCategories = categories.filter((category) =>
-//     category.name.toLowerCase().includes(searchTerm.toLowerCase())
-//   );
+  //   const filteredCategories = categories.filter((category) =>
+  //     category.name.toLowerCase().includes(searchTerm.toLowerCase())
+  //   );
 
   return (
     <div className="p-8 bg-gray-100 min-h-screen font-sans">
+      <CustomModal
+        isOpen={modal.isOpen}
+        onClose={closeModal}
+        onConfirm={modal.onConfirm}
+        title={modal.title}
+        message={modal.message}
+        type={modal.type}
+      />
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <h1 className="text-2xl font-bold text-gray-800">
           Category Management
@@ -144,15 +173,18 @@ const CategoryManagement = () => {
                         >
                           <Edit className="w-4 h-4" />
                         </Link>
-                        
-                          <button
-                            onClick={() => handleDelete(category._id)}
-                            className="text-gray-500 hover:text-red-600 transition-colors"
-                            title="Deactivate"
-                          >
-                            {category.isActive?<Trash2 className="w-4 h-4" />:<RefreshCcw className="w-4 h-4"></RefreshCcw>}
-                          </button>
-                        
+
+                        <button
+                          onClick={() => handleDelete(category._id)}
+                          className="text-gray-500 hover:text-red-600 transition-colors"
+                          title="Deactivate"
+                        >
+                          {category.isActive ? (
+                            <Trash2 className="w-4 h-4" />
+                          ) : (
+                            <RefreshCcw className="w-4 h-4"></RefreshCcw>
+                          )}
+                        </button>
                       </div>
                     </td>
                   </tr>

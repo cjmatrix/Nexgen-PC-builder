@@ -15,7 +15,7 @@ import {
   ToggleRight,
   RefreshCw,
 } from "lucide-react";
-import Swal from "sweetalert2";
+import CustomModal from "../../../components/CustomModal";
 import Pagination from "../../../components/Pagination";
 import { useQuery } from "@tanstack/react-query";
 import api from "../../../api/axios";
@@ -28,13 +28,13 @@ const ProductManagement = () => {
   const [category, setCategory] = useState("");
   const [page, setPage] = useState(1);
 
-  const {data:categories=[]}=useQuery({
-    queryKey:["adminCategory"],
-    queryFn: async()=>{
-      const response=await api.get("/admin/category")
-      return response.data
-    }
-  })
+  const { data: categories = [] } = useQuery({
+    queryKey: ["adminCategory"],
+    queryFn: async () => {
+      const response = await api.get("/admin/category");
+      return response.data;
+    },
+  });
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
@@ -42,6 +42,18 @@ const ProductManagement = () => {
     }, 500);
     return () => clearTimeout(delayDebounceFn);
   }, [dispatch, page, search, category]);
+
+  const [modal, setModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "info",
+    onConfirm: null,
+  });
+
+  const closeModal = () => {
+    setModal((prev) => ({ ...prev, isOpen: false }));
+  };
 
   const handleToggleFeature = (id, currentStatus) => {
     dispatch(
@@ -51,44 +63,41 @@ const ProductManagement = () => {
       })
     );
   };
-  
 
-     const statusList=categories.map(category=>{
-      return <option key={category._id} value={category.name}>{category.name}</option>
-     })
-
-  
-
+  const statusList = categories.map((category) => {
+    return (
+      <option key={category._id} value={category.name}>
+        {category.name}
+      </option>
+    );
+  });
 
   const handleDelete = (id, isActive) => {
-    Swal.fire({
-      title: "Are you sure?",
-      text: `You are about to ${
+    setModal({
+      isOpen: true,
+      title: "Confirm Action",
+      message: `Are you sure you want to ${
         isActive ? "deactivate" : "restore"
-      } this product!`,
-      icon: "question",
-      iconColor: "#3B82F6",
-      showCancelButton: true,
-      confirmButtonText: `Yes, ${isActive ? "deactivate" : "restore"} it!`,
-      buttonsStyling: false,
-      customClass: {
-        popup: "rounded-2xl shadow-2xl font-sans border border-gray-100",
-        title: "text-xl font-bold text-gray-900",
-        htmlContainer: "text-gray-600",
-        confirmButton:
-          "bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 m-2",
-        cancelButton:
-          "bg-white hover:bg-gray-50 text-gray-700 font-bold py-3 px-8 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 focus:ring-2 focus:ring-gray-200 focus:ring-offset-2 m-2",
+      } this product?`,
+      type: "confirmation",
+      confirmText: `Yes, ${isActive ? "Deactivate" : "Restore"}`,
+      onConfirm: () => {
+        dispatch(deleteProduct(id)); // Assuming deleteProduct handles both deactivate/restore logic or server side toggles it
       },
-    }).then((result) => {
-      if (result.isConfirmed) {
-        dispatch(deleteProduct(id)); 
-      }
     });
   };
 
   return (
     <div className="p-8 bg-gray-100 min-h-screen font-sans">
+      <CustomModal
+        isOpen={modal.isOpen}
+        onClose={closeModal}
+        onConfirm={modal.onConfirm}
+        title={modal.title}
+        message={modal.message}
+        type={modal.type}
+        confirmText={modal.confirmText}
+      />
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-2xl font-bold text-gray-800">Product Management</h1>
         <Link

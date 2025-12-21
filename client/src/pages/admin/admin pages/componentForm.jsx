@@ -1,5 +1,7 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Upload, ChevronLeft, Cross } from "lucide-react";
+import CustomModal from "../../../components/CustomModal";
+import ImageCropperModal from "../../../components/ImageCropperModal";
 import { CATEGORY_SPECS } from "../../../config/componentFields";
 import api from "../../../api/axios";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -16,6 +18,64 @@ const ComponentForm = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const isEditMode = !!id;
+
+  const [modal, setModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "info",
+    onConfirm: null,
+  });
+
+  const [isCropOpen, setIsCropOpen] = useState(false);
+  const [imageSrc, setImageSrc] = useState(null);
+  const [uploadTarget, setUploadTarget] = useState(null);
+
+  const handleFileSelect = (e, target) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.addEventListener("load", () => {
+        setImageSrc(reader.result);
+        setUploadTarget(target);
+        setIsCropOpen(true);
+      });
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleCropConfirm = async (croppedImageBlob) => {
+    try {
+      const formData = new FormData();
+      formData.append("image", croppedImageBlob);
+
+      const res = await api.post("/upload", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      if (uploadTarget.type === "main") {
+        setValue("image", res.data.imageUrl);
+      } else if (uploadTarget.type === "spec") {
+        setValue(`specs.${uploadTarget.name}`, res.data.imageUrl);
+      }
+
+      setIsCropOpen(false);
+      setImageSrc(null);
+      setUploadTarget(null);
+    } catch (e) {
+      console.error(e);
+      setModal({
+        isOpen: true,
+        title: "Error",
+        message: "Something went wrong uploading the image",
+        type: "error",
+      });
+    }
+  };
+
+  const closeModal = () => {
+    setModal((prev) => ({ ...prev, isOpen: false }));
+  };
 
   const { loading } = useSelector((state) => state.components);
 
@@ -59,8 +119,13 @@ const ComponentForm = () => {
         })
         .catch((err) => {
           console.error("Failed to fetch component:", err);
-          alert("Failed to fetch component details");
-          navigate("/admin/components");
+          setModal({
+            isOpen: true,
+            title: "Error",
+            message: "Failed to fetch component details",
+            type: "error",
+            onConfirm: () => navigate("/admin/components"),
+          });
         });
     }
   }, [id, isEditMode, dispatch, navigate, reset]);
@@ -76,15 +141,31 @@ const ComponentForm = () => {
     try {
       if (isEditMode) {
         await dispatch(updateComponent({ id, data: payload })).unwrap();
-        alert("Component Updated Successfully!");
+        setModal({
+          isOpen: true,
+          title: "Success",
+          message: "Component Updated Successfully!",
+          type: "success",
+          onConfirm: () => navigate("/admin/components"),
+        });
       } else {
         await dispatch(createComponent(payload)).unwrap();
-        alert("Component Created Successfully!");
+        setModal({
+          isOpen: true,
+          title: "Success",
+          message: "Component Created Successfully!",
+          type: "success",
+          onConfirm: () => navigate("/admin/components"),
+        });
       }
-      navigate("/admin/components");
     } catch (error) {
       console.error("Error saving component:", error);
-      alert(`Error ${isEditMode ? "updating" : "creating"} component`);
+      setModal({
+        isOpen: true,
+        title: "Error",
+        message: `Error ${isEditMode ? "updating" : "creating"} component`,
+        type: "error",
+      });
     }
   };
 
@@ -150,25 +231,9 @@ const ComponentForm = () => {
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={async (e) => {
-                    const file = e.target.files[0];
-                    if (!file) return;
-
-                    const formData = new FormData();
-                    formData.append("image", file);
-
-                    try {
-                      const res = await api.post("/upload", formData, {
-                        headers: {
-                          "Content-Type": "multipart/form-data",
-                        },
-                      });
-                      setValue(`specs.${field.name}`, res.data.imageUrl);
-                    } catch (error) {
-                      console.error("Upload failed", error);
-                      alert("Image upload failed");
-                    }
-                  }}
+                  onChange={(e) =>
+                    handleFileSelect(e, { type: "spec", name: field.name })
+                  }
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                 />
               </>
@@ -198,6 +263,14 @@ const ComponentForm = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 p-8 flex justify-center">
+      <CustomModal
+        isOpen={modal.isOpen}
+        onClose={closeModal}
+        onConfirm={modal.onConfirm}
+        title={modal.title}
+        message={modal.message}
+        type={modal.type}
+      />
       <div className="w-full max-w-4xl bg-white rounded-xl shadow-sm border border-gray-100 p-8">
         {/* Header */}
         <div className="flex justify-between items-center mb-8 border-b pb-4">
@@ -305,25 +378,7 @@ const ComponentForm = () => {
                       <input
                         type="file"
                         accept="image/*"
-                        onChange={async (e) => {
-                          const file = e.target.files[0];
-                          if (!file) return;
-
-                          const formData = new FormData();
-                          formData.append("image", file);
-
-                          try {
-                            const res = await api.post("/upload", formData, {
-                              headers: {
-                                "Content-Type": "multipart/form-data",
-                              },
-                            });
-                            setValue("image", res.data.imageUrl);
-                          } catch (error) {
-                            console.error("Upload failed", error);
-                            alert("Image upload failed");
-                          }
-                        }}
+                        onChange={(e) => handleFileSelect(e, { type: "main" })}
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                       />
                     </>
@@ -422,6 +477,12 @@ const ComponentForm = () => {
           </div>
         </form>
       </div>
+      <ImageCropperModal
+        isOpen={isCropOpen}
+        onClose={() => setIsCropOpen(false)}
+        imageSrc={imageSrc}
+        onCropConfirm={handleCropConfirm}
+      />
     </div>
   );
 };

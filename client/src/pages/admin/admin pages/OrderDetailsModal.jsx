@@ -2,11 +2,24 @@ import React, { useRef, useState } from "react";
 import { X, Package, User, MapPin, Monitor } from "lucide-react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import api from "../../../api/axios";
+import CustomModal from "../../../components/CustomModal";
 
 const OrderDetailsModal = ({ isOpen, onClose, order: initialOrder }) => {
   const queryClient = useQueryClient();
   const modalRef = useRef(null);
   const [currentStatus, setCurrentStatus] = useState("");
+
+  const [modal, setModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "info",
+    onConfirm: null,
+  });
+
+  const closeModal = () => {
+    setModal((prev) => ({ ...prev, isOpen: false }));
+  };
 
   const { data: order } = useQuery({
     queryKey: ["order", initialOrder?._id],
@@ -34,17 +47,25 @@ const OrderDetailsModal = ({ isOpen, onClose, order: initialOrder }) => {
       queryClient.invalidateQueries(["order", order._id]);
     },
     onError: (err) => {
-      alert(err.response?.data?.message || "Failed to update status");
+      setModal({
+        isOpen: true,
+        title: "Error",
+        message: err.response?.data?.message || "Failed to update status",
+        type: "error",
+      });
     },
   });
 
   const handleStatusChange = (newStatus) => {
     if (!order) return;
-    if (
-      window.confirm(`Are you sure you want to change status to ${newStatus}?`)
-    ) {
-      updateStatusMutation.mutate({ id: order._id, status: newStatus });
-    }
+    setModal({
+      isOpen: true,
+      title: "Confirm Action",
+      message: `Are you sure you want to change status to ${newStatus}?`,
+      type: "confirmation",
+      onConfirm: () =>
+        updateStatusMutation.mutate({ id: order._id, status: newStatus }),
+    });
   };
 
   const cancelItemOrderMuation = useMutation({
@@ -60,7 +81,12 @@ const OrderDetailsModal = ({ isOpen, onClose, order: initialOrder }) => {
       console.log("successs");
     },
     onError: (err) => {
-      alert(err.response?.data?.message || "Failed to update status");
+      setModal({
+        isOpen: true,
+        title: "Error",
+        message: err.response?.data?.message || "Failed to update status",
+        type: "error",
+      });
     },
   });
 
@@ -74,10 +100,20 @@ const OrderDetailsModal = ({ isOpen, onClose, order: initialOrder }) => {
     onSuccess: () => {
       queryClient.invalidateQueries(["adminOrders"]);
       queryClient.invalidateQueries(["order", order._id]);
-      alert("Return approved successfully");
+      setModal({
+        isOpen: true,
+        title: "Success",
+        message: "Return approved successfully",
+        type: "success",
+      });
     },
     onError: (err) => {
-      alert(err.response?.data?.message || "Failed to approve return");
+      setModal({
+        isOpen: true,
+        title: "Error",
+        message: err.response?.data?.message || "Failed to approve return",
+        type: "error",
+      });
     },
   });
 
@@ -91,15 +127,56 @@ const OrderDetailsModal = ({ isOpen, onClose, order: initialOrder }) => {
     onSuccess: () => {
       queryClient.invalidateQueries(["adminOrders"]);
       queryClient.invalidateQueries(["order", order._id]);
-      alert("Return rejected successfully");
+      setModal({
+        isOpen: true,
+        title: "Success",
+        message: "Return rejected successfully",
+        type: "success",
+      });
     },
     onError: (err) => {
-      alert(err.response?.data?.message || "Failed to reject return");
+      setModal({
+        isOpen: true,
+        title: "Error",
+        message: err.response?.data?.message || "Failed to reject return",
+        type: "error",
+      });
     },
   });
 
   const handleItemCancel = (itemId) => {
-    cancelItemOrderMuation.mutate({ itemId });
+    setModal({
+      isOpen: true,
+      title: "Confirm Cancellation",
+      message: itemId
+        ? "Are you sure you want to cancel this item?"
+        : "Are you sure you want to cancel the entire order?",
+      type: "confirmation",
+      confirmText: "Yes, Cancel",
+      onConfirm: () => cancelItemOrderMuation.mutate({ itemId }),
+    });
+  };
+
+  const confirmApproveReturn = (itemId) => {
+    setModal({
+      isOpen: true,
+      title: "Confirm Return Approval",
+      message: "Are you sure you want to approve this return request?",
+      type: "confirmation",
+      confirmText: "Approve Return",
+      onConfirm: () => approveReturnMutation.mutate({ itemId }),
+    });
+  };
+
+  const confirmRejectReturn = (itemId) => {
+    setModal({
+      isOpen: true,
+      title: "Confirm Return Rejection",
+      message: "Are you sure you want to reject this return request?",
+      type: "confirmation",
+      confirmText: "Reject Return",
+      onConfirm: () => rejectReturnMutation.mutate({ itemId }),
+    });
   };
 
   if (!isOpen || !order) return null;
@@ -135,6 +212,14 @@ const OrderDetailsModal = ({ isOpen, onClose, order: initialOrder }) => {
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200"
       onClick={handleBackdropClick}
     >
+      <CustomModal
+        isOpen={modal.isOpen}
+        onClose={closeModal}
+        onConfirm={modal.onConfirm}
+        title={modal.title}
+        message={modal.message}
+        type={modal.type}
+      />
       <div
         ref={modalRef}
         className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-200"
@@ -285,17 +370,13 @@ const OrderDetailsModal = ({ isOpen, onClose, order: initialOrder }) => {
                       {item.status === "Return Requested" && (
                         <div className="flex gap-2">
                           <button
-                            onClick={() =>
-                              approveReturnMutation.mutate({ itemId: item._id })
-                            }
+                            onClick={() => confirmApproveReturn(item._id)}
                             className="text-sm font-medium text-green-600 hover:text-green-700 hover:bg-green-50 px-3 py-1.5 rounded-lg border border-green-200 transition-colors"
                           >
                             Approve Return
                           </button>
                           <button
-                            onClick={() =>
-                              rejectReturnMutation.mutate({ itemId: item._id })
-                            }
+                            onClick={() => confirmRejectReturn(item._id)}
                             className="text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 px-3 py-1.5 rounded-lg border border-red-200 transition-colors"
                           >
                             Reject Return

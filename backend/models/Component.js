@@ -73,7 +73,7 @@ const GpuSchema = new mongoose.Schema({
 
 const MotherboardSchema = new mongoose.Schema({
   specs: {
-    socket: { type: String, required: true, uppercase: true, trim: true }, // Must match CPU
+    socket: { type: String, required: true, uppercase: true, trim: true }, 
     formFactor: { type: String, required: true,},
     ramType: { type: String, required: true, uppercase: true, trim: true },
     ramSlots: { type: Number, required: true },

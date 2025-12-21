@@ -13,6 +13,7 @@ import {
   ChevronDown,
   RefreshCcw,
 } from "lucide-react";
+import CustomModal from "../../../components/CustomModal";
 
 import Pagination from "../../../components/Pagination";
 
@@ -47,6 +48,18 @@ const ComponentManagement = () => {
   const [status, setStatus] = useState("");
   const [sort, setSort] = useState("");
 
+  const [modal, setModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "info",
+    onConfirm: null,
+  });
+
+  const closeModal = () => {
+    setModal((prev) => ({ ...prev, isOpen: false }));
+  };
+
   useEffect(() => {
     dispatch(fetchAdminComponents({ page, search, category, status, sort }));
   }, [dispatch, page, search, category, status, sort]);
@@ -61,9 +74,13 @@ const ComponentManagement = () => {
 
   const handleToggleStatus = (id, currentStatus) => {
     const action = currentStatus ? "deactivate" : "activate";
-    if (window.confirm(`Are you sure you want to ${action} this item?`)) {
-      dispatch(deleteComponent(id));
-    }
+    setModal({
+      isOpen: true,
+      title: "Confirm Action",
+      message: `Are you sure you want to ${action} this item?`,
+      type: "confirmation",
+      onConfirm: () => dispatch(deleteComponent(id)),
+    });
   };
 
   const getTierColor = (tier) => {
@@ -85,6 +102,14 @@ const ComponentManagement = () => {
 
   return (
     <div className="p-8 bg-gray-100 min-h-screen font-sans">
+      <CustomModal
+        isOpen={modal.isOpen}
+        onClose={closeModal}
+        onConfirm={modal.onConfirm}
+        title={modal.title}
+        message={modal.message}
+        type={modal.type}
+      />
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <h1 className="text-2xl font-bold text-gray-800">
           Component Management
@@ -99,7 +124,6 @@ const ComponentManagement = () => {
       </div>
 
       <div className="bg-white p-4 rounded-xl shadow-sm mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-       
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
@@ -270,7 +294,6 @@ const ComponentManagement = () => {
           </table>
         </div>
 
-      
         <Pagination
           pagination={pagination}
           page={page}

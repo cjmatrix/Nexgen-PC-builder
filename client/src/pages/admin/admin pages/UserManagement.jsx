@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { Search, ChevronDown, Lock, LockOpen } from "lucide-react";
+import CustomModal from "../../../components/CustomModal";
 import {
   getUsers,
   setSearch,
@@ -11,8 +12,6 @@ import {
 import { logout, reset as authReset } from "../../../store/slices/authSlice";
 import { FaSignOutAlt } from "react-icons/fa";
 import Pagination from "../../../components/Pagination";
-
-import Swal from "sweetalert2";
 
 const UserManagement = () => {
   const navigate = useNavigate();
@@ -25,6 +24,18 @@ const UserManagement = () => {
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState("");
   const [sort, setSort] = useState("");
+
+  const [modal, setModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "info",
+    onConfirm: null,
+  });
+
+  const closeModal = () => {
+    setModal((prev) => ({ ...prev, isOpen: false }));
+  };
 
   useEffect(() => {
     if (!user || user.role !== "admin") {
@@ -49,36 +60,33 @@ const UserManagement = () => {
   }, [searchInput, dispatch]);
 
   const handleBlock = (id, currentStatus) => {
-    Swal.fire({
-      title: "Are you sure?",
-      text: `You are about to ${
+    setModal({
+      isOpen: true,
+      title: "Confirm Action",
+      message: `Are you sure you want to ${
         currentStatus === "active" ? "suspend" : "activate"
-      } this user!`,
-      icon: "question", // Changed from 'warning' to be less aggressive
-      iconColor: "#3B82F6", // Custom blue color for the question mark
-      showCancelButton: true,
-      confirmButtonText: `Yes, ${
-        currentStatus === "active" ? "suspend" : "activate"
-      } it!`,
-      buttonsStyling: false,
-      customClass: {
-        popup: "rounded-2xl shadow-2xl font-sans border border-gray-100",
-        title: "text-xl font-bold text-gray-900",
-        htmlContainer: "text-gray-600",
-        confirmButton:
-          "bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 m-2",
-        cancelButton:
-          "bg-white hover:bg-gray-50 text-gray-700 font-bold py-3 px-8 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 focus:ring-2 focus:ring-gray-200 focus:ring-offset-2 m-2",
-      },
-    }).then((result) => {
-      if (result.isConfirmed) {
+      } this user?`,
+      type: "confirmation",
+      confirmText: `Yes, ${
+        currentStatus === "active" ? "Suspend" : "Activate"
+      }`,
+      onConfirm: () => {
         dispatch(blockUser(id));
-      }
+      },
     });
   };
 
   return (
     <div className="p-8 bg-gray-100 min-h-screen font-sans">
+      <CustomModal
+        isOpen={modal.isOpen}
+        onClose={closeModal}
+        onConfirm={modal.onConfirm}
+        title={modal.title}
+        message={modal.message}
+        type={modal.type}
+        confirmText={modal.confirmText}
+      />
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-2xl font-bold text-gray-800">User Management</h1>
       </div>
