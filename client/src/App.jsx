@@ -18,6 +18,8 @@ import CustomerDashboard from "./pages/customer/CustomerDashboard";
 import UserManagement from "./pages/admin/components/UserManagement";
 import CreateComponent from "./pages/admin/components/componentForm";
 import ComponentManagement from "./pages/admin/components/ComponentManagement";
+import CategoryManagement from "./pages/admin/components/CategoryManagement";
+import CategoryForm from "./pages/admin/components/CategoryForm";
 import PCBuilder from "./pages/customer/PCBuilder";
 import ProductManagement from "./pages/admin/components/ProductManagement";
 import OrderManagement from "./pages/admin/components/OrderManagement";
@@ -85,6 +87,18 @@ const router = createBrowserRouter([
           {
             path: "/admin/components",
             element: <ComponentManagement />,
+          },
+          {
+            path: "/admin/categories",
+            element: <CategoryManagement />,
+          },
+          {
+            path: "/admin/categories/create",
+            element: <CategoryForm />,
+          },
+          {
+            path: "/admin/categories/edit/:id",
+            element: <CategoryForm />,
           },
           {
             path: "/admin/products",

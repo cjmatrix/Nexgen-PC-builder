@@ -10,9 +10,15 @@ import {
   LogOut,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+
 const navItems = [
   { name: "Dashboard Home", icon: LayoutDashboard, link: "" },
   { name: "Component Management", icon: Layers, link: "/admin/components" },
+  {
+    name: "Category Management",
+    icon: LayoutDashboard,
+    link: "/admin/categories",
+  },
   { name: "Product Management", icon: Package, link: "/admin/products" },
   { name: "Order Management", icon: ShoppingCart, link: "/admin/orders" },
   { name: "User Management", icon: Users, link: "/admin" },

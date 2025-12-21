@@ -55,7 +55,7 @@ const LandingPage = () => {
         ease: "power3.out",
       });
 
-   
+  
       gsap.from(".category-card", {
         scrollTrigger: {
           trigger: categoriesRef.current,

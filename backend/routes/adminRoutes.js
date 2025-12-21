@@ -24,6 +24,13 @@ import {
 } from "../controllers/productController.js";
 
 import { protect, admin } from "../middleware/authMiddleware.js";
+import {
+  createCategory,
+  getCategories,
+  updateCategory,
+  deleteCategory,
+  getCategoryById,
+} from "../controllers/categoryController.js";
 
 router.get("/componentspublic", getComponents);
 
@@ -45,5 +52,10 @@ router.get("/products", getAdminProducts);
 router.get("/products/:id", getProductById);
 router.put("/products/:id", updateProduct);
 router.patch("/products/:id", deleteProduct);
+router.get("/category", getCategories);
+router.get("/category/:id", getCategoryById);
+router.post("/category", createCategory);
+router.put("/category/:id", updateCategory);
+router.delete("/category/:id", deleteCategory);
 
 export default router;

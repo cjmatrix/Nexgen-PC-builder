@@ -17,6 +17,8 @@ import {
 } from "lucide-react";
 import Swal from "sweetalert2";
 import Pagination from "../../../components/Pagination";
+import { useQuery } from "@tanstack/react-query";
+import api from "../../../api/axios";
 
 const ProductManagement = () => {
   const dispatch = useDispatch();
@@ -25,6 +27,14 @@ const ProductManagement = () => {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
   const [page, setPage] = useState(1);
+
+  const {data:categories=[]}=useQuery({
+    queryKey:["adminCategory"],
+    queryFn: async()=>{
+      const response=await api.get("/admin/category")
+      return response.data
+    }
+  })
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
@@ -41,6 +51,14 @@ const ProductManagement = () => {
       })
     );
   };
+  
+
+     const statusList=categories.map(category=>{
+      return <option key={category._id} value={category.name}>{category.name}</option>
+     })
+
+  
+
 
   const handleDelete = (id, isActive) => {
     Swal.fire({
@@ -97,9 +115,7 @@ const ProductManagement = () => {
           onChange={(e) => setCategory(e.target.value)}
         >
           <option value="">All Categories</option>
-          <option value="Gaming">Gaming</option>
-          <option value="Office">Office</option>
-          <option value="Workstation">Workstation</option>
+          {statusList}
         </select>
       </div>
 

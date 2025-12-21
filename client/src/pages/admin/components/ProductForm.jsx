@@ -1,4 +1,4 @@
-import React, { useEffect ,useState} from "react";
+import React, { useEffect, useState } from "react";
 import { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useForm } from "react-hook-form";
@@ -8,7 +8,7 @@ import {
   resetBuild,
   setSelected,
 } from "../../../store/slices/builderSlice";
-
+import { useQuery } from "@tanstack/react-query";
 import Cropper from "react-easy-crop";
 import getCroppedImg from "../../../utils/cropUtils";
 import { useParams, useNavigate } from "react-router-dom";
@@ -29,7 +29,7 @@ import {
   Upload,
   X,
   Check,
-  ZoomIn
+  ZoomIn,
 } from "lucide-react";
 import api from "../../../api/axios";
 
@@ -124,8 +124,6 @@ const AddProductForm = () => {
   const images = watch("images");
   const basePrice = watch("base_price");
 
-
-
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
@@ -156,7 +154,7 @@ const AddProductForm = () => {
     try {
       setIsUploading(true);
       const croppedImageBlob = await getCroppedImg(imageSrc, croppedAreaPixels);
-      
+
       // Upload the CROPPED blob instead of original file
       const uploadData = new FormData();
       uploadData.append("image", croppedImageBlob);
@@ -169,7 +167,7 @@ const AddProductForm = () => {
       const newImages = [...currentImages];
       newImages[currentImageIndex] = res.data.imageUrl;
       setValue("images", newImages);
-      
+
       // Close Modal
       setIsCropOpen(false);
       setIsUploading(false);
@@ -181,7 +179,6 @@ const AddProductForm = () => {
     }
   };
 
-  
   useEffect(() => {
     if (isEditMode) {
       dispatch(fetchProductById(id))
@@ -317,6 +314,23 @@ const AddProductForm = () => {
     }
   };
 
+  const {
+    data: categories = [],
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["adminCategory"],
+    queryFn: async () => {
+      const response = await api.get("/admin/category");
+      console.log(response.data);
+      return response.data;
+    },
+  });
+
+  useEffect(()=>{
+    if(categories && !isEditMode)
+      setValue("category","Gaming")
+  },[categories,isEditMode])
   return (
     <div className="min-h-screen bg-gray-50 pt-10 pb-12 px-4 sm:px-6 lg:px-8 font-sans">
       <div className="max-w-7xl mx-auto">
@@ -371,14 +385,19 @@ const AddProductForm = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Category
                     </label>
-                    <select
+                    {categories && <select
                       className="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                       {...register("category")}
                     >
-                      <option value="Gaming">Gaming</option>
-                      <option value="Office">Office</option>
-                      <option value="Workstation">Workstation</option>
-                    </select>
+                      {
+                        categories.map((category) => {
+                          return (
+                            <option value={category.name} key={category._id}>
+                              {category.name}
+                            </option>
+                          );
+                        })}
+                    </select>}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -629,11 +648,14 @@ const AddProductForm = () => {
           <div className="bg-white w-full max-w-2xl rounded-2xl overflow-hidden shadow-2xl flex flex-col h-[80vh]">
             <div className="p-4 border-b flex justify-between items-center bg-gray-50">
               <h3 className="font-bold text-lg text-gray-800">Adjust Image</h3>
-              <button onClick={() => setIsCropOpen(false)} className="text-gray-500 hover:text-gray-800">
+              <button
+                onClick={() => setIsCropOpen(false)}
+                className="text-gray-500 hover:text-gray-800"
+              >
                 <X size={24} />
               </button>
             </div>
-            
+
             <div className="relative flex-1 bg-gray-900">
               <Cropper
                 image={imageSrc}
@@ -660,7 +682,7 @@ const AddProductForm = () => {
                   className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
                 />
               </div>
-              
+
               <div className="flex justify-end gap-3">
                 <button
                   type="button"
