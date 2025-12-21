@@ -13,7 +13,7 @@ import {
 import { logout } from "../store/slices/authSlice";
 
 import { useEffect } from "react";
-// ... existing imports ...
+
 import { fetchCart } from "../store/slices/cartSlice";
 
 const Navbar = () => {
@@ -41,10 +41,10 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="bg-white border-b border-gray-200 fixed w-full z-50">
+    <nav className="bg-white border-b border-gray-200 fixed w-full z-50 top-0 left-0">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
-          {/* Left: Logo */}
+        
           <div
             className="shrink-0 flex items-center cursor-pointer"
             onClick={() => navigate("/")}
@@ -57,7 +57,6 @@ const Navbar = () => {
             </span>
           </div>
 
-          {/* Center: Navigation Links */}
           <div className="hidden md:flex items-center space-x-8">
             <Link
               to="/"
@@ -85,7 +84,7 @@ const Navbar = () => {
             </Link>
           </div>
 
-          {/* Right: Actions */}
+         
           <div className="hidden md:flex items-center space-x-4">
             <Link to='/ai-assistant'>
             
