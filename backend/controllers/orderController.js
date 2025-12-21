@@ -1,155 +1,18 @@
-import Order from "../models/Order.js";
-import Cart from "../models/Cart.js";
-import Component from "../models/Component.js";
-import Product from "../models/Product.js";
-import User from "../models/User.js";
-import mongoose from "mongoose";
+import * as orderService from "../services/orderService.js";
 
 export const createOrder = async (req, res) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
   try {
-    const {
-      shippingAddress,
-      paymentMethod,
-      shippingPrice,
-      taxPrice,
-      totalPrice,
-    } = req.body;
-
-    const cart = await Cart.findOne({ user: req.user._id })
-      .populate({
-        path: "items.product",
-        populate: {
-          path: "default_config.cpu default_config.gpu default_config.motherboard default_config.ram default_config.storage default_config.case default_config.psu default_config.cooler",
-        },
-      })
-      .session(session);
-
-    if (!cart || cart.items.length === 0) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(400).json({ message: "Cart is empty" });
-    }
-
-    const orderItems = [];
-    const stockToDecrement = {};
-
-    const addToStockMap = (compId, qty) => {
-      if (!compId) return;
-      const id = compId.toString();
-      stockToDecrement[id] = (stockToDecrement[id] || 0) + Number(qty);
-    };
-
-    for (const item of cart.items) {
-      const product = item.product;
-      if (!product || !product.default_config) continue;
-
-      const createSnapshot = (comp) => {
-        if (!comp) return null;
-        return {
-          componentId: comp._id,
-          name: comp.name,
-          price: comp.price,
-          image: comp.images?.[0] || "https://placehold.co/100",
-          specs: comp.specs || {},
-        };
-      };
-
-      const config = product.default_config;
-      const compList = [
-        config.cpu,
-        config.gpu,
-        config.motherboard,
-        config.ram,
-        config.storage,
-        config.case,
-        config.psu,
-        config.cooler,
-      ];
-      compList.forEach((c) => {
-        if (c && c._id) addToStockMap(c._id, item.quantity);
-      });
-
-      orderItems.push({
-        name: product.name,
-        qty: item.quantity,
-        image: product.images?.[0] || "https://placehold.co/100",
-        price: product.base_price,
-        product: product._id,
-        components: {
-          cpu: createSnapshot(config.cpu),
-          gpu: createSnapshot(config.gpu),
-          motherboard: createSnapshot(config.motherboard),
-          ram: createSnapshot(config.ram),
-          storage: createSnapshot(config.storage),
-          case: createSnapshot(config.case),
-          psu: createSnapshot(config.psu),
-          cooler: createSnapshot(config.cooler),
-        },
-      });
-    }
-
-    for (const [compId, totalNeeded] of Object.entries(stockToDecrement)) {
-      const updatedComponent = await Component.findOneAndUpdate(
-        {
-          _id: compId,
-          stock: { $gte: totalNeeded },
-        },
-        { $inc: { stock: -totalNeeded } },
-        { new: true, session }
-      );
-
-      if (!updatedComponent) {
-        throw new Error(
-          `Stock insufficient for component ID: ${compId}. Found while processing.`
-        );
-      }
-    }
-
-    const itemsPrice = orderItems.reduce(
-      (acc, item) => acc + item.price * item.qty,
-      0
+    const order = await orderService.createOrder(
+      req.user._id,
+      req.user,
+      req.body
     );
-
-    const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-    const randomStr = Math.random().toString(36).substring(2, 6).toUpperCase();
-    const orderId = `ORD-${dateStr}-${randomStr}`;
-
-    const order = new Order({
-      user: req.user._id,
-      userName: req.user.name,
-      userEmail: req.user.email,
-      orderId,
-
-      orderItems: orderItems,
-      shippingAddress: {
-        fullName: shippingAddress.fullName,
-        address: shippingAddress.address,
-        city: shippingAddress.city,
-        postalCode: shippingAddress.postalCode,
-        country: shippingAddress.country,
-        phone: shippingAddress.phone,
-      },
-      paymentMethod,
-      itemsPrice,
-      taxPrice,
-      shippingPrice,
-      totalPrice: itemsPrice + shippingPrice + taxPrice,
-    });
-
-    const createdOrder = await order.save({ session });
-
-    cart.items = [];
-    await cart.save({ session });
-
-    await session.commitTransaction();
-    session.endSession();
-
-    res.status(201).json(createdOrder);
+    res.status(201).json(order);
   } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
+    if (error.message === "Cart is empty") {
+      return res.status(400).json({ message: error.message });
+    }
+   
     console.error(error);
     res.status(500).json({
       message: "Order Failed: " + error.message,
@@ -160,30 +23,13 @@ export const createOrder = async (req, res) => {
 
 export const getMyOrders = async (req, res) => {
   try {
-    const { search, page = 1, limit = 5 } = req.query;
-    let query = { user: req.user._id };
-
-    if (search) {
-      query.$or = [
-        { orderId: { $regex: search, $options: "i" } },
-
-        // { "orderItems.name": { $regex: search, $options: "i" } }
-      ];
-    }
-
-    const totalDocument = await Order.countDocuments();
-    const totalPages = Math.ceil(totalDocument / limit);
-
-    const orders = await Order.find(query)
-      .sort({
-        createdAt: -1,
-      })
-      .limit(limit)
-      .skip(limit * (page - 1));
-
-    res
-      .status(200)
-      .json({ orders, pagination: { totalDocument, totalPages, page } });
+    const { search, page, limit } = req.query;
+    const result = await orderService.getUserOrders(req.user._id, {
+      search,
+      page,
+      limit,
+    });
+    res.status(200).json(result);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server Error" });
@@ -192,81 +38,27 @@ export const getMyOrders = async (req, res) => {
 
 export const getOrderById = async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id)
-      .populate("user", "name email")
-      .populate({
-        path: "orderItems.product",
-        select: "name images",
-      });
-
-    if (order) {
-      res.json(order);
-    } else {
-      res.status(404).json({ message: "Order not found" });
-    }
+    const order = await orderService.getOrderById(req.params.id);
+    res.json(order);
   } catch (error) {
     console.error(error);
+    if (error.message === "Order not found") {
+      return res.status(404).json({ message: error.message });
+    }
     res.status(500).json({ message: "Server Error" });
   }
 };
 
 export const getAllOrders = async (req, res) => {
   try {
-    const pageSize = Number(req.query.limit) || 10;
-    const page = Number(req.query.page) || 1;
-
-    const keyword = req.query.search
-      ? {
-          $or: [
-            {
-              _id: mongoose.isValidObjectId(req.query.search)
-                ? req.query.search
-                : null,
-            },
-          ].filter(Boolean),
-        }
-      : {};
-
-    if (req.query.status && req.query.status !== "All") {
-      keyword.status = req.query.status;
-    }
-
-    // if (req.query.search && !keyword.$or?.length) {
-
-    //   const users = await User.find({
-    //     $or: [
-    //       { name: { $regex: req.query.search, $options: "i" } },
-    //       { email: { $regex: req.query.search, $options: "i" } },
-    //     ],
-    //   }).select("_id");
-
-    //   const userIds = users.map((u) => u._id);
-    //   keyword.user = { $in: userIds };
-    // }
-
-    if (req.query.search) {
-      keyword.$or.push({
-        userName: { $regex: req.query.search, $options: "i" },
-      });
-      keyword.$or.push({
-        userEmail: { $regex: req.query.search, $options: "i" },
-      });
-    }
-
-    console.log(keyword);
-    const count = await Order.countDocuments({ ...keyword });
-    const orders = await Order.find({ ...keyword })
-      .populate("user", "id name email")
-      .sort({ createdAt: -1 })
-      .limit(pageSize)
-      .skip(pageSize * (page - 1));
-
-    res.json({
-      orders,
+    const { page, limit, search, status } = req.query;
+    const result = await orderService.getAllOrders({
       page,
-      pages: Math.ceil(count / pageSize),
-      total: count,
+      limit,
+      search,
+      status,
     });
+    res.json(result);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server Error" });
@@ -276,387 +68,122 @@ export const getAllOrders = async (req, res) => {
 export const updateOrderStatus = async (req, res) => {
   try {
     const { status } = req.body;
-    const order = await Order.findById(req.params.id);
-
-    if (!order) {
-      return res.status(404).json({ message: "Order not found" });
-    }
-
-    if (order.status === "Delivered" || order.status === "Cancelled") {
-      return res
-        .status(400)
-        .json({ message: `Cannot change status of a ${order.status} order.` });
-    }
-
-    order.status = status;
-
-    if (status === "Delivered") {
-      order.isDelivered = true;
-      order.deliveredAt = Date.now();
-    }
-
-    if (status === "Paid") {
-      order.isPaid = true;
-      order.paidAt = Date.now();
-    }
-
-    const updatedOrder = await order.save();
+    const updatedOrder = await orderService.updateOrderStatus(
+      req.params.id,
+      status
+    );
     res.json(updatedOrder);
   } catch (error) {
     console.error(error);
+    if (error.message === "Order not found") {
+      return res.status(404).json({ message: error.message });
+    }
+    if (error.message.includes("Cannot change status")) {
+      return res.status(400).json({ message: error.message });
+    }
     res.status(500).json({ message: "Server Error" });
   }
 };
 
 export const cancelOrder = async (req, res) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
   try {
     const { itemId, reason } = req.body;
-    const order = await Order.findById(req.params.id).session(session);
-
-    if (!order) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(404).json({ message: "Order not found" });
-    }
-
-    if (
-      order.status === "Shipped" ||
-      order.status === "Delivered" ||
-      order.status === "Cancelled"
-    ) {
-      await session.abortTransaction();
-      session.endSession();
-      return res
-        .status(400)
-        .json({ message: `Cannot cancel order with status: ${order.status}` });
-    }
-
-    const restoreStock = async (item) => {
-      if (item.status === "Cancelled") return;
-
-      const compList = [
-        item.components.cpu.componentId,
-        item.components.gpu.componentId,
-        item.components.motherboard.componentId,
-        item.components.ram.componentId,
-        item.components.storage.componentId,
-        item.components.case.componentId,
-        item.components.psu.componentId,
-        item.components.cooler.componentId,
-      ];
-
-      for (const compId of compList) {
-        if (compId) {
-          await Component.findByIdAndUpdate(compId, {
-            $inc: { stock: item.qty },
-          }).session(session);
-        }
-      }
-    };
-
-    if (itemId) {
-      const item = order.orderItems.find((i) => i._id.toString() === itemId);
-      if (!item) {
-        await session.abortTransaction();
-        session.endSession();
-        return res.status(404).json({ message: "Item not found in order" });
-      }
-
-      if (item.status === "Cancelled") {
-        await session.abortTransaction();
-        session.endSession();
-        return res.status(400).json({ message: "Item already cancelled" });
-      }
-
-      await restoreStock(item);
-      item.status = "Cancelled";
-      item.cancellationReason = reason;
-
-      const allCancelled = order.orderItems.every(
-        (i) => i.status === "Cancelled"
-      );
-      if (allCancelled) {
-        order.status = "Cancelled";
-        order.cancellationReason = "All items cancelled";
-      }
-    } else {
-      for (const item of order.orderItems) {
-        if (item.status !== "Cancelled") {
-          await restoreStock(item);
-          item.status = "Cancelled";
-          item.cancellationReason = reason;
-        }
-      }
-      order.status = "Cancelled";
-      order.cancellationReason = reason;
-    }
-
-    const updatedOrder = await order.save({ session });
-    await session.commitTransaction();
-    session.endSession();
-
+    const updatedOrder = await orderService.cancelOrder(
+      req.params.id,
+      itemId,
+      reason
+    );
     res.json(updatedOrder);
   } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
     console.error(error);
+    if (
+      error.message === "Order not found" ||
+      error.message === "Item not found in order"
+    ) {
+      return res.status(404).json({ message: error.message });
+    }
+    if (
+      error.message.includes("Cannot cancel") ||
+      error.message === "Item already cancelled"
+    ) {
+      return res.status(400).json({ message: error.message });
+    }
     res.status(500).json({ message: "Server Error: " + error.message });
   }
 };
 
 export const requestReturn = async (req, res) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
   try {
     const { itemId, reason } = req.body;
-    if (!reason) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(400).json({ message: "Return reason is mandatory" });
-    }
-
-    const order = await Order.findById(req.params.id).session(session);
-
-    if (!order) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(404).json({ message: "Order not found" });
-    }
-
-    if (order.status !== "Delivered" && order.status !== "Return Requested") {
-      await session.abortTransaction();
-      session.endSession();
-      return res
-        .status(400)
-        .json({ message: "Can only request return for delivered orders" });
-    }
-
-    if (itemId) {
-      const item = order.orderItems.find((i) => i._id.toString() === itemId);
-      if (!item) {
-        await session.abortTransaction();
-        session.endSession();
-        return res.status(404).json({ message: "Item not found" });
-      }
-
-      if (
-        item.status === "Returned" ||
-        item.status === "Return Requested" ||
-        item.status === "Return Approved"
-      ) {
-        await session.abortTransaction();
-        session.endSession();
-        return res
-          .status(400)
-          .json({ message: "Return already requested or processed for item" });
-      }
-
-      item.status = "Return Requested";
-      item.returnReason = reason;
-
-      const allRequested = order.orderItems.every(
-        (i) =>
-          i.status === "Return Requested" ||
-          i.status === "Cancelled" ||
-          i.status === "Returned"
-      );
-      if (allRequested) {
-        order.status = "Return Requested";
-      }
-    } else {
-      for (const item of order.orderItems) {
-        if (
-          item.status !== "Returned" &&
-          item.status !== "Cancelled" &&
-          item.status !== "Return Requested"
-        ) {
-          item.status = "Return Requested";
-          item.returnReason = reason;
-        }
-      }
-      order.status = "Return Requested";
-      order.returnReason = reason;
-    }
-
-    const updatedOrder = await order.save({ session });
-    await session.commitTransaction();
-    session.endSession();
-
+    const updatedOrder = await orderService.requestReturn(
+      req.params.id,
+      itemId,
+      reason
+    );
     res.json(updatedOrder);
   } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
     console.error(error);
+    if (error.message === "Return reason is mandatory") {
+      return res.status(400).json({ message: error.message });
+    }
+    if (
+      error.message === "Order not found" ||
+      error.message === "Item not found"
+    ) {
+      return res.status(404).json({ message: error.message });
+    }
+    if (
+      error.message === "Can only request return for delivered orders" ||
+      error.message === "Return already requested or processed for item"
+    ) {
+      return res.status(400).json({ message: error.message });
+    }
     res.status(500).json({ message: "Server Error: " + error.message });
   }
 };
 
 export const approveReturn = async (req, res) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
   try {
     const { itemId } = req.body;
-    const order = await Order.findById(req.params.id).session(session);
-
-    if (!order) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(404).json({ message: "Order not found" });
-    }
-
-    const restoreStock = async (item) => {
-      const compList = [
-        item.components.cpu.componentId,
-        item.components.gpu.componentId,
-        item.components.motherboard.componentId,
-        item.components.ram.componentId,
-        item.components.storage.componentId,
-        item.components.case.componentId,
-        item.components.psu.componentId,
-        item.components.cooler.componentId,
-      ];
-
-      for (const compId of compList) {
-        if (compId) {
-          await Component.findByIdAndUpdate(compId, {
-            $inc: { stock: item.qty },
-          }).session(session);
-        }
-      }
-    };
-
-    if (itemId) {
-      const item = order.orderItems.find((i) => i._id.toString() === itemId);
-      if (!item) {
-        await session.abortTransaction();
-        session.endSession();
-        return res.status(404).json({ message: "Item not found" });
-      }
-
-      if (item.status !== "Return Requested") {
-        await session.abortTransaction();
-        session.endSession();
-        return res
-          .status(400)
-          .json({ message: "Item is not in Return Requested state" });
-      }
-
-      await restoreStock(item);
-      item.status = "Return Approved"; 
-
-      const allReturned = order.orderItems.every(
-        (i) => i.status === "Return Approved" || i.status === "Cancelled"
-      );
-      if (allReturned) {
-        order.status = "Return Approved"; 
-        order.isReturned = true;
-      }
-    } else {
-      if (order.status !== "Return Requested") {
-       
-        const hasRequestedItems = order.orderItems.some(
-          (i) => i.status === "Return Requested"
-        );
-        if (!hasRequestedItems) {
-          await session.abortTransaction();
-          session.endSession();
-          return res
-            .status(400)
-            .json({ message: "Order is not in Return Requested state" });
-        }
-      }
-
-      for (const item of order.orderItems) {
-        if (item.status === "Return Requested") {
-          await restoreStock(item);
-          item.status = "Return Approved";
-        }
-      }
- 
-      const allReturned = order.orderItems.every(
-        (i) => i.status === "Return Approved" || i.status === "Cancelled"
-      );
-      if (allReturned) {
-        order.status = "Return Approved";
-        order.isReturned = true;
-      }
-    }
-
-    const updatedOrder = await order.save({ session });
-    await session.commitTransaction();
-    session.endSession();
-
+    const updatedOrder = await orderService.approveReturn(
+      req.params.id,
+      itemId
+    );
     res.json(updatedOrder);
   } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
     console.error(error);
+    if (
+      error.message === "Order not found" ||
+      error.message === "Item not found"
+    ) {
+      return res.status(404).json({ message: error.message });
+    }
+    if (
+      error.message === "Item is not in Return Requested state" ||
+      error.message === "Order is not in Return Requested state"
+    ) {
+      return res.status(400).json({ message: error.message });
+    }
     res.status(500).json({ message: "Server Error: " + error.message });
   }
 };
 
 export const rejectReturn = async (req, res) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
   try {
     const { itemId } = req.body;
-    const order = await Order.findById(req.params.id).session(session);
-
-    if (!order) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(404).json({ message: "Order not found" });
-    }
-
-    if (itemId) {
-      const item = order.orderItems.find((i) => i._id.toString() === itemId);
-      if (!item) {
-        await session.abortTransaction();
-        session.endSession();
-        return res.status(404).json({ message: "Item not found" });
-      }
-
-      if (item.status !== "Return Requested") {
-        await session.abortTransaction();
-        session.endSession();
-        return res
-          .status(400)
-          .json({ message: "Item is not in Return Requested state" });
-      }
-
-      item.status = "Return Rejected";
-      
-      if (order.status === "Return Requested") {
-        const otherRequested = order.orderItems.some(
-          (i) => i.status === "Return Requested" && i._id.toString() !== itemId
-        );
-        if (!otherRequested) {
-          order.status = "Delivered"; 
-        }
-      }
-    } else {
-     
-      for (const item of order.orderItems) {
-        if (item.status === "Return Requested") {
-          item.status = "Return Rejected";
-        }
-      }
-      if (order.status === "Return Requested") {
-        order.status = "Delivered";
-      }
-    }
-
-    const updatedOrder = await order.save({ session });
-    await session.commitTransaction();
-    session.endSession();
-
+    const updatedOrder = await orderService.rejectReturn(req.params.id, itemId);
     res.json(updatedOrder);
   } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
     console.error(error);
+    if (
+      error.message === "Order not found" ||
+      error.message === "Item not found"
+    ) {
+      return res.status(404).json({ message: error.message });
+    }
+    if (error.message === "Item is not in Return Requested state") {
+      return res.status(400).json({ message: error.message });
+    }
     res.status(500).json({ message: "Server Error: " + error.message });
   }
 };

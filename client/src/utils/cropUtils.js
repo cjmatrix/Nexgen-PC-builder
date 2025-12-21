@@ -16,11 +16,11 @@ export default async function getCroppedImg(imageSrc, pixelCrop) {
     return null;
   }
 
-  // Set canvas size to match the cropped area
+
   canvas.width = pixelCrop.width;
   canvas.height = pixelCrop.height;
 
-  // Draw the cropped image onto the canvas
+
   ctx.drawImage(
     image,
     pixelCrop.x,
@@ -33,7 +33,7 @@ export default async function getCroppedImg(imageSrc, pixelCrop) {
     pixelCrop.height
   );
 
-  // Convert canvas to Blob (file)
+
   return new Promise((resolve, reject) => {
     canvas.toBlob((blob) => {
       if (!blob) {
