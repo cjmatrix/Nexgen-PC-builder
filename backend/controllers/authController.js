@@ -24,15 +24,17 @@ const register = async (req, res) => {
   }
 };
 
+
+
 const verifyOTP = async (req, res) => {
   try {
     const { email, otp } = req.body;
-    const { user, accessToken, refreshToken } = await authService.verifyOTP(
+    const { user} = await authService.verifyOTP(
       email,
       otp
     );
 
-    setCookies(res, accessToken, refreshToken);
+    // setCookies(res, accessToken, refreshToken);
 
     res.status(200).json({
       _id: user._id,

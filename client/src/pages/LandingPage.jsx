@@ -91,12 +91,12 @@ const LandingPage = () => {
     >
       <Navbar />
 
-      {/* Hero Section */}
+
       <div
         ref={heroRef}
         className="relative h-screen flex items-center justify-center overflow-hidden"
       >
-        {/* Background Image with Overlay */}
+ 
         <div
           className="absolute inset-0 z-0"
           style={{
@@ -106,11 +106,7 @@ const LandingPage = () => {
             backgroundPosition: "center",
           }}
         >
-          {/* Light overlay for better text contrast/readability on light theme, or keep dark if text is white?
-              User wants "white theme". Usually this means background is white.
-              If hero has image, overlay should be white-ish if we want dark text, or we keep hero dark.
-              Let's make overlay white-ish and text dark for "white theme" fidelity.
-           */}
+          
           <div className="absolute inset-0 bg-gradient-to-b from-white/90 via-white/70 to-gray-50 z-10"></div>
         </div>
 
@@ -152,7 +148,7 @@ const LandingPage = () => {
         </div>
       </div>
 
-      {/* The Nexgen Advantage Section */}
+
       <section ref={featuresRef} className="py-24 bg-gray-50 relative">
         <div className="container mx-auto px-4">
           <div className="text-center mb-20">
@@ -190,7 +186,7 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Build Categories */}
+
       <section ref={categoriesRef} className="py-24 bg-white">
         <div className="container mx-auto px-4">
           <div className="mb-16">
@@ -231,7 +227,7 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* How It Works */}
+
       <section
         ref={howItWorksRef}
         className="py-24 bg-gray-50 border-t border-gray-200"
@@ -242,7 +238,7 @@ const LandingPage = () => {
           </div>
 
           <div className="flex flex-col md:flex-row justify-between items-center relative space-y-12 md:space-y-0">
-            {/* Connecting Line (Desktop) */}
+
             <div className="hidden md:block absolute top-1/2 left-0 w-full h-1 bg-gray-200 -translate-y-1/2 z-0"></div>
 
             <StepItem
@@ -273,7 +269,6 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* CTA Footer-ish */}
       <section className="py-20 relative overflow-hidden bg-white">
         <div className="absolute inset-0 bg-blue-50/50"></div>
         <div className="container mx-auto px-4 text-center relative z-10">
@@ -298,7 +293,7 @@ const LandingPage = () => {
   );
 };
 
-// Sub-components
+
 const FeatureCard = ({ icon, title, desc }) => (
   <div className="feature-card p-8 rounded-2xl bg-white border border-gray-100 shadow-lg hover:shadow-xl hover:border-blue-100 transition-all duration-300">
     <div className="mb-6 bg-gray-50 w-16 h-16 rounded-2xl flex items-center justify-center">

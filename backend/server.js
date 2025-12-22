@@ -41,7 +41,7 @@ app.use("/api/v1/products", productRoutes);
 app.use("/api/v1/cart", cartRoutes);
 app.use("/api/v1/orders", orderRoutes);
 app.use("/api/v1/ai", aiRoutes);
-// app.use("api/v1/attributes")
+
 app.use("/api/v1/user", userRoutes);
 
 const connectDB = async () => {

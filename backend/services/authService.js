@@ -37,10 +37,12 @@ const registerUser = async (userData) => {
   let user = await User.findOne({ email });
   if (user) {
     if (!user.isVerified) {
+
     } else {
       throw new Error("User already exists");
     }
   }
+//x+10
 
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   const otpExpires = Date.now() + 10 * 60 * 1000;
@@ -85,10 +87,11 @@ const verifyOTP = async (email, otp) => {
     throw new Error("User not found");
   }
 
+  console.log(user)
   if (!user.otp || !user.otpExpires) {
     throw new Error("No OTP found");
   }
-
+  console.log(user)
   if (user.otp !== otp) {
     throw new Error("Invalid OTP");
   }
@@ -109,8 +112,8 @@ const verifyOTP = async (email, otp) => {
   user.otpExpires = undefined;
   await user.save();
 
-  const tokens = await generateTokens(user._id);
-  return { user, ...tokens };
+  // const tokens = await generateTokens(user._id);
+  return { user };
 };
 
 const resendOTP = async (email) => {

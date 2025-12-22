@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import api from "../../api/axios";
 import { fetchCart } from "../../store/slices/cartSlice";
-import AddAddressModal from "./user profile/components/AddAddressModal"; // Adjust path if needed
+import AddAddressModal from "./user profile/components/AddAddressModal"; 
 
 const Checkout = () => {
   const dispatch = useDispatch();
@@ -176,7 +176,7 @@ const Checkout = () => {
     </div>
   );
 
-  // Step 2: Order Summary
+
   const renderStep2 = () => (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       {/* Left: Items Review */}
@@ -234,7 +234,7 @@ const Checkout = () => {
         </div>
       </div>
 
-      {/* Right: Payment & Total */}
+  
       <div className="lg:col-span-1">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 sticky top-24">
           <h2 className="text-lg font-bold text-gray-900 mb-6">
@@ -296,7 +296,7 @@ const Checkout = () => {
     </div>
   );
 
-  // Step 3
+
   const renderStep3 = () => (
     <div className="max-w-xl mx-auto text-center pt-12 pb-20">
       <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -317,12 +317,7 @@ const Checkout = () => {
         >
           Continue Shopping
         </Link>
-        {/* 
-               // Future Implementation
-               <Link to="/orders" className="border border-gray-300 text-gray-700 px-8 py-3 rounded-lg font-bold hover:bg-gray-50 transition-colors">
-                  View Order
-               </Link> 
-               */}
+    
       </div>
     </div>
   );
@@ -330,7 +325,7 @@ const Checkout = () => {
   return (
     <div className="min-h-screen bg-gray-50 pt-24 pb-12 px-4 sm:px-6 lg:px-8 font-sans">
       <div className="max-w-7xl mx-auto">
-        {/* Steps Indicator */}
+      
         {step < 3 && (
           <div className="flex justify-center mb-12">
             <div className="flex items-center">

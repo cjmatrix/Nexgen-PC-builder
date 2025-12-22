@@ -152,7 +152,7 @@ const authSlice = createSlice({
       .addCase(verifyOTP.fulfilled, (state, action) => {
         state.isLoading = false;
         state.isSuccess = true;
-        state.user = action.payload;
+        state.user = null; 
       })
       .addCase(verifyOTP.rejected, (state, action) => {
         state.isLoading = false;

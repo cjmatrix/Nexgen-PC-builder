@@ -28,7 +28,7 @@ const ProductManagement = () => {
   const [category, setCategory] = useState("");
   const [page, setPage] = useState(1);
 
-  const { data: categories = [] } = useQuery({
+  const { data } = useQuery({
     queryKey: ["adminCategory"],
     queryFn: async () => {
       const response = await api.get("/admin/category");
@@ -64,7 +64,7 @@ const ProductManagement = () => {
     );
   };
 
-  const statusList = categories.map((category) => {
+  const statusList = data?.categories.map((category) => {
     return (
       <option key={category._id} value={category.name}>
         {category.name}

@@ -1,5 +1,7 @@
 import * as cartService from "../services/cartService.js";
 
+const MAX_QTY_PER_PRODUCT=5;
+
 export const getCart = async (req, res) => {
   try {
     const result = await cartService.getCart(req.user._id);
@@ -13,6 +15,13 @@ export const getCart = async (req, res) => {
 export const addToCart = async (req, res) => {
   try {
     const { productId, quantity } = req.body;
+
+    if (quantity > MAX_QTY_PER_PRODUCT) {
+       return res.status(400).json({ 
+         message: `You cannot add more than ${MAX_QTY_PER_PRODUCT} of this item.` 
+       });
+    }
+
     const result = await cartService.addToCart(
       req.user._id,
       productId,
@@ -27,7 +36,7 @@ export const addToCart = async (req, res) => {
     if (error.message.includes("Stock Limit Exceeded")) {
       return res.status(400).json({ success: false, message: error.message });
     }
-    res.status(500).json({ success: false, message: "Server Error" });
+    res.status(500).json({ success: false, message: error.message});
   }
 };
 
@@ -68,7 +77,7 @@ export const updateQuantity = async (req, res) => {
     if (error.message.includes("Stock Limit Exceeded")) {
       return res.status(400).json({ success: false, message: error.message });
     }
-    res.status(500).json({ success: false, message: "Server Error" });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 

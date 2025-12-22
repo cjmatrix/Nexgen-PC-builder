@@ -2,6 +2,8 @@ import Cart from "../models/Cart.js";
 import Product from "../models/Product.js";
 import Component from "../models/Component.js";
 
+const MAX_QTY_PER_PRODUCT=5;
+
 const calculateSummary = (items) => {
   const subtotal = items.reduce(
     (sum, item) =>
@@ -133,6 +135,10 @@ export const addToCart = async (userId, productId, quantity = 1) => {
   );
 
   if (itemIndex > -1) {
+    if((cart.items[itemIndex].quantity+1)>MAX_QTY_PER_PRODUCT){
+      throw new Error(`Limit reached: Maximum ${MAX_QTY_PER_PRODUCT} items allowed per product.`)
+    }
+
     cart.items[itemIndex].quantity += quantity;
   } else {
     cart.items.push({ product: productId, quantity });
@@ -168,6 +174,9 @@ export const updateQuantity = async (userId, productId, quantity) => {
     throw new Error("Quantity must be at least 1");
   }
 
+  if(quantity>MAX_QTY_PER_PRODUCT){
+    throw new Error(`Limit reached: Maximum ${MAX_QTY_PER_PRODUCT} items allowed per product.`)
+  }
 
   const cartForValidation = await Cart.findOne({ user: userId }).populate({
     path: "items.product",

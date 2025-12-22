@@ -282,7 +282,7 @@ const AddProductForm = () => {
   };
 
   const {
-    data: categories = [],
+    data,
     isLoading,
     error,
   } = useQuery({
@@ -294,9 +294,33 @@ const AddProductForm = () => {
     },
   });
 
+    if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600 mb-4"></div>
+        <p className="text-gray-600 font-medium">Loading Product Details...</p>
+      </div>
+    );
+  }
+ 
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 text-red-500">
+        Error loading data. Please try again.
+      </div>
+    );
+  }
+
+
+
   useEffect(() => {
-    if (categories && !isEditMode) setValue("category", "Gaming");
-  }, [categories, isEditMode]);
+    if (data.categories && !isEditMode) setValue("category", "Gaming");
+  }, [data.categories, isEditMode]);
+
+
+
+
+
   return (
     <div className="min-h-screen bg-gray-50 pt-10 pb-12 px-4 sm:px-6 lg:px-8 font-sans">
       <CustomModal
@@ -359,12 +383,12 @@ const AddProductForm = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Category
                     </label>
-                    {categories && (
+                    {data?.categories && (
                       <select
                         className="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                         {...register("category")}
                       >
-                        {categories.map((category) => {
+                        {data.categories.map((category) => {
                           return (
                             <option value={category.name} key={category._id}>
                               {category.name}

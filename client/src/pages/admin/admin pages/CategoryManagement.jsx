@@ -5,7 +5,8 @@ import { Edit, Trash2, Plus, Search } from "lucide-react";
 import api from "../../../api/axios";
 import { RefreshCcw } from "lucide-react";
 import CustomModal from "../../../components/CustomModal";
-
+import Pagination from "../../../components/Pagination";
+import { ChevronDown } from "lucide-react";
 const CategoryManagement = () => {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
@@ -16,25 +17,33 @@ const CategoryManagement = () => {
     type: "info",
     onConfirm: null,
   });
+  
 
+  const [status,setStatus]=useState("");
+  const [page,setPage]=useState(1)
   const closeModal = () => {
     setModal((prev) => ({ ...prev, isOpen: false }));
   };
 
   const [searchInput, setSearchInput] = useState("");
 
+  console.log(status)
   const {
-    data: categories = [],
+    data,
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["adminCategory", searchInput],
+    queryKey: ["adminCategory", searchInput,page,status],
     queryFn: async () => {
       const response = await api.get("/admin/category", {
         params: {
           search: searchInput,
+          page,
+          limit:3,
+          status
         },
       });
+      console.log(response.data)
       return response.data;
     },
   });
@@ -101,7 +110,7 @@ const CategoryManagement = () => {
         </Link>
       </div>
 
-      <div className="bg-white p-4 rounded-xl shadow-sm mb-6 max-w-md">
+      <div className="flex bg-white p-4 rounded-xl shadow-sm mb-6 w-full justify-between">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
@@ -112,6 +121,17 @@ const CategoryManagement = () => {
             className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-blue-100 focus:bg-white transition-all outline-none"
           />
         </div>
+         <div className="relative">
+                    <select
+                      onChange={(e) => setStatus(e.target.value)}
+                      className="appearance-none bg-white border border-gray-200 text-gray-700 py-2.5 pl-4 pr-10 rounded-lg text-sm focus:outline-none focus:border-blue-500 cursor-pointer"
+                    >
+                      <option value="">Status All</option>
+                      <option value="Active">Active</option>
+                      <option value="Inactive">Inactive</option>
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  </div>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
@@ -132,14 +152,14 @@ const CategoryManagement = () => {
                     Loading...
                   </td>
                 </tr>
-              ) : categories.length === 0 ? (
+              ) : data.categories.length === 0 ? (
                 <tr>
                   <td colSpan="4" className="p-8 text-center text-gray-500">
                     No categories found.
                   </td>
                 </tr>
               ) : (
-                categories.map((category) => (
+                data?.categories.map((category) => (
                   <tr
                     key={category._id}
                     className={`hover:bg-gray-50/80 transition-colors group ${
@@ -194,6 +214,7 @@ const CategoryManagement = () => {
           </table>
         </div>
       </div>
+      <Pagination pagination={data?.pagination} page={page} setPage={setPage}></Pagination>
     </div>
   );
 };

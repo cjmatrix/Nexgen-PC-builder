@@ -76,23 +76,12 @@ const Signup = () => {
     return () => clearInterval(interval);
   }, [step, timer]);
 
-  useEffect(() => {
-    if (isError) {
-      alert(message);
-      dispatch(reset());
-    }
 
-    if (isSuccess) {
-      if (step === 1) {
-        setStep(2);
-        setTimer(60);
-        setCanResend(false);
-        dispatch(reset());
-      } else if (step === 2 && user) {
-        navigate("/dashboard");
-      }
-    }
-  }, [user, isError, isSuccess, message, navigate, dispatch, step]);
+  useEffect(() => {
+    return () => {
+      dispatch(reset());
+    };
+  }, [dispatch]);
 
   useEffect(() => {
     const otpString = otpValues.join("");
@@ -106,7 +95,18 @@ const Signup = () => {
       email: data.email,
       password: data.password,
     };
-    dispatch(registerUser(userData));
+    dispatch(registerUser(userData))
+      .unwrap()
+      .then(() => {
+        setStep(2);
+        setTimer(60);
+        setCanResend(false);
+        dispatch(reset());
+      })
+      .catch((error) => {
+        alert(error || "Registration failed");
+        dispatch(reset());
+      });
   };
 
   const onOtpSubmit = (data) => {
@@ -114,7 +114,16 @@ const Signup = () => {
       alert("Please enter a valid 6-digit OTP");
       return;
     }
-    dispatch(verifyOTP({ email: emailForOtp, otp: data.otp }));
+    dispatch(verifyOTP({ email: emailForOtp, otp: data.otp }))
+      .unwrap()
+      .then(() => {
+        navigate("/login");
+        dispatch(reset());
+      })
+      .catch((error) => {
+        alert(error || "Verification failed");
+        dispatch(reset());
+      });
   };
 
   const onResend = () => {

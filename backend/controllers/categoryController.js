@@ -3,14 +3,29 @@ import Category from "../models/Category.js";
 export const getCategories = async (req, res) => {
   try {
 
-    const {search}=req.query;
+    const {search,page,limit,status}=req.query;
+    
+    console.log(page)
     let query={}
     if(search){
       query.name={$regex:search,$options:"i"}
     }
+
+    if(status){
+      query.isActive=status==="Active"?true:false
+    }
+
     
-    const categories = await Category.find(query).sort({ createdAt: -1 });
-    res.json(categories);
+
+
+    const categories = await Category.find(query).sort({ createdAt: -1 }).limit(limit).skip(limit*(page-1));
+    const totaldocs=await Category.countDocuments(query);
+    const totalPages= Math.ceil(totaldocs/limit);
+
+    res.json({categories,pagination:{
+      totalPages,
+      page
+    }});
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
