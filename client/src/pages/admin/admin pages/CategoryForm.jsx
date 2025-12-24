@@ -33,6 +33,7 @@ const CategoryForm = () => {
   } = useForm({
     defaultValues: {
       name: "",
+      offer: 0,
     },
   });
 
@@ -48,7 +49,10 @@ const CategoryForm = () => {
   });
 
   useEffect(() => {
-    if (data) setValue("name", data.name);
+    if (data) {
+      setValue("name", data.name);
+      setValue("offer", data.offer || 0);
+    }
   }, [data]);
 
   const createMutation = useMutation({
@@ -129,24 +133,51 @@ const CategoryForm = () => {
         <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Category Name
-              </label>
-              <input
-                type="text"
-                className={`w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.name ? "border-red-500" : "border-gray-300"
-                }`}
-                placeholder="e.g. Gaming, Office"
-                {...register("name", {
-                  required: "Category Name is required",
-                })}
-              />
-              {errors.name && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors.name.message}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Category Name
+                </label>
+                <input
+                  type="text"
+                  className={`w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500 ${
+                    errors.name ? "border-red-500" : "border-gray-300"
+                  }`}
+                  placeholder="e.g. Gaming, Office"
+                  {...register("name", {
+                    required: "Category Name is required",
+                  })}
+                />
+                {errors.name && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.name.message}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Category Offer (%)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="99"
+                  className="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500 border-gray-300"
+                  placeholder="e.g. 10"
+                  {...register("offer", {
+                    min: { value: 0, message: "Minimum 0%" },
+                    max: { value: 99, message: "Maximum 99%" },
+                  })}
+                />
+                {errors.offer && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.offer.message}
+                  </p>
+                )}
+                <p className="text-xs text-gray-500 mt-1">
+                  This offer will apply to all products in this category unless
+                  the product has a higher individual discount.
                 </p>
-              )}
+              </div>
             </div>
 
             <button

@@ -227,7 +227,7 @@ const UserOrderDetails = ({ isOpen, onClose, order }) => {
                   setIsItemDetailsOpen(true);
                 }}
               >
-                <div className="w-20 h-20 bg-gray-100 rounded-lg flex-shrink-0 flex items-center justify-center relative overflow-hidden">
+                <div className="w-20 h-20 bg-gray-100 rounded-lg shrink-0 flex items-center justify-center relative overflow-hidden">
                   <img
                     src={item.image}
                     alt={item.name}
@@ -366,7 +366,7 @@ const UserOrderDetails = ({ isOpen, onClose, order }) => {
       </div>
 
       {isActionModalOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4">
           <div className="absolute inset-0" onClick={handleCloseAction}></div>
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 relative animate-in zoom-in-95 duration-200 border border-gray-100">
             <h3 className="text-lg font-bold text-gray-900 mb-2 capitalize">

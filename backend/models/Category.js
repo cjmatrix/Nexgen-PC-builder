@@ -8,6 +8,12 @@ const categorySchema = new mongoose.Schema(
       unique: true,
       trim: true,
     },
+    offer: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 99,
+    },
     isActive: {
       type: Boolean,
       default: true,

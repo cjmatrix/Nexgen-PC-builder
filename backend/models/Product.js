@@ -34,9 +34,18 @@ const productSchema = new mongoose.Schema(
       type: Number,
       default: 0,
       min: 0,
-      max: 99, 
+      max: 99,
     },
-
+    final_price: {
+      type: Number,
+      default: 0,
+    },
+    applied_offer: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 99,
+    },
     images: [
       {
         type: String,
@@ -114,10 +123,16 @@ const productSchema = new mongoose.Schema(
 );
 
 productSchema.pre("save", function () {
-  if (!this.isModified("name")) {
-    return;
+  if (this.isModified("base_price") || this.isModified("discount") ||this.isModified("applied_offer")) {
+    const price = this.base_price || 0;
+    const applied_offer = this.applied_offer || 0;
+    this.final_price = Math.round(price * (1 - applied_offer / 100));
   }
-  this.slug = this.name.toLowerCase().split(" ").join("-");
+
+  if (this.isModified("name")) {
+    this.slug = this.name.toLowerCase().split(" ").join("-");
+  }
+
 });
 
 export default mongoose.model("Product", productSchema);

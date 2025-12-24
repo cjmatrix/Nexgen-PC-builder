@@ -336,12 +336,39 @@ const OrderDetailsModal = ({ isOpen, onClose, order: initialOrder }) => {
                         <h4 className="font-bold text-gray-900 text-lg">
                           {item.name}
                         </h4>
-                        <p className="font-bold text-gray-900 text-lg">
-                          ₹{(item.price * item.qty).toLocaleString()}
-                        </p>
+                        <div className="text-right">
+                          <p className="font-bold text-gray-900 text-lg">
+                            ₹
+                            {(
+                              (item.price *
+                                item.qty *
+                                (1 - (item.discount || 0) / 100)) /
+                              100
+                            ).toLocaleString()}
+                          </p>
+                        </div>
                       </div>
                       <p className="text-sm text-gray-500 mb-4">
-                        Qty: {item.qty} | Price: ₹{item.price.toLocaleString()}
+                        Qty: {item.qty} | Price:{" "}
+                        {item.discount > 0 ? (
+                          <span>
+                            <span className="line-through mr-1 text-gray-400">
+                              ₹{(item.price / 100).toLocaleString()}
+                            </span>
+                            <span className="text-green-600 font-bold">
+                              ₹
+                              {(
+                                (item.price * (1 - item.discount / 100)) /
+                                100
+                              ).toLocaleString()}
+                            </span>{" "}
+                            <span className="ml-1 text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">
+                              {item.discount}% OFF
+                            </span>
+                          </span>
+                        ) : (
+                          <span>₹{(item.price / 100).toLocaleString()}</span>
+                        )}
                       </p>
                     </div>
 

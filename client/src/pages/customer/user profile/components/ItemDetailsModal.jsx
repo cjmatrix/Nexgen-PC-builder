@@ -203,7 +203,13 @@ const ItemDetailsModal = ({ isOpen, onClose, item, order }) => {
                   <div className="flex p-4 bg-gray-50 border-t border-gray-200 justify-between items-center">
                     <span className="font-bold text-gray-900">Item Total</span>
                     <span className="font-bold text-lg text-gray-900">
-                      {formatPrice(item.price * item.qty)}
+                      {formatPrice(
+                        
+                          (item.price *
+                            item.qty *
+                            (1 - (item.discount || 0) / 100)) /
+                          100
+                        )}
                     </span>
                   </div>
                 </div>

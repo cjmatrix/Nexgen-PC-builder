@@ -1,9 +1,23 @@
 import Product from "../models/Product.js";
+import Category from "../models/Category.js";
 
 const createProduct = async (productData) => {
   if (!productData.slug) {
     productData.slug = productData.name.toLowerCase().split(" ").join("-");
   }
+
+
+  productData.discount =productData.discount!==undefined?productData.discount:0
+  const category=await Category.findOne({name:productData.category})
+  if(!category)
+    throw new Error('Unmatched category')
+
+  if(productData.discount>category.offer){
+    productData.applied_offer=productData.discount
+  }else {
+    productData.applied_offer = category.offer;
+  }
+
   const product = await Product.create(productData);
   return product;
 };
@@ -52,11 +66,11 @@ const getPublicProducts = async ({ page, limit, search, category, sort }) => {
 
   if (sort) {
     if (sort === "price_asc") {
-      sortLogic = { base_price: 1 };
+      sortLogic = { final_price: 1 };
     }
 
     if (sort === "price_desc") {
-      sortLogic = { base_price: -1 };
+      sortLogic = { final_price: -1 };
     }
   }
 
@@ -76,6 +90,13 @@ const getPublicProducts = async ({ page, limit, search, category, sort }) => {
     .limit(limit)
     .skip((page - 1) * limit);
 
+  // const items=await Product.find({})
+
+  // for(let item of items){
+  //   item.applied_offer=0;
+  //   await item.save()
+  // }
+
   return {
     products,
     total,
@@ -84,13 +105,11 @@ const getPublicProducts = async ({ page, limit, search, category, sort }) => {
   };
 };
 
-const getProductById = async (req,id) => {
-
-  let query={_id:id};
-  if(req.user.role==='customer'){
-    query.isActive=true;
+const getProductById = async (req, id) => {
+  let query = { _id: id };
+  if (req.user.role === "customer") {
+    query.isActive = true;
   }
- 
 
   const product = await Product.findOne(query).populate([
     { path: "default_config.cpu" },
@@ -108,16 +127,37 @@ const getProductById = async (req,id) => {
 };
 
 const updateProduct = async (id, updateData) => {
+  const product = await Product.findById(id);
+
+  if (!product) throw new Error("Product not found");
+
   if (updateData.name && !updateData.slug) {
     updateData.slug = updateData.name.toLowerCase().split(" ").join("-");
   }
 
-  const product = await Product.findByIdAndUpdate(id, updateData, {
-    new: true,
-    runValidators: true,
+  const category = await Category.findOne({ name: updateData.category || product.category});
+  
+  if (!category) throw new Error("Category not found");
+
+
+  updateData.discount =
+    updateData.discount !== undefined ? updateData.discount : product.discount;
+
+  if (updateData.discount > category.offer) {
+    product.applied_offer = updateData.discount;
+  } else {
+    product.applied_offer = category.offer;
+  }
+
+  console.log(updateData.applied_offer);
+
+  Object.keys(updateData).forEach((key) => {
+    if (key !== "applied_offer") {
+      product[key] = updateData[key];
+    }
   });
 
-  if (!product) throw new Error("Product not found");
+  await product.save();
   return product;
 };
 
