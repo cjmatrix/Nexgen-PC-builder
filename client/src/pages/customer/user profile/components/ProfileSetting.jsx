@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../../../../api/axios";
 import AddAddressModal from "./AddAddressModal";
 import ChangePasswordModal from "./ChangePasswordModal";
+import CustomModal from "../../../../components/CustomModal";
 
 const OTPModal = ({ isOpen, onClose, onVerify, email, onResend }) => {
   const [otp, setOtp] = useState("");
@@ -33,7 +34,7 @@ const OTPModal = ({ isOpen, onClose, onVerify, email, onResend }) => {
   };
 
   const handleResend = async () => {
-    setTimer(30); // Reset timer
+    setTimer(30);
     setIsVerifying(true);
     try {
       await onResend(otp);
@@ -107,6 +108,14 @@ const ProfileSetting = () => {
   const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] =
     useState(false);
   const [pendingEmail, setPendingEmail] = useState("");
+  const [modal, setModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "info",
+    onConfirm: null,
+  });
+
   const queryClient = useQueryClient();
   const {
     register,
@@ -132,26 +141,6 @@ const ProfileSetting = () => {
     setIsAddressModalOpen(false);
   };
 
-  // useEffect(() => {
-  //   const fetchProfile = async () => {
-  //     try {
-  //      const response= await api.get('/user/profile');
-  //      const userData = response.data.profile
-  //      setProfile(userData);
-  //         reset({
-  //           fullName:userData.name,
-  //           email:userData.email
-  //         })
-
-  //     }
-  //      catch (error) {
-  //       console.error("Failed to fetch profile", error);
-  //     }
-  //   };
-
-  //   fetchProfile();
-  // }, [reset]);
-
   const {
     data: profile,
     isLoading,
@@ -168,7 +157,7 @@ const ProfileSetting = () => {
       return response.data.profile;
     },
   });
-  // Profile Update Mutation
+
   const updateProfileMutation = useMutation({
     mutationFn: async (data) => {
       const response = await api.put("/user/profile", data);
@@ -180,12 +169,22 @@ const ProfileSetting = () => {
         console.log(data.user.email);
       } else {
         queryClient.invalidateQueries(["userProfile"]);
-        alert("Profile updated successfully");
+        setModal({
+          isOpen: true,
+          title: "Success",
+          message: "Profile updated successfully",
+          type: "success",
+        });
       }
     },
     onError: (error) => {
       console.error("Update failed:", error);
-      alert(error.response?.data?.message || "Failed to update profile");
+      setModal({
+        isOpen: true,
+        title: "Update Failed",
+        message: error.response?.data?.message || "Failed to update profile",
+        type: "error",
+      });
     },
   });
 
@@ -200,11 +199,21 @@ const ProfileSetting = () => {
     onSuccess: () => {
       setIsOTPModalOpen(false);
       queryClient.invalidateQueries(["userProfile"]);
-      alert("Email verified successfully");
+      setModal({
+        isOpen: true,
+        title: "Verified",
+        message: "Email verified successfully",
+        type: "success",
+      });
     },
     onError: (error) => {
       console.error("Verification failed:", error);
-      alert(error.response?.data?.message || "Invalid OTP");
+      setModal({
+        isOpen: true,
+        title: "Verification Failed",
+        message: error.response?.data?.message || "Invalid OTP",
+        type: "error",
+      });
     },
   });
 
@@ -212,12 +221,23 @@ const ProfileSetting = () => {
     mutationFn: async () => {
       await api.post("/auth/resend-otp", { email: pendingEmail });
     },
-    onSuccess: () => alert("OTP resent successfully"),
-    onError: (err) => alert(err.message),
+    onSuccess: () =>
+      setModal({
+        isOpen: true,
+        title: "Sent",
+        message: "OTP resent successfully",
+        type: "success",
+      }),
+    onError: (err) =>
+      setModal({
+        isOpen: true,
+        title: "Error",
+        message: err.message,
+        type: "error",
+      }),
   });
 
   const onSubmitPersonalInfo = (data) => {
-    // Map fullName to name for backend
     const payload = {
       ...data,
       name: data.fullName,
@@ -240,35 +260,63 @@ const ProfileSetting = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(["userAddresses"]);
-      alert("Address deleted successfully");
+      setModal({
+        isOpen: true,
+        title: "Deleted",
+        message: "Address deleted successfully",
+        type: "success",
+      });
     },
     onError: (error) => {
       console.error("Delete failed:", error);
-      alert(error.response?.data?.message || "Failed to delete address");
+      setModal({
+        isOpen: true,
+        title: "Error",
+        message: error.response?.data?.message || "Failed to delete address",
+        type: "error",
+      });
     },
   });
 
   const handleDeleteAddress = (id) => {
-    if (window.confirm("Are you sure you want to delete this address?")) {
-      deleteAddressMutation.mutate(id);
+    setModal({
+      isOpen: true,
+      title: "Confirm Deletion",
+      message: "Are you sure you want to delete this address?",
+      type: "confirmation",
+      onConfirm: () => deleteAddressMutation.mutate(id),
+    });
+  };
+
+  const closeModal = () => {
+    setModal((prev) => ({ ...prev, isOpen: false }));
+    if (modal.onConfirm && modal.type !== "confirmation") {
+      modal.onConfirm();
     }
   };
+
   return (
     <div className="bg-gray-100 min-h-screen p-8 font-sans">
+      <CustomModal
+        isOpen={modal.isOpen}
+        onClose={closeModal}
+        onConfirm={modal.onConfirm}
+        title={modal.title}
+        message={modal.message}
+        type={modal.type}
+      />
       <div className="max-w-5xl mx-auto">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">
           Account Settings
         </h1>
 
         <div className="space-y-8">
-          {/* --- Personal Information Section --- */}
           <section className="bg-white p-8 rounded-xl shadow-sm">
             <h2 className="text-xl font-semibold text-gray-900 mb-6">
               Personal Information
             </h2>
             <form onSubmit={handleSubmit(onSubmitPersonalInfo)}>
               <div className="space-y-6">
-                {/* Full Name Field */}
                 <div>
                   <label
                     htmlFor="fullName"
@@ -279,7 +327,6 @@ const ProfileSetting = () => {
                   <input
                     id="fullName"
                     type="text"
-                    // Register the field with useForm and add validation rules.
                     {...register("fullName", {
                       required: "Full Name is required",
                     })}
@@ -294,7 +341,6 @@ const ProfileSetting = () => {
                   )}
                 </div>
 
-                {/* Email Address Field */}
                 <div>
                   <label
                     htmlFor="email"
@@ -305,7 +351,6 @@ const ProfileSetting = () => {
                   <input
                     id="email"
                     type="email"
-                    // Register with email pattern validation.
                     {...register("email", {
                       required: "Email is required",
                       pattern: {
@@ -325,7 +370,6 @@ const ProfileSetting = () => {
                 </div>
               </div>
 
-              {/* Save Changes Button */}
               <div className="mt-8">
                 <button
                   type="submit"
@@ -337,7 +381,6 @@ const ProfileSetting = () => {
             </form>
           </section>
 
-          {/* --- Login & Security Section --- */}
           <section className="bg-white p-8 rounded-xl shadow-sm flex justify-between items-center">
             <div>
               <h2 className="text-xl font-semibold text-gray-900 mb-2">
@@ -361,7 +404,6 @@ const ProfileSetting = () => {
             </button>
           </section>
 
-          {/* --- Saved Addresses Section --- */}
           <section className="bg-white p-8 rounded-xl shadow-sm">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-semibold text-gray-900">
@@ -375,7 +417,6 @@ const ProfileSetting = () => {
               </button>
             </div>
 
-            {/* List of Saved Addresses */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {isAddressLoading ? (
                 <p>Loading addresses...</p>

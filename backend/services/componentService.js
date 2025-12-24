@@ -48,7 +48,7 @@ const deleteComponent = async (userId) => {
 
   component.isActive = component.isActive ? false : true;
 
-  component.save();
+  await component.save();
 
   return component;
 };

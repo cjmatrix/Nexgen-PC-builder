@@ -121,7 +121,7 @@ const ProductManagement = () => {
         </div>
         <select
           className="border rounded-lg px-4 py-2 outline-none"
-          onChange={(e) => setCategory(e.target.value)}
+          onChange={(e) =>{ setCategory(e.target.value);setPage(1);}}
         >
           <option value="">All Categories</option>
           {statusList}

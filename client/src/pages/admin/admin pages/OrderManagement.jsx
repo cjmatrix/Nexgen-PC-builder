@@ -27,7 +27,7 @@ const OrderManagement = () => {
     queryFn: async () => {
       const params = {
         page,
-        limit: 2,
+        limit: 10,
         search: search || undefined,
         status: statusFilter !== "All" ? statusFilter : undefined,
       };
@@ -75,10 +75,6 @@ const OrderManagement = () => {
       case "Delivered":
         color = "bg-green-100 text-green-800";
         icon = <CheckCircle className="w-3 h-3" />;
-        break;
-      case "Cancelled":
-        color = "bg-red-100 text-red-800";
-        icon = <XCircle className="w-3 h-3" />;
         break;
       case "Cancelled":
         color = "bg-red-100 text-red-800";

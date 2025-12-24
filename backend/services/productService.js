@@ -84,8 +84,15 @@ const getPublicProducts = async ({ page, limit, search, category, sort }) => {
   };
 };
 
-const getProductById = async (id) => {
-  const product = await Product.findById(id).populate([
+const getProductById = async (req,id) => {
+
+  let query={_id:id};
+  if(req.user.role==='customer'){
+    query.isActive=true;
+  }
+ 
+
+  const product = await Product.findOne(query).populate([
     { path: "default_config.cpu" },
     { path: "default_config.gpu" },
     { path: "default_config.motherboard" },

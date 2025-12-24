@@ -2,7 +2,7 @@ import Cart from "../models/Cart.js";
 import Product from "../models/Product.js";
 import Component from "../models/Component.js";
 
-const MAX_QTY_PER_PRODUCT=5;
+const MAX_QTY_PER_PRODUCT = 5;
 
 const calculateSummary = (items) => {
   const subtotal = items.reduce(
@@ -11,14 +11,22 @@ const calculateSummary = (items) => {
     0
   );
 
-  const shipping = 0;
-  const discount = 0;
+  const shipping = 5000;
+
+  // Calculate total discount
+  const discount = items.reduce((sum, item) => {
+    const price = item.product?.base_price || 0;
+    const itemDiscount = item.product?.discount || 0;
+    const saving = price * (itemDiscount / 100);
+    return sum + saving * Number(item.quantity);
+  }, 0);
+
   const total = subtotal + shipping - discount;
 
   return {
     subtotal: subtotal / 100,
     shipping: 50,
-    discount,
+    discount: discount / 100,
     tax: 0,
     total: total / 100,
   };
@@ -27,7 +35,7 @@ const calculateSummary = (items) => {
 const populateCart = async (cartId) => {
   return await Cart.findById(cartId).populate({
     path: "items.product",
-    select: "name base_price images category description",
+    select: "name base_price images category description discount",
   });
 };
 
@@ -90,14 +98,12 @@ const checkStockAvailability = async (cartItems, newItem = null) => {
 export const getCart = async (userId) => {
   let cart = await Cart.findOne({ user: userId }).populate({
     path: "items.product",
-    select: "name base_price images category description",
+    select: "name base_price images category description discount",
   });
 
   if (!cart) {
     cart = await Cart.create({ user: userId, items: [] });
   }
-
- 
 
   const summary = calculateSummary(cart.items);
   return { cart, summary };
@@ -112,7 +118,6 @@ export const addToCart = async (userId, productId, quantity = 1) => {
     throw new Error("Product not found");
   }
 
- 
   const cartForValidation = await Cart.findOne({ user: userId }).populate({
     path: "items.product",
     populate: {
@@ -122,7 +127,6 @@ export const addToCart = async (userId, productId, quantity = 1) => {
 
   const currentItems = cartForValidation ? cartForValidation.items : [];
 
- 
   await checkStockAvailability(currentItems, { product, quantity });
 
   let cart = await Cart.findOne({ user: userId });
@@ -135,8 +139,10 @@ export const addToCart = async (userId, productId, quantity = 1) => {
   );
 
   if (itemIndex > -1) {
-    if((cart.items[itemIndex].quantity+1)>MAX_QTY_PER_PRODUCT){
-      throw new Error(`Limit reached: Maximum ${MAX_QTY_PER_PRODUCT} items allowed per product.`)
+    if (cart.items[itemIndex].quantity + 1 > MAX_QTY_PER_PRODUCT) {
+      throw new Error(
+        `Limit reached: Maximum ${MAX_QTY_PER_PRODUCT} items allowed per product.`
+      );
     }
 
     cart.items[itemIndex].quantity += quantity;
@@ -174,8 +180,10 @@ export const updateQuantity = async (userId, productId, quantity) => {
     throw new Error("Quantity must be at least 1");
   }
 
-  if(quantity>MAX_QTY_PER_PRODUCT){
-    throw new Error(`Limit reached: Maximum ${MAX_QTY_PER_PRODUCT} items allowed per product.`)
+  if (quantity > MAX_QTY_PER_PRODUCT) {
+    throw new Error(
+      `Limit reached: Maximum ${MAX_QTY_PER_PRODUCT} items allowed per product.`
+    );
   }
 
   const cartForValidation = await Cart.findOne({ user: userId }).populate({
@@ -189,7 +197,6 @@ export const updateQuantity = async (userId, productId, quantity) => {
     throw new Error("Cart not found");
   }
 
- 
   let itemFound = false;
   const simulatedItems = cartForValidation.items.map((item) => {
     if (item.product._id.toString() === productId) {
@@ -203,9 +210,7 @@ export const updateQuantity = async (userId, productId, quantity) => {
     throw new Error("Item not found in cart");
   }
 
-
   await checkStockAvailability(simulatedItems);
-
 
   let cart = await Cart.findOne({ user: userId });
   const itemIndex = cart.items.findIndex(

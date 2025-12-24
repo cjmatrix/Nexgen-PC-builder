@@ -50,7 +50,7 @@ const getPublicProducts = async (req, res) => {
 
 const getProductById = async (req, res) => {
   try {
-    const product = await productService.getProductById(req.params.id);
+    const product = await productService.getProductById(req,req.params.id);
     res.status(200).json({ success: true, data: product });
   } catch (error) {
     res.status(404).json({ success: false, message: error.message });

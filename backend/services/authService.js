@@ -91,7 +91,7 @@ const verifyOTP = async (email, otp) => {
   if (!user.otp || !user.otpExpires) {
     throw new Error("No OTP found");
   }
-  console.log(user)
+
   if (user.otp !== otp) {
     throw new Error("Invalid OTP");
   }

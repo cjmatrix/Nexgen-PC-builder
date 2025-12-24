@@ -15,7 +15,7 @@ const ProductDetail = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { currentProduct: product, loading } = useSelector(
+  const { currentProduct: product, loading ,error} = useSelector(
     (state) => state.products
   );
   const [selectedImage, setSelectedImage] = useState(0);
@@ -24,7 +24,7 @@ const ProductDetail = () => {
 
   useEffect(() => {
     if (id) {
-      dispatch(fetchPublicProductById(id));
+      dispatch(fetchPublicProductById(id))
     }
   }, [dispatch, id]);
 
@@ -77,6 +77,8 @@ const ProductDetail = () => {
       });
     }
   };
+
+ 
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
@@ -139,9 +141,29 @@ const ProductDetail = () => {
               <h1 className="text-4xl font-extrabold text-gray-900 mb-4">
                 {product.name}
               </h1>
-              <p className="text-3xl font-bold text-blue-600 mb-6">
-                ₹{(product.base_price / 100).toLocaleString()}
-              </p>
+              {product.discount > 0 ? (
+                <div className="mb-6">
+                  <div className="flex items-center gap-3">
+                    <p className="text-3xl font-bold text-red-600">
+                      ₹
+                      {(
+                        (product.base_price / 100) *
+                        (1 - product.discount / 100)
+                      ).toLocaleString()}
+                    </p>
+                    <span className="bg-red-100 text-red-700 text-sm font-bold px-3 py-1 rounded-full">
+                      {product.discount}% OFF
+                    </span>
+                  </div>
+                  <p className="text-gray-400 text-lg line-through mt-1">
+                    MRP: ₹{(product.base_price / 100).toLocaleString()}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-3xl font-bold text-blue-600 mb-6">
+                  ₹{(product.base_price / 100).toLocaleString()}
+                </p>
+              )}
               <p className="text-gray-600 mb-8 leading-relaxed text-lg">
                 {product.description}
               </p>

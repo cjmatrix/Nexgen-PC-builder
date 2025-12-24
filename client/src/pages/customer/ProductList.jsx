@@ -111,6 +111,11 @@ const ProductList = () => {
                 className="group bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden flex flex-col"
               >
                 <div className="relative aspect-[4/3] bg-gray-100 overflow-hidden">
+                  {product.discount > 0 && (
+                    <div className="absolute top-3 left-3 bg-red-600 text-white text-xs font-bold px-2.5 py-1 rounded-md shadow-sm z-10">
+                      {product.discount}% OFF
+                    </div>
+                  )}
                   <img
                     src={
                       product.images?.[0] ||
@@ -137,9 +142,24 @@ const ProductList = () => {
                       <p className="text-xs text-gray-500 mb-0.5">
                         Starting at
                       </p>
-                      <p className="text-lg font-bold text-gray-900">
-                        ₹{(product.base_price / 100).toLocaleString()}
-                      </p>
+                      {product.discount > 0 ? (
+                        <div className="flex flex-col">
+                          <span className="text-xs text-gray-400 line-through">
+                            ₹{(product.base_price / 100).toLocaleString()}
+                          </span>
+                          <p className="text-lg font-bold text-red-600">
+                            ₹
+                            {(
+                              (product.base_price / 100) *
+                              (1 - product.discount / 100)
+                            ).toLocaleString()}
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="text-lg font-bold text-gray-900">
+                          ₹{(product.base_price / 100).toLocaleString()}
+                        </p>
+                      )}
                     </div>
                     <button
                       onClick={() => navigate(`/products/${product._id}`)}

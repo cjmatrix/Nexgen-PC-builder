@@ -61,12 +61,14 @@ const ComponentManagement = () => {
   };
 
   useEffect(() => {
+
     dispatch(fetchAdminComponents({ page, search, category, status, sort }));
   }, [dispatch, page, search, category, status, sort]);
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
       setSearch(searchInput);
+      setPage(1);
     }, 500);
 
     return () => clearTimeout(delayDebounceFn);
@@ -139,7 +141,7 @@ const ComponentManagement = () => {
           <div className="relative">
             <select
               value={category}
-              onChange={(e) => setCategory(e.target.value)}
+              onChange={(e) => {setCategory(e.target.value);setPage(1);}}
               className="appearance-none bg-white border border-gray-200 text-gray-700 py-2.5 pl-4 pr-10 rounded-lg text-sm focus:outline-none focus:border-blue-500 cursor-pointer"
             >
               <option value="">All Categories</option>
@@ -157,7 +159,7 @@ const ComponentManagement = () => {
 
           <div className="relative">
             <select
-              onChange={(e) => setStatus(e.target.value)}
+              onChange={(e) => {setStatus(e.target.value);setPage(1);}}
               className="appearance-none bg-white border border-gray-200 text-gray-700 py-2.5 pl-4 pr-10 rounded-lg text-sm focus:outline-none focus:border-blue-500 cursor-pointer"
             >
               <option value="">Status All</option>
@@ -170,7 +172,7 @@ const ComponentManagement = () => {
           <div className="relative">
             <select
               value={sort}
-              onChange={(e) => setSort(e.target.value)}
+              onChange={(e) => {setSort(e.target.value);setPage(1);}}
               className="appearance-none bg-white border border-gray-200 text-gray-700 py-2.5 pl-4 pr-10 rounded-lg text-sm focus:outline-none focus:border-blue-500 cursor-pointer"
             >
               <option value="">Sort By: Newest</option>
@@ -235,7 +237,7 @@ const ComponentManagement = () => {
                       {item.category}
                     </td>
                     <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                      ₹{item.price.toLocaleString()}
+                      ₹{(item.price/100).toLocaleString()}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500">
                       {item.stock}

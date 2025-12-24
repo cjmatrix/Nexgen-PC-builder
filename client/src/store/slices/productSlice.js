@@ -91,6 +91,7 @@ export const fetchPublicProductById = createAsyncThunk(
       const response = await api.get(`/products/${id}`);
       return response.data.data;
     } catch (error) {
+     
       return rejectWithValue(error.response?.data?.message);
     }
   }

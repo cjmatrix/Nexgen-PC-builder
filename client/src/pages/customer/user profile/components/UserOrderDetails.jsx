@@ -10,6 +10,7 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../../../../api/axios";
 import ItemDetailsModal from "./ItemDetailsModal";
+import CustomModal from "../../../../components/CustomModal";
 
 const UserOrderDetails = ({ isOpen, onClose, order }) => {
   const queryClient = useQueryClient();
@@ -21,6 +22,19 @@ const UserOrderDetails = ({ isOpen, onClose, order }) => {
   const [viewDetailItem, setViewDetailItem] = useState(null);
   const [isItemDetailsOpen, setIsItemDetailsOpen] = useState(false);
 
+  const [infoModal, setInfoModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "info",
+    onConfirm: null,
+  });
+
+  const closeInfoModal = () => {
+    setInfoModal((prev) => ({ ...prev, isOpen: false }));
+    if (infoModal.onConfirm) infoModal.onConfirm();
+  };
+
   const returnMutation = useMutation({
     mutationFn: async (data) => {
       const response = await api.put(`/orders/${order?._id}/return`, data);
@@ -29,11 +43,21 @@ const UserOrderDetails = ({ isOpen, onClose, order }) => {
     onSuccess: () => {
       queryClient.invalidateQueries(["myOrders"]);
       handleCloseAction();
-      onClose();
-      alert("Return requested successfully. Waiting for admin approval.");
+      setInfoModal({
+        isOpen: true,
+        title: "Success",
+        message: "Return requested successfully. Waiting for admin approval.",
+        type: "success",
+        onConfirm: onClose,
+      });
     },
     onError: (err) => {
-      alert(err.response?.data?.message || "Return failed");
+      setInfoModal({
+        isOpen: true,
+        title: "Return Failed",
+        message: err.response?.data?.message || "Return failed",
+        type: "error",
+      });
     },
   });
 
@@ -45,11 +69,21 @@ const UserOrderDetails = ({ isOpen, onClose, order }) => {
     onSuccess: () => {
       queryClient.invalidateQueries(["myOrders"]);
       handleCloseAction();
-      onClose();
-      alert("Cancellation processed successfully");
+      setInfoModal({
+        isOpen: true,
+        title: "Success",
+        message: "Cancellation processed successfully",
+        type: "success",
+        onConfirm: onClose,
+      });
     },
     onError: (err) => {
-      alert(err.response?.data?.message || "Cancellation failed");
+      setInfoModal({
+        isOpen: true,
+        title: "Cancellation Failed",
+        message: err.response?.data?.message || "Cancellation failed",
+        type: "error",
+      });
     },
   });
 
@@ -71,7 +105,12 @@ const UserOrderDetails = ({ isOpen, onClose, order }) => {
 
   const handleSubmitAction = () => {
     if (!reason.trim()) {
-      alert("Please provide a reason.");
+      setInfoModal({
+        isOpen: true,
+        title: "Action Required",
+        message: "Please provide a reason.",
+        type: "info",
+      });
       return;
     }
 
@@ -147,6 +186,14 @@ const UserOrderDetails = ({ isOpen, onClose, order }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
+      <CustomModal
+        isOpen={infoModal.isOpen}
+        onClose={closeInfoModal}
+        title={infoModal.title}
+        message={infoModal.message}
+        type={infoModal.type}
+        confirmText="OK"
+      />
       <div
         className={`bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col ${
           isActionModalOpen ? "opacity-50 pointer-events-none" : ""
@@ -197,12 +244,41 @@ const UserOrderDetails = ({ isOpen, onClose, order }) => {
                         {item.name}
                       </h4>
                       <p className="text-xs text-gray-500 mt-1">
-                        Quantity: {item.qty} | ₹{(item.price/100).toLocaleString()}
+                        Quantity: {item.qty} |{" "}
+                        {item.discount > 0 ? (
+                          <span>
+                            <span className="line-through mr-1">
+                              ₹{(item.price / 100).toLocaleString()}
+                            </span>
+                            <span className="text-green-600 font-bold">
+                              ₹
+                              {(
+                                (item.price / 100) *
+                                (1 - item.discount / 100)
+                              ).toLocaleString()}
+                            </span>
+                          </span>
+                        ) : (
+                          <span>₹{(item.price / 100).toLocaleString()}</span>
+                        )}
                       </p>
                     </div>
-                    <p className="font-bold text-gray-900 text-sm">
-                      ₹{(item.price * item.qty).toLocaleString()}
-                    </p>
+                    <div className="text-right">
+                      <p className="font-bold text-gray-900 text-sm">
+                        ₹
+                        {(
+                          (item.price *
+                            item.qty *
+                            (1 - (item.discount || 0) / 100)) /
+                          100
+                        ).toLocaleString()}
+                      </p>
+                      {item.discount > 0 && (
+                        <p className="text-[10px] text-green-600 font-bold bg-green-50 px-1.5 py-0.5 rounded-full inline-block mt-1">
+                          {item.discount}% OFF
+                        </p>
+                      )}
+                    </div>
                   </div>
 
                   <div className="mt-3 flex items-center justify-between">
@@ -216,7 +292,7 @@ const UserOrderDetails = ({ isOpen, onClose, order }) => {
                           ? "bg-green-50 text-green-600"
                           : item.status === "Return Requested"
                           ? "bg-orange-50 text-orange-600"
-                          : "bg-blue-50 text-blue-600" // Default/Active
+                          : "bg-blue-50 text-blue-600"
                       }`}
                     >
                       {item.status || "Active"}
@@ -253,7 +329,7 @@ const UserOrderDetails = ({ isOpen, onClose, order }) => {
             <div className="flex justify-between text-sm mb-2">
               <span className="text-gray-500">Subtotal</span>
               <span className="font-medium">
-                ₹{order.itemsPrice.toLocaleString()}
+                ₹{(order.itemsPrice / 100).toLocaleString()}
               </span>
             </div>
             <div className="flex justify-between text-sm mb-2">
@@ -264,7 +340,7 @@ const UserOrderDetails = ({ isOpen, onClose, order }) => {
             </div>
             <div className="flex justify-between text-base font-bold text-gray-900 pt-2 border-t border-dashed border-gray-200">
               <span>Total</span>
-              <span>₹{order.totalPrice.toLocaleString()}</span>
+              <span>₹{(order.totalPrice / 100).toLocaleString()}</span>
             </div>
           </div>
         </div>
@@ -334,7 +410,6 @@ const UserOrderDetails = ({ isOpen, onClose, order }) => {
         </div>
       )}
 
-      
       <ItemDetailsModal
         isOpen={isItemDetailsOpen}
         onClose={() => setIsItemDetailsOpen(false)}

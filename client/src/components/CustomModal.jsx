@@ -1,18 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { X, AlertTriangle, CheckCircle, Info } from "lucide-react";
 
-/**
- * CustomModal Component
- *
- * @param {boolean} isOpen - Whether the modal is open
- * @param {function} onClose - Function to close the modal (cancel action)
- * @param {function} onConfirm - Function to call on confirmation (optional)
- * @param {string} title - Modal title
- * @param {string} message - Modal message/body
- * @param {string} type - 'confirmation', 'success', 'error', 'info' (default: 'info')
- * @param {string} confirmText - Text for confirm button (default: 'Confirm')
- * @param {string} cancelText - Text for cancel button (default: 'Cancel')
- */
+
 const CustomModal = ({
   isOpen,
   onClose,

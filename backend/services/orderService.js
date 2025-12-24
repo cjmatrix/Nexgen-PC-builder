@@ -11,8 +11,7 @@ export const createOrder = async (userId, user, orderData) => {
   try {
     const { shippingAddress, paymentMethod } = orderData;
 
-   
-    const shippingPrice = 0;
+    const shippingPrice = 5000;
     const taxPrice = 0;
 
     const cart = await Cart.findOne({ user: userId })
@@ -72,6 +71,7 @@ export const createOrder = async (userId, user, orderData) => {
         qty: item.quantity,
         image: product.images?.[0] || "https://placehold.co/100",
         price: product.base_price,
+        discount: product.discount || 0,
         product: product._id,
         components: {
           cpu: createSnapshot(config.cpu),
@@ -103,10 +103,12 @@ export const createOrder = async (userId, user, orderData) => {
       }
     }
 
-    const itemsPrice = orderItems.reduce(
-      (acc, item) => acc + item.price * item.qty,
-      0
-    );
+    const itemsPrice = orderItems.reduce((acc, item) => {
+      const price = item.price || 0;
+      const discount = item.discount || 0;
+      const discountedPrice = price * (1 - discount / 100);
+      return acc + discountedPrice * item.qty;
+    }, 0);
 
     const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
     const randomStr = Math.random().toString(36).substring(2, 6).toUpperCase();

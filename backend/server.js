@@ -27,7 +27,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
-      "https://bdghml9c-5173.euw.devtunnels.ms",
+      "https://bdghml9c-5173.euw.devtunnels.ms/",
     ],
     credentials: true,
   })

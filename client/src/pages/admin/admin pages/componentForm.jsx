@@ -109,7 +109,7 @@ const ComponentForm = () => {
         .then((data) => {
           reset({
             name: data.name,
-            price: data.price / 100, // Convert Paisa to Rupees
+            price: data.price / 100, 
             stock: data.stock,
             category: data.category,
             tier_level: String(data.tier_level),

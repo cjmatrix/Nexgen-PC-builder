@@ -66,9 +66,7 @@ export const deleteComponent = createAsyncThunk(
   "components/delete",
   async (id, { rejectWithValue }) => {
     try {
-      const response = await api.patch(`/admin/components/${id}/delete`, {
-        isActive: false,
-      });
+      const response = await api.patch(`/admin/components/${id}/delete`);
       return response.data.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Delete failed");

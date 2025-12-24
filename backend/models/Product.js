@@ -30,6 +30,12 @@ const productSchema = new mongoose.Schema(
       get: (v) => Math.round(v),
       set: (v) => Math.round(v),
     },
+    discount: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 99, 
+    },
 
     images: [
       {

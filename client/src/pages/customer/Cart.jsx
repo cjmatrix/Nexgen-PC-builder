@@ -36,20 +36,15 @@ const Cart = () => {
     dispatch(removeFromCart(productId));
   };
 
-  const handleCheckout=async()=>{
-
-    try{
-      
-      const response=await api.get("/cart/validate");
-      navigate('/checkout')
-      
+  const handleCheckout = async () => {
+    try {
+      const response = await api.get("/cart/validate");
+      navigate("/checkout");
+    } catch (error) {
+      alert(error.response.data.message);
+      return;
     }
-    catch(error){
-      alert(error.response.data.message)
-      return
-    }
-
-  }
+  };
 
   if (loading && items.length === 0) {
     return (
@@ -81,7 +76,6 @@ const Cart = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
               <div className="lg:col-span-2 space-y-6">
                 {items.map((item) => (
                   <div
@@ -100,17 +94,14 @@ const Cart = () => {
                       />
                     </div>
 
-                    
                     <div className="flex-1 flex flex-col justify-between">
                       <div>
                         <div className="flex justify-between items-start mb-2">
                           <h3 className="text-xl font-bold text-gray-900">
                             {item.product?.name}
                           </h3>
-                          
                         </div>
 
-        
                         <p className="text-sm text-gray-500 line-clamp-2 mb-4">
                           {item.product?.description}
                         </p>
@@ -125,9 +116,34 @@ const Cart = () => {
                       </div>
 
                       <div className="flex justify-between items-end mt-4 sm:mt-0">
-                        <div className="text-lg font-bold text-gray-900">
-                          Price: ₹{" "}
-                          {item.product?.base_price / 100?.toLocaleString()}
+                        <div>
+                          {item.product?.discount > 0 ? (
+                            <div className="flex flex-col items-start bg-gray-50 p-2 rounded-lg">
+                              <span className="text-xs text-gray-400 line-through">
+                                ₹
+                                {(
+                                  item.product?.base_price / 100
+                                ).toLocaleString()}
+                              </span>
+                              <span className="text-lg font-bold text-gray-900">
+                                ₹{" "}
+                                {(
+                                  (item.product?.base_price / 100) *
+                                  (1 - item.product?.discount / 100)
+                                ).toLocaleString()}
+                              </span>
+                              <span className="text-[10px] text-green-600 font-bold bg-green-100 px-1.5 py-0.5 rounded-full mt-0.5">
+                                {item.product?.discount}% OFF
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="text-lg font-bold text-gray-900">
+                              ₹{" "}
+                              {(
+                                item.product?.base_price / 100
+                              ).toLocaleString()}
+                            </div>
+                          )}
                         </div>
 
                         <div className="flex flex-col items-end gap-1">

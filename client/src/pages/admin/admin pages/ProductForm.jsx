@@ -34,7 +34,6 @@ import CustomModal from "../../../components/CustomModal";
 import ImageCropperModal from "../../../components/ImageCropperModal";
 import PartSelector from "./components/PartSelector";
 
-
 const AddProductForm = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -51,6 +50,7 @@ const AddProductForm = () => {
     setValue,
     watch,
     reset,
+    trigger,
     formState: { errors },
   } = useForm({
     defaultValues: {
@@ -58,6 +58,7 @@ const AddProductForm = () => {
       description: "",
       category: "Gaming",
       base_price: "",
+      discount: 0,
       images: [],
     },
   });
@@ -130,7 +131,8 @@ const AddProductForm = () => {
             name: data.name,
             description: data.description,
             category: data.category,
-            base_price: data.base_price / 100, 
+            base_price: data.base_price / 100,
+            discount: data.discount || 0,
             images: data.images || [],
           });
           dispatch(setSelected(data.default_config));
@@ -281,11 +283,7 @@ const AddProductForm = () => {
     }
   };
 
-  const {
-    data,
-    isLoading,
-    error,
-  } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ["adminCategory"],
     queryFn: async () => {
       const response = await api.get("/admin/category");
@@ -294,7 +292,7 @@ const AddProductForm = () => {
     },
   });
 
-    if (isLoading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
         <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600 mb-4"></div>
@@ -302,7 +300,7 @@ const AddProductForm = () => {
       </div>
     );
   }
- 
+
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 text-red-500">
@@ -311,15 +309,9 @@ const AddProductForm = () => {
     );
   }
 
-
-
   useEffect(() => {
     if (data.categories && !isEditMode) setValue("category", "Gaming");
   }, [data.categories, isEditMode]);
-
-
-
-
 
   return (
     <div className="min-h-screen bg-gray-50 pt-10 pb-12 px-4 sm:px-6 lg:px-8 font-sans">
@@ -416,6 +408,7 @@ const AddProductForm = () => {
                               "Price should be greater or equal to total cost"
                             );
                         },
+                        onChange:()=>trigger('base_price')
                       })}
                     />
                     {errors.base_price && (
@@ -427,6 +420,39 @@ const AddProductForm = () => {
                       Leave empty to use sum of parts cost.
                     </p>
                   </div>
+
+                  {/* --- NEW DISCOUNT INPUT --- */}
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Discount (%)
+                    </label>
+                    <input
+                      type="number"
+                      className="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="0"
+            
+                      {...register("discount", {
+                        min: { value: 0, message: "Min 0%" },
+                        max: { value: 99, message: "Max 99%" },
+                        onChange: () => trigger("discount")
+
+                      })}
+                    />
+                    {!errors.discount && <p className="text-xs text-gray-500 mt-1">
+                      Final Price: ₹
+                      {(
+                        (watch("base_price") || totalPrice / 100) *
+                        (1 - (watch("discount") || 0) / 100)
+                      ).toLocaleString()}
+                    </p>}
+                    {errors.discount && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors.discount.message}
+                      </p>
+                    )}
+                  </div>
+                    
                 </div>
 
                 <div>
@@ -623,13 +649,26 @@ const AddProductForm = () => {
                   <span>Total Cost</span>
                   <span>₹{(totalPrice / 100).toLocaleString()}</span>
                 </div>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-orange-600">Discount</span>
+                  <span className="font-small text-orange-600">
+                    {watch('discount')?watch('discount')+' %':'N/A'} 
+                  </span>
+                </div>
+                <div className="flex justify-between items-center text-lg font-bold text-green-600 mt-2">
+                    <span>Final Price</span>
+                    <span>₹{(
+                        (watch("base_price") || totalPrice / 100) *
+                        (1 - (watch("discount") || 0) / 100)
+                      ).toLocaleString()}</span>
+                  </div>
                 {basePrice && (
                   <div className="flex justify-between items-center text-lg font-bold text-green-600 mt-2">
                     <span>Selling Price</span>
-                    <span>₹{(Number(basePrice) / 100).toLocaleString()}</span>
+                    <span>₹{(Number(basePrice)).toLocaleString()}</span>
                   </div>
                 )}
-              </div>
+              </div>  
 
               <button
                 type="submit"
