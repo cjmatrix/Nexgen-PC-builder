@@ -10,12 +10,8 @@ const colors = {
   accent: "#8b5cf6", // violet-500
 };
 
-export const MotherboardSVG = (props) => (
-  <svg
-    viewBox="0 0 300 400"
-    className="w-full h-full drop-shadow-2xl"
-    {...props}
-  >
+export const MotherboardSVG = ({ dragType , dragPart}) => (
+  <svg viewBox="0 0 300 400" className="w-full h-full drop-shadow-2xl">
     {/* PCB Board - Matte Black */}
     <rect
       x="10"
@@ -24,7 +20,8 @@ export const MotherboardSVG = (props) => (
       height="380"
       rx="10"
       fill="#09090b"
-      stroke="#27272a"
+      stroke={dragType==="motherboard"? "red" :"#27272a"}
+      style={dragType === "motherboard" ? { filter: "drop-shadow(0 0 5px red)" } : {}}
       strokeWidth="2"
     />
 
@@ -47,7 +44,8 @@ export const MotherboardSVG = (props) => (
       height="40"
       rx="4"
       fill="#18181b"
-      stroke="#27272a"
+       stroke={dragType==="psu"? "red" :"#27272a"}
+        style={dragType === "psu" ? { filter: "drop-shadow(0 0 5px red)" } : {}}
       strokeWidth="1"
     />
     <rect
@@ -68,9 +66,11 @@ export const MotherboardSVG = (props) => (
       width="100"
       height="100"
       fill="none"
-      stroke="#3f3f46"
+      stroke={dragType === "cpu" ? "red" : "#3f3f46"}
+       
       strokeDasharray="4 4"
       opacity="0.5"
+      style={dragType === "cpu" ? { filter: "drop-shadow(0 0 5px red)" } : {}}
     />
 
     {/* RAM Slots - Dark Grey (140 height from previous fix) */}
@@ -81,7 +81,8 @@ export const MotherboardSVG = (props) => (
         width="10"
         height="140"
         fill="#18181b"
-        stroke="#27272a"
+        stroke={dragType === "ram" ? "red" : "#27272a"}
+        style={dragType === "ram" ? { filter: "drop-shadow(0 0 5px red)" } : {}}
       />
       <rect
         x="15"
@@ -97,7 +98,8 @@ export const MotherboardSVG = (props) => (
         width="10"
         height="140"
         fill="#18181b"
-        stroke="#27272a"
+         stroke={dragType === "storage" ? "red" : "#27272a"}
+        style={dragType === "storage" ? { filter: "drop-shadow(0 0 5px red)" } : {}}
       />
       {/* <rect
         x="45"
@@ -133,7 +135,8 @@ export const MotherboardSVG = (props) => (
       width="220"
       height="58"
       fill="#18181b"
-      stroke="#27272a"
+       stroke={dragType === "gpu" ? "red" : "#27272a"}
+        style={dragType === "gpu" ? { filter: "drop-shadow(0 0 5px red)" } : {}}
     />
 
     {/* Chipset Heatsink - Dark */}
@@ -392,11 +395,11 @@ export const StorageSVG = ({ label, ...props }) => (
   </svg>
 );
 
-export const CoolerSVG = (props) => (
+export const CoolerSVG = ({part}) => (
   <svg
     viewBox="0 0 120 120"
     className="w-full h-full drop-shadow-[0_0_15px_rgba(59,130,246,0.4)]"
-    {...props}
+    
   >
     <rect
       x="10"
@@ -433,16 +436,16 @@ export const CoolerSVG = (props) => (
       fill="white"
       fontWeight="bold"
     >
-      AIR
+      {part?.specs?.coolerType==="Liquid"?"Liquid":"Air"}
     </text>
   </svg>
 );
 
-export const PsuSVG = (props) => (
+export const PsuSVG = ({part}) => (
   <svg
     viewBox="0 0 200 120"
     className="w-full h-full drop-shadow-md"
-    {...props}
+    
   >
     <rect
       x="5"

@@ -9,11 +9,8 @@ export const fetchComponents = createAsyncThunk(
         params: { category, ...params, limit: 100 },
       });
 
-      console.log(
-        `[BuilderSlice] Fetching ${category} success. Items:`,
-        response.data.components?.length
-      );
-      console.log(`[BuilderSlice] Data:`, response.data.components);
+     
+     
       return { category, data: response.data.components };
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Fetch failed");
@@ -53,6 +50,7 @@ const builderSlice = createSlice({
   initialState,
   reducers: {
     selectPart: (state, action) => {
+      
       const { category, component } = action.payload;
       state.selected[category] = component;
 

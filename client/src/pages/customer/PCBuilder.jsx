@@ -32,7 +32,11 @@ import {
   StorageSVG,
   CoolerSVG,
   PsuSVG,
-} from "../../components/PCParts";
+} from "./Builder Component/PCParts";
+import ComponentsList from "./Builder Component/ComponentsList";
+
+import DraggablePartCard from "../../components/DraggablePartCard";
+import { useDrop } from "react-dnd";
 
 const STEPS = [
   { id: "cpu", label: "Processor", icon: Cpu },
@@ -45,9 +49,17 @@ const STEPS = [
   { id: "case", label: "Case", icon: Box },
 ];
 
-const VisualizerPart = ({ part, type, index }) => {
+const VisualizerPart = ({
+  part,
+  type,
+  index,
+  handleSelect,
+  selected,
+  dragType,
+  dragPart,
+}) => {
   const ref = useRef(null);
-
+  console.log(part, "partssss");
   useGSAP(() => {
     if (!part) return;
 
@@ -64,6 +76,19 @@ const VisualizerPart = ({ part, type, index }) => {
       }
     );
   }, [part]);
+
+  const [{ isOver }, drop] = useDrop(
+    () => ({
+      accept: "COMPONENT",
+      drop: (item) => {
+        handleSelect(item);
+      },
+      collect: (monitor) => ({
+        isOver: !!monitor.isOver(),
+      }),
+    }),
+    [handleSelect]
+  );
 
   const isGhost = !part && type === "motherboard";
   if (!part && !isGhost) return null;
@@ -127,25 +152,23 @@ const VisualizerPart = ({ part, type, index }) => {
     storage: StorageSVG,
     cooler: CoolerSVG,
     psu: PsuSVG,
-    case: () => null, // Case is handled by background
+    case: () => null,
   }[type];
 
   return (
     <div
-      ref={ref}
+      ref={(node) => {
+        ref.current = node;
+
+        drop(node);
+      }}
       className={`absolute transition-all duration-300 ${
-        isGhost ? " grayscale" : ""
-      } pointer-events-none`}
+        isGhost ? " " : "drop-shadow-[0_0_1px_rgba(250,204,21,0.6)] scale-105"
+      } `}
       style={getStyle(type)}
     >
-      {!isGhost && (
-        <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-white/10 backdrop-blur-md border border-white/20 px-2 py-1 rounded shadow-xl text-white text-[10px] whitespace-nowrap z-50">
-          <span className="font-bold">{part.name}</span>
-        </div>
-      )}
-
       {ComponentSVG ? (
-        <ComponentSVG />
+        <ComponentSVG dragType={dragType} part={part} />
       ) : (
         <div className="w-full h-full bg-blue-500/30 rounded-lg blur-sm border border-white/20"></div>
       )}
@@ -158,6 +181,9 @@ const PCBuilder = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [currentStep, setCurrentStep] = useState(0);
+  const [draggedItem, setDraggedItem] = useState({});
+
+  console.log(draggedItem);
 
   const { selected, options, totalPrice, estimatedWattage } = useSelector(
     (state) => state.builder
@@ -165,6 +191,7 @@ const PCBuilder = () => {
 
   const containerRef = useRef(null);
   const stepRef = useRef(null);
+  const caseFrameRef = useRef(null);
 
   useEffect(() => {
     if (id) {
@@ -183,7 +210,6 @@ const PCBuilder = () => {
 
     dispatch(fetchComponents({ category: "cpu" }));
     dispatch(fetchComponents({ category: "storage" }));
-    dispatch(fetchComponents({ category: "case" }));
   }, [id, dispatch]);
 
   useEffect(() => {
@@ -217,6 +243,12 @@ const PCBuilder = () => {
           params: { motherboardId: selected.motherboard._id },
         })
       );
+      dispatch(
+        fetchComponents({
+          category: "case",
+          params: { motherboardId: selected.motherboard._id },
+        })
+      );
     }
   }, [dispatch, selected.motherboard]);
 
@@ -231,8 +263,10 @@ const PCBuilder = () => {
     }
   }, [dispatch, estimatedWattage]);
 
-  const handleSelect = (part) => {
-    dispatch(selectPart({ category: STEPS[currentStep].id, component: part }));
+  const handleSelect = (item) => {
+    dispatch(
+      selectPart({ category: STEPS[currentStep].id, component: item.part })
+    );
   };
 
   const nextStep = () => {
@@ -254,6 +288,40 @@ const PCBuilder = () => {
       { opacity: 1, x: 0, duration: 0.4, ease: "power2.out" }
     );
   }, [currentStep]);
+
+  useGSAP(() => {
+    if (selected.case && caseFrameRef.current) {
+      gsap.to(caseFrameRef.current, {
+        keyframes: {
+          "0%": {
+            boxShadow: "0 0 100px rgba(255, 0, 0, 0.4)",
+            borderColor: "rgba(255, 0, 0, 0.8)",
+          },
+          "33%": {
+            boxShadow: "0 0 100px rgba(0, 255, 0, 0.4)",
+            borderColor: "rgba(0, 255, 0, 0.8)",
+          },
+          "66%": {
+            boxShadow: "0 0 100px rgba(0, 0, 255, 0.4)",
+            borderColor: "rgba(0, 0, 255, 0.8)",
+          },
+          "100%": {
+            boxShadow: "0 0 100px rgba(255, 0, 0, 0.4)",
+            borderColor: "rgba(255, 0, 0, 0.8)",
+          },
+        },
+        duration: 6,
+        repeat: -1,
+        ease: "none",
+      });
+    } else if (caseFrameRef.current) {
+      gsap.killTweensOf(caseFrameRef.current);
+      gsap.set(caseFrameRef.current, {
+        boxShadow: "none",
+        borderColor: "rgba(31, 41, 55, 0.8)",
+      });
+    }
+  }, [selected.case]);
 
   const currentCategory = STEPS[currentStep].id;
   const currentOptions = options[currentCategory] || [];
@@ -311,25 +379,32 @@ const PCBuilder = () => {
             }}
           ></div>
 
-          <div className="relative w-full max-w-[35rem] aspect-3/4 border border-gray-800 bg-black/40 rounded-3xl shadow-2xl backdrop-blur-md overflow-hidden ring-1 ring-white/5">
+          <ComponentsList
+            steps={STEPS}
+            selected={selected}
+            totalPrice={totalPrice}
+            currentStep={currentStep}
+            setCurrentStep={setCurrentStep}
+          />
+
+          <div
+            ref={caseFrameRef}
+            className="relative w-full max-w-[35rem] aspect-3/4 border border-gray-800 bg-black/40 rounded-3xl shadow-2xl backdrop-blur-md overflow-hidden ring-1 ring-white/5 "
+          >
             {/* "Case" Frame */}
-            <div className="absolute inset-0 border-20 border-gray-900/80 rounded-3xl pointer-events-none z-20"></div>
+            <div className=" absolute inset-0 border-20 border-gray-900/80 rounded-3xl pointer-events-none z-20"></div>
 
             {/* Parts Visualizer */}
             <div className="absolute inset-0 p-8 z-10">
-              {selected.case && (
-                <img
-                  src={selected.case.image}
-                  alt="Case"
-                  className="absolute inset-0 w-full h-full object-cover opacity-50"
-                />
-              )}
-
               {STEPS.map((step) => (
                 <VisualizerPart
                   key={step.id}
                   part={selected[step.id]}
                   type={step.id}
+                  handleSelect={handleSelect}
+                  selected={selected}
+                  dragPart={draggedItem?.part}
+                  dragType={draggedItem?.category}
                 />
               ))}
             </div>
@@ -373,46 +448,14 @@ const PCBuilder = () => {
               </div>
             ) : (
               currentOptions.map((opt) => (
-                <div
+                <DraggablePartCard
                   key={opt._id}
-                  onClick={() => handleSelect(opt)}
-                  className={`group p-4 rounded-xl border cursor-pointer w-full text-left transition-all duration-200 hover:scale-[1.02] ${
-                    selected[currentCategory]?._id === opt._id
-                      ? "bg-blue-600/10 border-blue-500 ring-1 ring-blue-500"
-                      : "bg-gray-800/50 border-gray-700 hover:border-gray-500 hover:bg-gray-800"
-                  }`}
-                >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3
-                        className={`font-semibold ${
-                          selected[currentCategory]?._id === opt._id
-                            ? "text-blue-400"
-                            : "text-gray-200"
-                        }`}
-                      >
-                        {opt.name}
-                      </h3>
-                      <div className="text-xs text-gray-500 mt-1">
-                        {opt.specs &&
-                          Object.keys(opt.specs)
-                            .slice(0, 2)
-                            .map((k) => (
-                              <span
-                                key={k}
-                                className="mr-2 inline-block bg-gray-700/50 px-1.5 py-0.5 rounded capitalize"
-                              >
-                                {k.replace(/([A-Z])/g, " $1").trim()}:{" "}
-                                {opt.specs[k]}
-                              </span>
-                            ))}
-                      </div>
-                    </div>
-                    <div className="font-bold text-blue-300">
-                      ₹{(opt.price / 100).toLocaleString()}
-                    </div>
-                  </div>
-                </div>
+                  handleSelect={handleSelect}
+                  currentCategory={currentCategory}
+                  opt={opt}
+                  selected={selected}
+                  setDraggedItem={setDraggedItem}
+                ></DraggablePartCard>
               ))
             )}
           </div>

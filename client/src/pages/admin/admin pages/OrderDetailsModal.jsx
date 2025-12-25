@@ -16,7 +16,7 @@ const OrderDetailsModal = ({ isOpen, onClose, order: initialOrder }) => {
     type: "info",
     onConfirm: null,
   });
-
+  
   const closeModal = () => {
     setModal((prev) => ({ ...prev, isOpen: false }));
   };
