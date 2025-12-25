@@ -51,7 +51,6 @@ const VisualizerPart = ({ part, type, index }) => {
   useGSAP(() => {
     if (!part) return;
 
-    // Animation for new part entering
     gsap.fromTo(
       ref.current,
       { opacity: 0, scale: 0.5, y: 50, rotation: -10 },
@@ -66,15 +65,13 @@ const VisualizerPart = ({ part, type, index }) => {
     );
   }, [part]);
 
-  // Logic to show "Ghost" or "Placeholder" for specific parts (like Motherboard)
   const isGhost = !part && type === "motherboard";
-  if (!part && !isGhost) return null; // Only allow rendering if part exists OR it's a ghost motherboard
+  if (!part && !isGhost) return null;
 
-  // Position logic (Mock positioning for visualizer)
   const getStyle = (type) => {
     switch (type) {
       case "cpu":
-        return { top: "30%", left: "44.5%", width: "11%", zIndex: 20 };
+        return { top: "24%", left: "35.5%", width: "29%", zIndex: 20 };
       case "motherboard":
         return {
           top: "5%",
@@ -85,15 +82,15 @@ const VisualizerPart = ({ part, type, index }) => {
         };
       case "ram":
         return {
-          top: "14.5%", // Align with top of slots
-          left: "65%", // Align with slots
+          top: "14.5%",
+          left: "65%",
           width: "5%",
           height: "35%",
           zIndex: 15,
         };
       case "gpu":
         return {
-          top: "52%",
+          top: "54.5%",
           left: "17%",
           width: "66%",
           height: "22%",
@@ -103,19 +100,19 @@ const VisualizerPart = ({ part, type, index }) => {
         return { top: "27%", left: "40.5%", width: "19%", zIndex: 30 };
       case "psu":
         return {
-          bottom: "5%",
-          left: "15%",
-          width: "35%",
+          bottom: "4%",
+          left: "17%",
+          width: "18%",
           height: "20%",
           zIndex: 5,
         };
       case "storage":
         return {
-          bottom: "45%",
-          left: "45%",
-          width: "18%",
-          height: "5%",
-          zIndex: 10,
+          top: "18%",
+          left: "72%",
+          width: "5%",
+          height: "35%",
+          zIndex: 16,
         };
       default:
         return {};
@@ -137,7 +134,7 @@ const VisualizerPart = ({ part, type, index }) => {
     <div
       ref={ref}
       className={`absolute transition-all duration-300 ${
-        isGhost ? "opacity-30 grayscale" : ""
+        isGhost ? " grayscale" : ""
       } pointer-events-none`}
       style={getStyle(type)}
     >
@@ -169,7 +166,6 @@ const PCBuilder = () => {
   const containerRef = useRef(null);
   const stepRef = useRef(null);
 
-  // Initial Data Fetching
   useEffect(() => {
     if (id) {
       const fetchProductConfig = async () => {
@@ -184,13 +180,12 @@ const PCBuilder = () => {
       };
       fetchProductConfig();
     }
-    // Always fetch initial categories
+
     dispatch(fetchComponents({ category: "cpu" }));
     dispatch(fetchComponents({ category: "storage" }));
-    dispatch(fetchComponents({ category: "case" })); // Pre-fetch case for visualizer background if needed
+    dispatch(fetchComponents({ category: "case" }));
   }, [id, dispatch]);
 
-  // Dependency Fetching Logic
   useEffect(() => {
     if (selected.cpu) {
       dispatch(
@@ -265,7 +260,7 @@ const PCBuilder = () => {
   const currentSelection = selected[currentCategory];
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white font-sans overflow-hidden flex flex-col pt-16">
+    <div className="min-h-screen bg-gray-900 text-white font-sans overflow-hidden flex flex-col ">
       {/* Top Progress Bar */}
       <div className="h-16 border-b border-gray-800 flex items-center px-6 overflow-x-auto no-scrollbar bg-gray-900/90 backdrop-blur z-20">
         {STEPS.map((step, idx) => (
@@ -316,7 +311,7 @@ const PCBuilder = () => {
             }}
           ></div>
 
-          <div className="relative w-full max-w-2xl aspect-3/4 border border-gray-800 bg-black/40 rounded-3xl shadow-2xl backdrop-blur-md overflow-hidden ring-1 ring-white/5">
+          <div className="relative w-full max-w-[35rem] aspect-3/4 border border-gray-800 bg-black/40 rounded-3xl shadow-2xl backdrop-blur-md overflow-hidden ring-1 ring-white/5">
             {/* "Case" Frame */}
             <div className="absolute inset-0 border-20 border-gray-900/80 rounded-3xl pointer-events-none z-20"></div>
 

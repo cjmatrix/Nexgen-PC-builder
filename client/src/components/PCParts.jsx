@@ -39,12 +39,12 @@ export const MotherboardSVG = (props) => (
       opacity="0.3"
     />
 
-    {/* VRM Heatsinks - Dark Metallic */}
+    {/* PSU-Container*/}
     <rect
-      x="50"
-      y="50"
-      width="40"
-      height="100"
+      x="10"
+      y="400"
+      width="74"
+      height="40"
       rx="4"
       fill="#18181b"
       stroke="#27272a"
@@ -99,18 +99,18 @@ export const MotherboardSVG = (props) => (
         fill="#18181b"
         stroke="#27272a"
       />
-      <rect
+      {/* <rect
         x="45"
         y="0"
         width="10"
         height="140"
         fill="#18181b"
         stroke="#27272a"
-      />
+      /> */}
     </g>
 
     {/* PCIe Slots - Dark with subtle metallic accent */}
-    <rect
+    {/* <rect
       x="40"
       y="220"
       width="220"
@@ -118,20 +118,20 @@ export const MotherboardSVG = (props) => (
       fill="#18181b"
       stroke="#52525b"
       strokeWidth="1"
-    />
-    <rect
+    /> */}
+    {/* <rect
       x="40"
       y="260"
       width="220"
       height="15"
       fill="#18181b"
       stroke="#27272a"
-    />
+    /> */}
     <rect
       x="40"
-      y="300"
+      y="250"
       width="220"
-      height="15"
+      height="58"
       fill="#18181b"
       stroke="#27272a"
     />
@@ -256,7 +256,7 @@ export const RamSVG = (props) => (
 
 export const GpuSVG = (props) => (
   <svg
-    viewBox="0 0 350 120"
+    viewBox="0 0 350 195"
     className="w-full h-full drop-shadow-[0_0_25px_rgba(0,0,0,0.6)]"
     {...props}
   >
@@ -348,35 +348,47 @@ export const GpuSVG = (props) => (
   </svg>
 );
 
-export const StorageSVG = (props) => (
-  <svg viewBox="0 0 120 40" className="w-full h-full drop-shadow-md" {...props}>
+export const StorageSVG = ({ label, ...props }) => (
+  <svg viewBox="0 0 40 200" className="w-full h-full drop-shadow-md" {...props}>
+    {/* Vertical PCB */}
     <rect
-      x="2"
-      y="10"
-      width="116"
-      height="20"
+      x="10"
+      y="-31"
+      width="20"
+      height="260"
       rx="2"
       fill="#0f172a"
       stroke="#334155"
       strokeWidth="1"
     />
 
-    {/* Label Sticker */}
-    <rect x="10" y="12" width="100" height="16" rx="1" fill="#1e293b" />
+    {/* Label Sticker - Vertical */}
+    <rect
+      x="12"
+      y="30"
+      width="16"
+      height="120"
+      rx="1"
+      fill="#1e293b"
+      opacity="0.8"
+    />
+    <rect x="14" y="32" width="12" height="10" rx="1" fill="#22c55e" />
 
-    {/* Green Accent */}
-    <rect x="12" y="14" width="10" height="12" rx="1" fill="#22c55e" />
+    {/* Chips (hint) */}
+    <rect x="12" y="160" width="16" height="20" rx="1" fill="#1e293b" />
 
-    <text
-      x="65"
-      y="22"
+    {/* Vertical Text */}
+    {/* <text
+      x="20"
+      y="100"
       textAnchor="middle"
       fontSize="8"
       fill="#e2e8f0"
       fontFamily="sans-serif"
+      transform="rotate(90 20 100)"
     >
-      Samsung 980 Pro
-    </text>
+      {label ? label.substring(0, 15) : "NVMe SSD"}
+    </text> */}
   </svg>
 );
 
@@ -458,14 +470,12 @@ export const PsuSVG = (props) => (
       x="50"
       y="65"
       textAnchor="middle"
-      fontSize="16"
+      fontSize="20"
       fill="#eab308"
       fontWeight="bold"
     >
       PSU
     </text>
-    <text x="50" y="85" textAnchor="middle" fontSize="10" fill="#94a3b8">
-      850W
-    </text>
+    <text x="50" y="85" textAnchor="middle" fontSize="10" fill="#94a3b8"></text>
   </svg>
 );
