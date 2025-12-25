@@ -67,7 +67,7 @@ const Navbar = () => {
             <NavLink to="/" className={getNavLinkClass} end>
               Home
             </NavLink>
-            <NavLink to="/build" className={getNavLinkClass}>
+            <NavLink to="/builder" className={getNavLinkClass}>
               Build
             </NavLink>
             <NavLink to="/products" className={getNavLinkClass}>
@@ -156,7 +156,7 @@ const Navbar = () => {
               Home
             </NavLink>
             <NavLink
-              to="/products"
+              to="/build"
               className={getMobileNavLinkClass}
               onClick={() => setIsOpen(false)}
             >
@@ -170,7 +170,7 @@ const Navbar = () => {
               Products
             </NavLink>
             <NavLink
-              to="/products"
+              to="/components"
               className={getMobileNavLinkClass}
               onClick={() => setIsOpen(false)}
             >
