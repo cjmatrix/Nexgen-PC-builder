@@ -13,120 +13,150 @@ const colors = {
 export const MotherboardSVG = (props) => (
   <svg
     viewBox="0 0 300 400"
-    className="w-full h-full drop-shadow-lg"
+    className="w-full h-full drop-shadow-2xl"
     {...props}
   >
-    {/* PCB Board */}
+    {/* PCB Board - Matte Black */}
     <rect
       x="10"
       y="10"
       width="280"
       height="380"
       rx="10"
-      fill="#0f172a"
-      stroke={colors.border}
+      fill="#09090b"
+      stroke="#27272a"
       strokeWidth="2"
     />
 
-    {/* Circuits */}
-    <path d="M40 40 L40 360" stroke="#1e293b" strokeWidth="2" />
-    <path d="M260 40 L260 360" stroke="#1e293b" strokeWidth="2" />
+    {/* Circuits - Subtle Dark Grey */}
+    <path d="M40 40 L40 360" stroke="#18181b" strokeWidth="2" />
+    <path d="M260 40 L260 360" stroke="#18181b" strokeWidth="2" />
     <path
       d="M50 50 H250 V150 H50 Z"
       fill="none"
-      stroke={colors.primary}
+      stroke="#27272a"
       strokeWidth="1"
       opacity="0.3"
     />
 
-    {/* VRM Heatsinks */}
-    <rect x="50" y="50" width="40" height="100" rx="4" fill="#334155" />
-    <rect x="60" y="20" width="100" height="20" rx="4" fill="#334155" />
+    {/* VRM Heatsinks - Dark Metallic */}
+    <rect
+      x="50"
+      y="50"
+      width="40"
+      height="100"
+      rx="4"
+      fill="#18181b"
+      stroke="#27272a"
+      strokeWidth="1"
+    />
+    <rect
+      x="60"
+      y="20"
+      width="100"
+      height="20"
+      rx="4"
+      fill="#18181b"
+      stroke="#27272a"
+      strokeWidth="1"
+    />
 
-    {/* CPU Socket Area Outline (for alignment) */}
+    {/* CPU Socket Area Outline */}
     <rect
       x="100"
       y="80"
       width="100"
       height="100"
       fill="none"
-      stroke="#64748b"
+      stroke="#3f3f46"
       strokeDasharray="4 4"
+      opacity="0.5"
     />
 
-    {/* RAM Slots */}
+    {/* RAM Slots - Dark Grey (140 height from previous fix) */}
     <g transform="translate(220, 60)">
       <rect
         x="0"
         y="0"
         width="10"
-        height="180"
-        fill="#1e293b"
-        stroke={colors.border}
+        height="140"
+        fill="#18181b"
+        stroke="#27272a"
       />
       <rect
         x="15"
         y="0"
         width="10"
-        height="180"
-        fill="#1e293b"
-        stroke={colors.border}
+        height="140"
+        fill="#18181b"
+        stroke="#27272a"
       />
-      {/* <rect
+      <rect
         x="30"
         y="0"
         width="10"
-        height="180"
-        fill="#1e293b"
-        stroke={colors.border}
+        height="140"
+        fill="#18181b"
+        stroke="#27272a"
       />
       <rect
         x="45"
         y="0"
         width="10"
-        height="180"
-        fill="#1e293b"
-        stroke={colors.border}
-      /> */}
+        height="140"
+        fill="#18181b"
+        stroke="#27272a"
+      />
     </g>
 
-    {/* PCIe Slots */}
+    {/* PCIe Slots - Dark with subtle metallic accent */}
     <rect
       x="40"
       y="220"
       width="220"
       height="15"
-      fill="#1e293b"
-      stroke={colors.primary}
+      fill="#18181b"
+      stroke="#52525b"
+      strokeWidth="1"
     />
     <rect
       x="40"
       y="260"
       width="220"
       height="15"
-      fill="#1e293b"
-      stroke={colors.border}
+      fill="#18181b"
+      stroke="#27272a"
     />
     <rect
       x="40"
       y="300"
       width="220"
       height="15"
-      fill="#1e293b"
-      stroke={colors.border}
+      fill="#18181b"
+      stroke="#27272a"
     />
 
-    {/* Chipset Heatsink */}
-    <rect x="180" y="330" width="80" height="50" rx="5" fill="#334155" />
+    {/* Chipset Heatsink - Dark */}
+    <rect
+      x="180"
+      y="330"
+      width="80"
+      height="50"
+      rx="5"
+      fill="#18181b"
+      stroke="#27272a"
+      strokeWidth="1"
+    />
     <text
       x="220"
       y="360"
       textAnchor="middle"
-      fill="#94a3b8"
+      fill="#52525b"
       fontSize="12"
       fontFamily="monospace"
+      fontWeight="bold"
     >
-      CHIPSET
+      NEXGEN
     </text>
   </svg>
 );
@@ -134,64 +164,91 @@ export const MotherboardSVG = (props) => (
 export const CpuSVG = (props) => (
   <svg
     viewBox="0 0 100 100"
-    className="w-full h-full drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]"
+    className="w-full h-full drop-shadow-[0_0_15px_rgba(59,130,246,0.3)]"
     {...props}
   >
+    {/* IHS (Integrated Heat Spreader) */}
     <rect
-      x="5"
-      y="5"
-      width="90"
-      height="90"
-      rx="8"
-      fill="#e2e8f0"
-      stroke={colors.primary}
+      x="10"
+      y="10"
+      width="80"
+      height="80"
+      rx="4"
+      fill="#0f172a"
+      stroke="#3b82f6"
       strokeWidth="2"
     />
-    <rect x="25" y="25" width="50" height="50" fill="#94a3b8" />
-    <circle cx="50" cy="50" r="10" fill="#64748b" opacity="0.5" />
+    {/* Inner details */}
+    <rect
+      x="35"
+      y="25"
+      width="30"
+      height="30"
+      rx="2"
+      fill="#1e293b"
+      opacity="0.5"
+    />
+
     <text
       x="50"
-      y="85"
+      y="55"
       textAnchor="middle"
-      fontSize="8"
-      fill="#475569"
+      fontSize="10"
+      fill="#e2e8f0"
       fontWeight="bold"
+      fontFamily="sans-serif"
     >
-      PROCESSOR
+      i9-13900K
     </text>
+    <circle cx="50" cy="35" r="2" fill="#3b82f6" opacity="0.7" />
   </svg>
 );
 
 export const RamSVG = (props) => (
   <svg
     viewBox="0 0 40 200"
-    className="w-full h-full drop-shadow-[0_0_10px_rgba(34,197,94,0.3)]"
+    className="w-full h-full drop-shadow-[0_0_15px_rgba(251,191,36,0.3)]"
     {...props}
   >
+    {/* Gold Heat Spreader */}
     <rect
-      x="5"
+      x="10"
       y="5"
-      width="30"
-      height="190"
-      rx="4"
-      fill="#1e293b"
-      stroke={colors.success}
-      strokeWidth="2"
-    />
-    {/* RGB Strip */}
-    <rect
-      x="12"
-      y="10"
-      width="16"
-      height="180"
+      width="20"
+      height="260"
       rx="2"
-      fill="url(#ramGradient)"
+      fill="url(#ramGoldGradient)"
+      stroke="#b45309"
+      strokeWidth="1"
     />
+
+    {/* Detail Lines */}
+    <line
+      x1="15"
+      y1="20"
+      x2="15"
+      y2="180"
+      stroke="#78350f"
+      strokeWidth="1"
+      opacity="0.5"
+    />
+    <line
+      x1="25"
+      y1="20"
+      x2="25"
+      y2="180"
+      stroke="#78350f"
+      strokeWidth="1"
+      opacity="0.5"
+    />
+
     <defs>
-      <linearGradient id="ramGradient" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stopColor="#22c55e" />
-        <stop offset="50%" stopColor="#3b82f6" />
-        <stop offset="100%" stopColor="#8b5cf6" />
+      <linearGradient id="ramGoldGradient" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stopColor="#d97706" />
+        <stop offset="30%" stopColor="#fbbf24" />
+        <stop offset="50%" stopColor="#fcd34d" />
+        <stop offset="70%" stopColor="#fbbf24" />
+        <stop offset="100%" stopColor="#d97706" />
       </linearGradient>
     </defs>
   </svg>
@@ -200,108 +257,94 @@ export const RamSVG = (props) => (
 export const GpuSVG = (props) => (
   <svg
     viewBox="0 0 350 120"
-    className="w-full h-full drop-shadow-[0_0_20px_rgba(139,92,246,0.4)]"
+    className="w-full h-full drop-shadow-[0_0_25px_rgba(0,0,0,0.6)]"
     {...props}
   >
-    {/* Backplate */}
+    {/* Main Body - Dark, Sleek */}
     <rect
-      x="10"
-      y="10"
-      width="330"
-      height="100"
-      rx="8"
-      fill="#1e293b"
-      stroke={colors.accent}
+      x="5"
+      y="15"
+      width="340"
+      height="90"
+      rx="4"
+      fill="#0f172a"
+      stroke="#334155"
       strokeWidth="2"
     />
 
+    {/* Side Plate / Branding Area */}
+    <rect
+      x="20"
+      y="40"
+      width="150"
+      height="40"
+      rx="2"
+      fill="#1e293b"
+      stroke="#475569"
+      strokeWidth="1"
+    />
+    <text
+      x="95"
+      y="65"
+      textAnchor="middle"
+      fontSize="14"
+      fill="#e2e8f0"
+      fontWeight="bold"
+      fontFamily="sans-serif"
+    >
+      GEFORCE RTX
+    </text>
+
+    {/* Fans Container - Slightly recessed */}
+    <rect
+      x="190"
+      y="25"
+      width="145"
+      height="70"
+      rx="4"
+      fill="#020617"
+      opacity="0.5"
+    />
+
     {/* Fan 1 */}
-    <g>
-      <circle
-        cx="80"
-        cy="60"
-        r="35"
-        fill="#334155"
-        stroke={colors.border}
-        strokeWidth="1"
-      />
-      <path
-        d="M80 60 L80 25 M80 60 L110 80 M80 60 L50 80"
-        stroke="#475569"
-        strokeWidth="2"
-      >
+    <g transform="translate(225, 60)">
+      <circle r="30" fill="none" stroke="#334155" strokeWidth="1" />
+      <g>
+        <path
+          d="M0 -30 L0 30 M-26 -15 L26 15 M-26 15 L26 -15"
+          stroke="#1e293b"
+          strokeWidth="2"
+        />
         <animateTransform
           attributeName="transform"
           type="rotate"
-          from="0 80 60"
-          to="360 80 60"
-          dur="1.5s"
+          from="0 0 0"
+          to="360 0 0"
+          dur="2s"
           repeatCount="indefinite"
         />
-      </path>
+      </g>
     </g>
 
     {/* Fan 2 */}
-    <g>
-      <circle
-        cx="175"
-        cy="60"
-        r="35"
-        fill="#334155"
-        stroke={colors.border}
-        strokeWidth="1"
-      />
-      <path
-        d="M175 60 L175 25 M175 60 L205 80 M175 60 L145 80"
-        stroke="#475569"
-        strokeWidth="2"
-      >
+    <g transform="translate(295, 60)">
+      <circle r="30" fill="none" stroke="#334155" strokeWidth="1" />
+      <g>
+        <path
+          d="M0 -30 L0 30 M-26 -15 L26 15 M-26 15 L26 -15"
+          stroke="#1e293b"
+          strokeWidth="2"
+        />
         <animateTransform
           attributeName="transform"
           type="rotate"
-          from="0 175 60"
-          to="360 175 60"
-          dur="1.5s"
+          from="0 0 0"
+          to="360 0 0"
+          dur="2s"
           repeatCount="indefinite"
         />
-      </path>
+      </g>
     </g>
-
-    {/* Fan 3 */}
-    <g>
-      <circle
-        cx="270"
-        cy="60"
-        r="35"
-        fill="#334155"
-        stroke={colors.border}
-        strokeWidth="1"
-      />
-      <path
-        d="M270 60 L270 25 M270 60 L300 80 M270 60 L240 80"
-        stroke="#475569"
-        strokeWidth="2"
-      >
-        <animateTransform
-          attributeName="transform"
-          type="rotate"
-          from="0 270 60"
-          to="360 270 60"
-          dur="1.5s"
-          repeatCount="indefinite"
-        />
-      </path>
-    </g>
-
-    {/* Branding */}
-    <rect
-      x="20"
-      y="10"
-      width="310"
-      height="10"
-      fill={colors.accent}
-      opacity="0.8"
-    />
   </svg>
 );
 
@@ -309,25 +352,31 @@ export const StorageSVG = (props) => (
   <svg viewBox="0 0 120 40" className="w-full h-full drop-shadow-md" {...props}>
     <rect
       x="2"
-      y="5"
+      y="10"
       width="116"
-      height="30"
-      rx="4"
+      height="20"
+      rx="2"
       fill="#0f172a"
-      stroke={colors.success}
+      stroke="#334155"
       strokeWidth="1"
     />
+
+    {/* Label Sticker */}
+    <rect x="10" y="12" width="100" height="16" rx="1" fill="#1e293b" />
+
+    {/* Green Accent */}
+    <rect x="12" y="14" width="10" height="12" rx="1" fill="#22c55e" />
+
     <text
-      x="60"
-      y="25"
+      x="65"
+      y="22"
       textAnchor="middle"
-      fontSize="10"
-      fill="#22c55e"
-      fontFamily="monospace"
+      fontSize="8"
+      fill="#e2e8f0"
+      fontFamily="sans-serif"
     >
-      NVMe SSD
+      Samsung 980 Pro
     </text>
-    <rect x="100" y="5" width="15" height="30" fill="#eab308" opacity="0.8" />
   </svg>
 );
 

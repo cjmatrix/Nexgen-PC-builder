@@ -85,8 +85,8 @@ const VisualizerPart = ({ part, type, index }) => {
         };
       case "ram":
         return {
-          top: "18%", // Align with top of slots
-          left: "66%", // Align with slots
+          top: "14.5%", // Align with top of slots
+          left: "65%", // Align with slots
           width: "5%",
           height: "35%",
           zIndex: 15,
@@ -305,7 +305,7 @@ const PCBuilder = () => {
 
       <div className="flex-1 flex overflow-hidden">
         {/* Left: Visualizer (The "Case") */}
-        <div className="flex-1 relative bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center p-10 overflow-hidden">
+        <div className="flex-1 relative bg-linear-to-br from-gray-950 via-black to-gray-900 flex items-center justify-center p-10 overflow-hidden">
           {/* Background Grid/Effects */}
           <div
             className="absolute inset-0 opacity-10"
@@ -316,9 +316,9 @@ const PCBuilder = () => {
             }}
           ></div>
 
-          <div className="relative w-full max-w-2xl aspect-[3/4] border border-gray-700 bg-gray-900/50 rounded-3xl shadow-2xl backdrop-blur-sm overflow-hidden ring-1 ring-white/10">
+          <div className="relative w-full max-w-2xl aspect-3/4 border border-gray-800 bg-black/40 rounded-3xl shadow-2xl backdrop-blur-md overflow-hidden ring-1 ring-white/5">
             {/* "Case" Frame */}
-            <div className="absolute inset-0 border-[20px] border-gray-800 rounded-3xl pointer-events-none z-20"></div>
+            <div className="absolute inset-0 border-20 border-gray-900/80 rounded-3xl pointer-events-none z-20"></div>
 
             {/* Parts Visualizer */}
             <div className="absolute inset-0 p-8 z-10">
@@ -340,7 +340,7 @@ const PCBuilder = () => {
             </div>
 
             <div className="absolute bottom-10 left-0 w-full text-center z-30">
-              <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
+              <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-linear-to-r from-blue-400 to-purple-500">
                 {selected.case ? "Custom Build" : "Select a Case"}
               </h2>
             </div>
