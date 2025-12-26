@@ -211,7 +211,7 @@ const PCBuilder = () => {
     dispatch(fetchComponents({ category: "cpu" }));
     dispatch(fetchComponents({ category: "storage" }));
   }, [id, dispatch]);
-
+//hello
   useEffect(() => {
     if (selected.cpu) {
       dispatch(
