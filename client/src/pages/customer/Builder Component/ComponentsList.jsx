@@ -9,11 +9,11 @@ const ComponentsList = ({
   setCurrentStep,
 }) => {
   return (
-    <div className="absolute left-6 top-6 w-72 bg-black/40 backdrop-blur-md border border-white/10 rounded-xl overflow-hidden flex flex-col shadow-2xl z-30 max-h-[calc(100%-3rem)]">
-      {/* Header */}
-      <div className="p-4 border-b border-white/10 bg-white/5">
-        <h3 className="text-white font-bold text-lg">Current Build</h3>
-        <p className="text-xs text-gray-400">Your selection summary</p>
+    <div className="absolute left-6 top-6 w-72 bg-white/90 backdrop-blur-2xl border border-white/60 rounded-2xl overflow-hidden flex flex-col shadow-[0_20px_40px_rgba(0,0,0,0.1)] z-30 max-h-[calc(100%-3rem)] ring-1 ring-white/50">
+     
+      <div className="p-4 border-b border-gray-100/50 bg-linear-to-br from-white/80 to-white/40">
+        <h3 className="text-gray-900 font-bold text-lg">Current Build</h3>
+        <p className="text-xs text-gray-500">Your selection summary</p>
       </div>
 
       {/* List */}
@@ -28,19 +28,17 @@ const ComponentsList = ({
               key={step.id}
               onClick={() => setCurrentStep(idx)}
               className={`group flex items-center p-2 rounded-lg cursor-pointer transition-all duration-200 border border-transparent ${
-                isCurrent
-                  ? "bg-blue-600/20 border-blue-500/30"
-                  : "hover:bg-white/5"
+                isCurrent ? "bg-blue-50 border-blue-200" : "hover:bg-white/50"
               }`}
             >
-              {/* Icon Status */}
+           
               <div
                 className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mr-3 transition-colors ${
                   isCompleted
-                    ? "bg-green-500/20 text-green-500"
+                    ? "bg-green-100 text-green-600"
                     : isCurrent
-                    ? "bg-blue-500/20 text-blue-500"
-                    : "bg-gray-800 text-gray-500"
+                    ? "bg-blue-100 text-blue-600"
+                    : "bg-gray-100 text-gray-500"
                 }`}
               >
                 {isCompleted ? <Check size={14} /> : <step.icon size={14} />}
@@ -51,22 +49,24 @@ const ComponentsList = ({
                 <div className="flex justify-between items-center mb-0.5">
                   <span
                     className={`text-xs font-semibold uppercase tracking-wider ${
-                      isCurrent ? "text-blue-400" : "text-gray-500"
+                      isCurrent ? "text-blue-600" : "text-gray-500"
                     }`}
                   >
                     {step.label}
                   </span>
                   {part && (
-                    <span className="text-xs text-green-400 font-mono">
+                    <span className="text-xs text-green-600 font-mono">
                       ₹{(part.price / 100).toLocaleString()}
                     </span>
                   )}
                 </div>
                 <div className="text-sm truncate">
                   {part ? (
-                    <span className="text-white">{part.name}</span>
+                    <span className="text-gray-900 font-medium">
+                      {part.name}
+                    </span>
                   ) : (
-                    <span className="text-gray-600 italic">Not selected</span>
+                    <span className="text-gray-400 italic">Not selected</span>
                   )}
                 </div>
               </div>
@@ -75,11 +75,13 @@ const ComponentsList = ({
         })}
       </div>
 
-      {/* Footer Total */}
-      <div className="p-4 border-t border-white/10 bg-white/5">
+  
+      <div className="p-4 border-t border-gray-100/50 bg-white/60 backdrop-blur-sm">
         <div className="flex justify-between items-end">
-          <span className="text-gray-400 text-sm">Total Price</span>
-          <span className="text-xl font-bold text-white bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-green-400">
+          <span className="text-gray-500 text-xs uppercase font-bold tracking-wider">
+            Total
+          </span>
+          <span className="text-xl font-black bg-clip-text text-transparent bg-linear-to-r from-blue-600 to-indigo-600 drop-shadow-sm">
             ₹{(totalPrice / 100).toLocaleString()}
           </span>
         </div>

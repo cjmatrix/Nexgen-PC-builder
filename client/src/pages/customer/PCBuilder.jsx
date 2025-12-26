@@ -162,7 +162,7 @@ const VisualizerPart = ({
 
         drop(node);
       }}
-      className={`absolute transition-all duration-300 ${
+      className={`absolute transition-all duration-300 z-50 ${
         isGhost ? " " : "drop-shadow-[0_0_1px_rgba(250,204,21,0.6)] scale-105"
       } `}
       style={getStyle(type)}
@@ -170,7 +170,7 @@ const VisualizerPart = ({
       {ComponentSVG ? (
         <ComponentSVG dragType={dragType} part={part} />
       ) : (
-        <div className="w-full h-full bg-blue-500/30 rounded-lg blur-sm border border-white/20"></div>
+        <div className="w-full h-full bg-blue-100/50 rounded-lg blur-sm border border-blue-200"></div>
       )}
     </div>
   );
@@ -294,19 +294,19 @@ const PCBuilder = () => {
       gsap.to(caseFrameRef.current, {
         keyframes: {
           "0%": {
-            boxShadow: "0 0 100px rgba(255, 0, 0, 0.4)",
+            boxShadow: "0 0 50px rgba(255, 0, 0, 0.9)",
             borderColor: "rgba(255, 0, 0, 0.8)",
           },
           "33%": {
-            boxShadow: "0 0 100px rgba(0, 255, 0, 0.4)",
+            boxShadow: "0 0 50px rgba(0, 255, 0, 0.9)",
             borderColor: "rgba(0, 255, 0, 0.8)",
           },
           "66%": {
-            boxShadow: "0 0 100px rgba(0, 0, 255, 0.4)",
+            boxShadow: "0 0 50px rgba(0, 0, 255, 0.9)",
             borderColor: "rgba(0, 0, 255, 0.8)",
           },
           "100%": {
-            boxShadow: "0 0 100px rgba(255, 0, 0, 0.4)",
+            boxShadow: "0 0 50px rgba(255, 0, 0, 0.9)",
             borderColor: "rgba(255, 0, 0, 0.8)",
           },
         },
@@ -328,28 +328,28 @@ const PCBuilder = () => {
   const currentSelection = selected[currentCategory];
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white font-sans overflow-hidden flex flex-col ">
+    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,var(--tw-gradient-stops))] from-gray-50 via-gray-100 to-gray-200 text-gray-900 font-sans overflow-hidden flex flex-col selection:bg-blue-500/30">
       {/* Top Progress Bar */}
-      <div className="h-16 border-b border-gray-800 flex items-center px-6 overflow-x-auto no-scrollbar bg-gray-900/90 backdrop-blur z-20">
+      <div className="h-16 border-b border-gray-200 flex items-center px-6 overflow-x-auto no-scrollbar bg-white/90 backdrop-blur z-20">
         {STEPS.map((step, idx) => (
           <div
             key={step.id}
             onClick={() => setCurrentStep(idx)}
             className={`flex items-center shrink-0 mr-8 cursor-pointer transition-colors ${
               idx === currentStep
-                ? "text-blue-500 font-bold"
+                ? "text-blue-600 font-bold"
                 : selected[step.id]
-                ? "text-green-500"
-                : "text-gray-500"
+                ? "text-green-600"
+                : "text-gray-400"
             }`}
           >
             <div
               className={`p-1.5 rounded-full mr-2 ${
                 idx === currentStep
-                  ? "bg-blue-500/20"
+                  ? "bg-blue-600 text-white shadow-lg shadow-blue-500/30"
                   : selected[step.id]
-                  ? "bg-green-500/20"
-                  : "bg-gray-800"
+                  ? "bg-green-100 text-green-600"
+                  : "bg-gray-100 text-gray-400"
               }`}
             >
               {selected[step.id] ? (
@@ -368,13 +368,16 @@ const PCBuilder = () => {
 
       <div className="flex-1 flex overflow-hidden">
         {/* Left: Visualizer (The "Case") */}
-        <div className="flex-1 relative bg-linear-to-br from-gray-950 via-black to-gray-900 flex items-center justify-center p-10 overflow-hidden">
+        <div className="flex-1 relative bg-transparent flex items-center justify-center p-10 overflow-hidden perspective-[2000px]">
+          {/* Ambient Glow */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-500/10 blur-[100px] rounded-full pointer-events-none mix-blend-multiply"></div>
+
           {/* Background Grid/Effects */}
           <div
             className="absolute inset-0 opacity-10"
             style={{
               backgroundImage:
-                "linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px)",
+                "linear-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 0, 0, 0.05) 1px, transparent 1px) ",
               backgroundSize: "40px 40px",
             }}
           ></div>
@@ -389,10 +392,10 @@ const PCBuilder = () => {
 
           <div
             ref={caseFrameRef}
-            className="relative w-full max-w-[35rem] aspect-3/4 border border-gray-800 bg-black/40 rounded-3xl shadow-2xl backdrop-blur-md overflow-hidden ring-1 ring-white/5 "
+            className="relative w-full max-w-[35rem] aspect-3/4 border border-gray-200 bg-gray-400/20 rounded-3xl shadow-xl backdrop-blur-md overflow-hidden ring-1 ring-black/5 "
           >
             {/* "Case" Frame */}
-            <div className=" absolute inset-0 border-20 border-gray-900/80 rounded-3xl pointer-events-none z-20"></div>
+            <div className=" absolute inset-0 border-20 border-gray-400 rounded-3xl pointer-events-none z-20"></div>
 
             {/* Parts Visualizer */}
             <div className="absolute inset-0 p-8 z-10">
@@ -418,20 +421,21 @@ const PCBuilder = () => {
         </div>
 
         {/* Right: Selection Panel */}
-        <div className="w-[450px] bg-gray-900 border-l border-gray-800 flex flex-col z-20 shadow-[-10px_0_30px_rgba(0,0,0,0.5)]">
-          <div className="p-6 border-b border-gray-800">
+        <div className="w-[450px] bg-white/80 backdrop-blur-xl border-l border-white/50 flex flex-col z-20 shadow-[-20px_0_40px_rgba(0,0,0,0.05)] relative">
+          <div className="absolute inset-0 bg-linear-to-b from-white/50 to-transparent pointer-events-none"></div>
+          <div className="p-6 border-b border-gray-100/50 relative">
             <div className="flex items-center justify-between mb-2">
-              <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+              <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3 tracking-tight">
                 {React.createElement(STEPS[currentStep].icon, {
-                  className: "text-blue-500",
+                  className: "text-blue-600 drop-shadow-sm",
                 })}
                 {STEPS[currentStep].label}
               </h2>
-              <div className="text-xs text-gray-500 bg-gray-800 px-2 py-1 rounded">
+              <div className="text-xs text-blue-700 font-semibold bg-blue-50 border border-blue-100 px-3 py-1 rounded-full shadow-sm">
                 Step {currentStep + 1} / {STEPS.length}
               </div>
             </div>
-            <p className="text-gray-400 text-sm">
+            <p className="text-gray-500 text-sm">
               {selected[currentCategory]
                 ? "You have selected a component. Select another to replace it."
                 : "Choose a component from the list below."}
@@ -460,10 +464,10 @@ const PCBuilder = () => {
             )}
           </div>
 
-          <div className="p-6 border-t border-gray-800 bg-gray-900">
+          <div className="p-6 border-t border-gray-200 bg-gray-50">
             <div className="flex justify-between items-center mb-4 text-sm">
-              <div className="text-gray-400">Total</div>
-              <div className="text-xl font-bold text-white">
+              <div className="text-gray-500 font-medium">Total Estimate</div>
+              <div className="text-2xl font-black text-gray-900">
                 ₹{(totalPrice / 100).toLocaleString()}
               </div>
             </div>
@@ -472,7 +476,7 @@ const PCBuilder = () => {
               <button
                 onClick={prevStep}
                 disabled={currentStep === 0}
-                className="px-4 py-3 rounded-lg bg-gray-800 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-white font-mediums flex items-center justify-center gap-2"
+                className="px-4 py-3 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-gray-700 font-bold flex items-center justify-center gap-2 shadow-sm"
               >
                 <ChevronLeft size={18} /> Back
               </button>
@@ -483,14 +487,14 @@ const PCBuilder = () => {
                     alert("Proceeding to checkout!");
                     // navigate('/checkout');
                   }}
-                  className="px-4 py-3 rounded-lg bg-green-600 hover:bg-green-700 text-white font-bold transition-all shadow-[0_0_20px_rgba(22,163,74,0.3)] hover:shadow-[0_0_30px_rgba(22,163,74,0.5)] flex items-center justify-center gap-2"
+                  className="px-4 py-3 rounded-xl bg-linear-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold transition-all shadow-lg shadow-green-500/30 hover:shadow-green-500/50 flex items-center justify-center gap-2"
                 >
                   <ShoppingCart size={18} /> Buy Build
                 </button>
               ) : (
                 <button
                   onClick={nextStep}
-                  className="px-4 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold transition-all shadow-[0_0_20px_rgba(37,99,235,0.3)] hover:shadow-[0_0_30px_rgba(37,99,235,0.5)] flex items-center justify-center gap-2"
+                  className="px-4 py-3 rounded-xl bg-gray-900 hover:bg-gray-800 text-white font-bold transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
                 >
                   Next <ChevronRight size={18} />
                 </button>
@@ -508,7 +512,7 @@ const PCBuilder = () => {
                   setCurrentStep(0);
                 }
               }}
-              className="w-full mt-3 px-4 py-3 rounded-lg bg-red-600/10 hover:bg-red-600/20 text-red-500 font-medium transition-colors flex items-center justify-center gap-2 border border-red-600/20"
+              className="w-full mt-3 px-4 py-3 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 font-bold transition-colors flex items-center justify-center gap-2 border border-red-100"
             >
               <Trash2 size={18} /> Clear Build
             </button>
