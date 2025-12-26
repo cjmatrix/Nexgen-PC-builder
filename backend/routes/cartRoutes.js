@@ -17,14 +17,6 @@ router.delete("/:productId", removeFromCart);
 router.put("/update", updateQuantity);
 
 
-
-
-
-
-
-
-
-
 router.get("/validate",protect,validate)
 
 export default router;

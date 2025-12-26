@@ -32,7 +32,11 @@ import {
   StorageSVG,
   CoolerSVG,
   PsuSVG,
-} from "../../components/PCParts";
+} from "./Builder Component/PCParts";
+import ComponentsList from "./Builder Component/ComponentsList";
+
+import DraggablePartCard from "../../components/DraggablePartCard";
+import { useDrop } from "react-dnd";
 
 const STEPS = [
   { id: "cpu", label: "Processor", icon: Cpu },
@@ -45,13 +49,20 @@ const STEPS = [
   { id: "case", label: "Case", icon: Box },
 ];
 
-const VisualizerPart = ({ part, type, index }) => {
+const VisualizerPart = ({
+  part,
+  type,
+  index,
+  handleSelect,
+  selected,
+  dragType,
+  dragPart,
+}) => {
   const ref = useRef(null);
-
+  console.log(part, "partssss");
   useGSAP(() => {
     if (!part) return;
 
-    // Animation for new part entering
     gsap.fromTo(
       ref.current,
       { opacity: 0, scale: 0.5, y: 50, rotation: -10 },
@@ -66,15 +77,26 @@ const VisualizerPart = ({ part, type, index }) => {
     );
   }, [part]);
 
-  // Logic to show "Ghost" or "Placeholder" for specific parts (like Motherboard)
-  const isGhost = !part && type === "motherboard";
-  if (!part && !isGhost) return null; // Only allow rendering if part exists OR it's a ghost motherboard
+  const [{ isOver }, drop] = useDrop(
+    () => ({
+      accept: "COMPONENT",
+      drop: (item) => {
+        handleSelect(item);
+      },
+      collect: (monitor) => ({
+        isOver: !!monitor.isOver(),
+      }),
+    }),
+    [handleSelect]
+  );
 
-  // Position logic (Mock positioning for visualizer)
+  const isGhost = !part && type === "motherboard";
+  if (!part && !isGhost) return null;
+
   const getStyle = (type) => {
     switch (type) {
       case "cpu":
-        return { top: "30%", left: "44.5%", width: "11%", zIndex: 20 };
+        return { top: "24%", left: "35.5%", width: "29%", zIndex: 20 };
       case "motherboard":
         return {
           top: "5%",
@@ -85,15 +107,15 @@ const VisualizerPart = ({ part, type, index }) => {
         };
       case "ram":
         return {
-          top: "18%", // Align with top of slots
-          left: "66%", // Align with slots
+          top: "14.5%",
+          left: "65%",
           width: "5%",
           height: "35%",
           zIndex: 15,
         };
       case "gpu":
         return {
-          top: "52%",
+          top: "54.5%",
           left: "17%",
           width: "66%",
           height: "22%",
@@ -103,19 +125,19 @@ const VisualizerPart = ({ part, type, index }) => {
         return { top: "27%", left: "40.5%", width: "19%", zIndex: 30 };
       case "psu":
         return {
-          bottom: "5%",
-          left: "15%",
-          width: "35%",
+          bottom: "4%",
+          left: "17%",
+          width: "18%",
           height: "20%",
           zIndex: 5,
         };
       case "storage":
         return {
-          bottom: "45%",
-          left: "45%",
-          width: "18%",
-          height: "5%",
-          zIndex: 10,
+          top: "18%",
+          left: "72%",
+          width: "5%",
+          height: "35%",
+          zIndex: 16,
         };
       default:
         return {};
@@ -130,27 +152,25 @@ const VisualizerPart = ({ part, type, index }) => {
     storage: StorageSVG,
     cooler: CoolerSVG,
     psu: PsuSVG,
-    case: () => null, // Case is handled by background
+    case: () => null,
   }[type];
 
   return (
     <div
-      ref={ref}
-      className={`absolute transition-all duration-300 ${
-        isGhost ? "opacity-30 grayscale" : ""
-      } pointer-events-none`}
+      ref={(node) => {
+        ref.current = node;
+
+        drop(node);
+      }}
+      className={`absolute transition-all duration-300 z-50 ${
+        isGhost ? " " : "drop-shadow-[0_0_1px_rgba(250,204,21,0.6)] scale-105"
+      } `}
       style={getStyle(type)}
     >
-      {!isGhost && (
-        <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-white/10 backdrop-blur-md border border-white/20 px-2 py-1 rounded shadow-xl text-white text-[10px] whitespace-nowrap z-50">
-          <span className="font-bold">{part.name}</span>
-        </div>
-      )}
-
       {ComponentSVG ? (
-        <ComponentSVG />
+        <ComponentSVG dragType={dragType} part={part} />
       ) : (
-        <div className="w-full h-full bg-blue-500/30 rounded-lg blur-sm border border-white/20"></div>
+        <div className="w-full h-full bg-blue-100/50 rounded-lg blur-sm border border-blue-200"></div>
       )}
     </div>
   );
@@ -161,6 +181,9 @@ const PCBuilder = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [currentStep, setCurrentStep] = useState(0);
+  const [draggedItem, setDraggedItem] = useState({});
+
+  console.log(draggedItem);
 
   const { selected, options, totalPrice, estimatedWattage } = useSelector(
     (state) => state.builder
@@ -168,8 +191,8 @@ const PCBuilder = () => {
 
   const containerRef = useRef(null);
   const stepRef = useRef(null);
+  const caseFrameRef = useRef(null);
 
-  // Initial Data Fetching
   useEffect(() => {
     if (id) {
       const fetchProductConfig = async () => {
@@ -184,13 +207,11 @@ const PCBuilder = () => {
       };
       fetchProductConfig();
     }
-    // Always fetch initial categories
+
     dispatch(fetchComponents({ category: "cpu" }));
     dispatch(fetchComponents({ category: "storage" }));
-    dispatch(fetchComponents({ category: "case" })); // Pre-fetch case for visualizer background if needed
   }, [id, dispatch]);
-
-  // Dependency Fetching Logic
+//hello
   useEffect(() => {
     if (selected.cpu) {
       dispatch(
@@ -222,6 +243,12 @@ const PCBuilder = () => {
           params: { motherboardId: selected.motherboard._id },
         })
       );
+      dispatch(
+        fetchComponents({
+          category: "case",
+          params: { motherboardId: selected.motherboard._id },
+        })
+      );
     }
   }, [dispatch, selected.motherboard]);
 
@@ -236,8 +263,10 @@ const PCBuilder = () => {
     }
   }, [dispatch, estimatedWattage]);
 
-  const handleSelect = (part) => {
-    dispatch(selectPart({ category: STEPS[currentStep].id, component: part }));
+  const handleSelect = (item) => {
+    dispatch(
+      selectPart({ category: STEPS[currentStep].id, component: item.part })
+    );
   };
 
   const nextStep = () => {
@@ -260,33 +289,67 @@ const PCBuilder = () => {
     );
   }, [currentStep]);
 
+  useGSAP(() => {
+    if (selected.case && caseFrameRef.current) {
+      gsap.to(caseFrameRef.current, {
+        keyframes: {
+          "0%": {
+            boxShadow: "0 0 50px rgba(255, 0, 0, 0.9)",
+            borderColor: "rgba(255, 0, 0, 0.8)",
+          },
+          "33%": {
+            boxShadow: "0 0 50px rgba(0, 255, 0, 0.9)",
+            borderColor: "rgba(0, 255, 0, 0.8)",
+          },
+          "66%": {
+            boxShadow: "0 0 50px rgba(0, 0, 255, 0.9)",
+            borderColor: "rgba(0, 0, 255, 0.8)",
+          },
+          "100%": {
+            boxShadow: "0 0 50px rgba(255, 0, 0, 0.9)",
+            borderColor: "rgba(255, 0, 0, 0.8)",
+          },
+        },
+        duration: 6,
+        repeat: -1,
+        ease: "none",
+      });
+    } else if (caseFrameRef.current) {
+      gsap.killTweensOf(caseFrameRef.current);
+      gsap.set(caseFrameRef.current, {
+        boxShadow: "none",
+        borderColor: "rgba(31, 41, 55, 0.8)",
+      });
+    }
+  }, [selected.case]);
+
   const currentCategory = STEPS[currentStep].id;
   const currentOptions = options[currentCategory] || [];
   const currentSelection = selected[currentCategory];
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white font-sans overflow-hidden flex flex-col pt-16">
+    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,var(--tw-gradient-stops))] from-gray-50 via-gray-100 to-gray-200 text-gray-900 font-sans overflow-hidden flex flex-col selection:bg-blue-500/30">
       {/* Top Progress Bar */}
-      <div className="h-16 border-b border-gray-800 flex items-center px-6 overflow-x-auto no-scrollbar bg-gray-900/90 backdrop-blur z-20">
+      <div className="h-16 border-b border-gray-200 flex items-center px-6 overflow-x-auto no-scrollbar bg-white/90 backdrop-blur z-20">
         {STEPS.map((step, idx) => (
           <div
             key={step.id}
             onClick={() => setCurrentStep(idx)}
             className={`flex items-center shrink-0 mr-8 cursor-pointer transition-colors ${
               idx === currentStep
-                ? "text-blue-500 font-bold"
+                ? "text-blue-600 font-bold"
                 : selected[step.id]
-                ? "text-green-500"
-                : "text-gray-500"
+                ? "text-green-600"
+                : "text-gray-400"
             }`}
           >
             <div
               className={`p-1.5 rounded-full mr-2 ${
                 idx === currentStep
-                  ? "bg-blue-500/20"
+                  ? "bg-blue-600 text-white shadow-lg shadow-blue-500/30"
                   : selected[step.id]
-                  ? "bg-green-500/20"
-                  : "bg-gray-800"
+                  ? "bg-green-100 text-green-600"
+                  : "bg-gray-100 text-gray-400"
               }`}
             >
               {selected[step.id] ? (
@@ -305,42 +368,52 @@ const PCBuilder = () => {
 
       <div className="flex-1 flex overflow-hidden">
         {/* Left: Visualizer (The "Case") */}
-        <div className="flex-1 relative bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center p-10 overflow-hidden">
+        <div className="flex-1 relative bg-transparent flex items-center justify-center p-10 overflow-hidden perspective-[2000px]">
+          {/* Ambient Glow */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-500/10 blur-[100px] rounded-full pointer-events-none mix-blend-multiply"></div>
+
           {/* Background Grid/Effects */}
           <div
             className="absolute inset-0 opacity-10"
             style={{
               backgroundImage:
-                "linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px)",
+                "linear-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 0, 0, 0.05) 1px, transparent 1px) ",
               backgroundSize: "40px 40px",
             }}
           ></div>
 
-          <div className="relative w-full max-w-2xl aspect-[3/4] border border-gray-700 bg-gray-900/50 rounded-3xl shadow-2xl backdrop-blur-sm overflow-hidden ring-1 ring-white/10">
+          <ComponentsList
+            steps={STEPS}
+            selected={selected}
+            totalPrice={totalPrice}
+            currentStep={currentStep}
+            setCurrentStep={setCurrentStep}
+          />
+
+          <div
+            ref={caseFrameRef}
+            className="relative w-full max-w-[35rem] aspect-3/4 border border-gray-200 bg-gray-400/20 rounded-3xl shadow-xl backdrop-blur-md overflow-hidden ring-1 ring-black/5 "
+          >
             {/* "Case" Frame */}
-            <div className="absolute inset-0 border-[20px] border-gray-800 rounded-3xl pointer-events-none z-20"></div>
+            <div className=" absolute inset-0 border-20 border-gray-400 rounded-3xl pointer-events-none z-20"></div>
 
             {/* Parts Visualizer */}
             <div className="absolute inset-0 p-8 z-10">
-              {selected.case && (
-                <img
-                  src={selected.case.image}
-                  alt="Case"
-                  className="absolute inset-0 w-full h-full object-cover opacity-50"
-                />
-              )}
-
               {STEPS.map((step) => (
                 <VisualizerPart
                   key={step.id}
                   part={selected[step.id]}
                   type={step.id}
+                  handleSelect={handleSelect}
+                  selected={selected}
+                  dragPart={draggedItem?.part}
+                  dragType={draggedItem?.category}
                 />
               ))}
             </div>
 
             <div className="absolute bottom-10 left-0 w-full text-center z-30">
-              <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
+              <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-linear-to-r from-blue-400 to-purple-500">
                 {selected.case ? "Custom Build" : "Select a Case"}
               </h2>
             </div>
@@ -348,20 +421,21 @@ const PCBuilder = () => {
         </div>
 
         {/* Right: Selection Panel */}
-        <div className="w-[450px] bg-gray-900 border-l border-gray-800 flex flex-col z-20 shadow-[-10px_0_30px_rgba(0,0,0,0.5)]">
-          <div className="p-6 border-b border-gray-800">
+        <div className="w-[450px] bg-white/80 backdrop-blur-xl border-l border-white/50 flex flex-col z-20 shadow-[-20px_0_40px_rgba(0,0,0,0.05)] relative">
+          <div className="absolute inset-0 bg-linear-to-b from-white/50 to-transparent pointer-events-none"></div>
+          <div className="p-6 border-b border-gray-100/50 relative">
             <div className="flex items-center justify-between mb-2">
-              <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+              <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3 tracking-tight">
                 {React.createElement(STEPS[currentStep].icon, {
-                  className: "text-blue-500",
+                  className: "text-blue-600 drop-shadow-sm",
                 })}
                 {STEPS[currentStep].label}
               </h2>
-              <div className="text-xs text-gray-500 bg-gray-800 px-2 py-1 rounded">
+              <div className="text-xs text-blue-700 font-semibold bg-blue-50 border border-blue-100 px-3 py-1 rounded-full shadow-sm">
                 Step {currentStep + 1} / {STEPS.length}
               </div>
             </div>
-            <p className="text-gray-400 text-sm">
+            <p className="text-gray-500 text-sm">
               {selected[currentCategory]
                 ? "You have selected a component. Select another to replace it."
                 : "Choose a component from the list below."}
@@ -378,54 +452,22 @@ const PCBuilder = () => {
               </div>
             ) : (
               currentOptions.map((opt) => (
-                <div
+                <DraggablePartCard
                   key={opt._id}
-                  onClick={() => handleSelect(opt)}
-                  className={`group p-4 rounded-xl border cursor-pointer w-full text-left transition-all duration-200 hover:scale-[1.02] ${
-                    selected[currentCategory]?._id === opt._id
-                      ? "bg-blue-600/10 border-blue-500 ring-1 ring-blue-500"
-                      : "bg-gray-800/50 border-gray-700 hover:border-gray-500 hover:bg-gray-800"
-                  }`}
-                >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3
-                        className={`font-semibold ${
-                          selected[currentCategory]?._id === opt._id
-                            ? "text-blue-400"
-                            : "text-gray-200"
-                        }`}
-                      >
-                        {opt.name}
-                      </h3>
-                      <div className="text-xs text-gray-500 mt-1">
-                        {opt.specs &&
-                          Object.keys(opt.specs)
-                            .slice(0, 2)
-                            .map((k) => (
-                              <span
-                                key={k}
-                                className="mr-2 inline-block bg-gray-700/50 px-1.5 py-0.5 rounded capitalize"
-                              >
-                                {k.replace(/([A-Z])/g, " $1").trim()}:{" "}
-                                {opt.specs[k]}
-                              </span>
-                            ))}
-                      </div>
-                    </div>
-                    <div className="font-bold text-blue-300">
-                      ₹{(opt.price / 100).toLocaleString()}
-                    </div>
-                  </div>
-                </div>
+                  handleSelect={handleSelect}
+                  currentCategory={currentCategory}
+                  opt={opt}
+                  selected={selected}
+                  setDraggedItem={setDraggedItem}
+                ></DraggablePartCard>
               ))
             )}
           </div>
 
-          <div className="p-6 border-t border-gray-800 bg-gray-900">
+          <div className="p-6 border-t border-gray-200 bg-gray-50">
             <div className="flex justify-between items-center mb-4 text-sm">
-              <div className="text-gray-400">Total</div>
-              <div className="text-xl font-bold text-white">
+              <div className="text-gray-500 font-medium">Total Estimate</div>
+              <div className="text-2xl font-black text-gray-900">
                 ₹{(totalPrice / 100).toLocaleString()}
               </div>
             </div>
@@ -434,7 +476,7 @@ const PCBuilder = () => {
               <button
                 onClick={prevStep}
                 disabled={currentStep === 0}
-                className="px-4 py-3 rounded-lg bg-gray-800 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-white font-mediums flex items-center justify-center gap-2"
+                className="px-4 py-3 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-gray-700 font-bold flex items-center justify-center gap-2 shadow-sm"
               >
                 <ChevronLeft size={18} /> Back
               </button>
@@ -445,14 +487,14 @@ const PCBuilder = () => {
                     alert("Proceeding to checkout!");
                     // navigate('/checkout');
                   }}
-                  className="px-4 py-3 rounded-lg bg-green-600 hover:bg-green-700 text-white font-bold transition-all shadow-[0_0_20px_rgba(22,163,74,0.3)] hover:shadow-[0_0_30px_rgba(22,163,74,0.5)] flex items-center justify-center gap-2"
+                  className="px-4 py-3 rounded-xl bg-linear-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold transition-all shadow-lg shadow-green-500/30 hover:shadow-green-500/50 flex items-center justify-center gap-2"
                 >
                   <ShoppingCart size={18} /> Buy Build
                 </button>
               ) : (
                 <button
                   onClick={nextStep}
-                  className="px-4 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold transition-all shadow-[0_0_20px_rgba(37,99,235,0.3)] hover:shadow-[0_0_30px_rgba(37,99,235,0.5)] flex items-center justify-center gap-2"
+                  className="px-4 py-3 rounded-xl bg-gray-900 hover:bg-gray-800 text-white font-bold transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
                 >
                   Next <ChevronRight size={18} />
                 </button>
@@ -470,7 +512,7 @@ const PCBuilder = () => {
                   setCurrentStep(0);
                 }
               }}
-              className="w-full mt-3 px-4 py-3 rounded-lg bg-red-600/10 hover:bg-red-600/20 text-red-500 font-medium transition-colors flex items-center justify-center gap-2 border border-red-600/20"
+              className="w-full mt-3 px-4 py-3 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 font-bold transition-colors flex items-center justify-center gap-2 border border-red-100"
             >
               <Trash2 size={18} /> Clear Build
             </button>
