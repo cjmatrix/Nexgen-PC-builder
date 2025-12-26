@@ -12,170 +12,289 @@ const colors = {
 
 export const MotherboardSVG = ({ dragType, dragPart }) => (
   <svg viewBox="0 0 300 400" className="w-full h-full drop-shadow-2xl">
-    {/* PCB Board - White/Silver */}
+    <defs>
+      {/* Matte White PCB Gradient */}
+      <linearGradient id="moboPcbGradient" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stopColor="#f8fafc" />
+        <stop offset="100%" stopColor="#e2e8f0" />
+      </linearGradient>
+
+      {/* Silver Heatsink Gradient */}
+      <linearGradient id="heatsinkGradient" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stopColor="#f1f5f9" />
+        <stop offset="50%" stopColor="#cbd5e1" />
+        <stop offset="100%" stopColor="#94a3b8" />
+      </linearGradient>
+
+      {/* Dark Port/Slot Gradient */}
+      <linearGradient id="slotGradient" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stopColor="#334155" />
+        <stop offset="100%" stopColor="#0f172a" />
+      </linearGradient>
+
+      {/* Striped Pattern for Heatsinks */}
+      <pattern
+        id="heatsinkFins"
+        x="0"
+        y="0"
+        width="4"
+        height="4"
+        patternUnits="userSpaceOnUse"
+      >
+        <line
+          x1="0"
+          y1="0"
+          x2="0"
+          y2="4"
+          stroke="#94a3b8"
+          strokeWidth="0.5"
+          opacity="0.5"
+        />
+      </pattern>
+    </defs>
+    {/* 1. PCB BASE BOARD */}
     <rect
       x="10"
       y="10"
       width="280"
       height="380"
       rx="10"
-      fill="#f8fafc"
+      fill="url(#moboPcbGradient)"
       stroke={dragType === "motherboard" ? "#3b82f6" : "#cbd5e1"}
+      strokeWidth="2"
       style={
         dragType === "motherboard"
           ? { filter: "drop-shadow(0 0 5px #3b82f6)" }
           : {}
       }
-      strokeWidth="2"
     />
-
-    {/* Circuits - Subtle Silver */}
-    <path d="M40 40 L40 360" stroke="#e2e8f0" strokeWidth="2" />
-    <path d="M260 40 L260 360" stroke="#e2e8f0" strokeWidth="2" />
+    {/* 2. CIRCUIT TRACES (Subtle background details) */}
     <path
-      d="M50 50 H250 V150 H50 Z"
-      fill="none"
+      d="M40 40 L40 360 M260 40 L260 360 M50 350 L250 350"
       stroke="#cbd5e1"
       strokeWidth="1"
-      opacity="0.3"
+      fill="none"
+      opacity="0.5"
     />
-
-    {/* PSU-Container - Light Gray */}
-    <rect
-      x="10"
-      y="400"
-      width="74"
-      height="40"
-      rx="4"
-      fill="#f1f5f9"
-      stroke={dragType === "psu" ? "#3b82f6" : "#cbd5e1"}
-      style={
-        dragType === "psu" ? { filter: "drop-shadow(0 0 5px #3b82f6)" } : {}
-      }
-      strokeWidth="1"
+    <path
+      d="M100 100 L 150 150 L 200 100"
+      stroke="#cbd5e1"
+      strokeWidth="0.5"
+      fill="none"
+      opacity="0.5"
     />
+    {/* 3. VRM HEATSINKS (Top & Left Power Delivery) */}
+    {/* Top Heatsink */}
     <rect
       x="60"
       y="20"
       width="100"
-      height="20"
-      rx="4"
-      fill="#f1f5f9"
+      height="25"
+      rx="2"
+      fill="url(#heatsinkGradient)"
       stroke="#cbd5e1"
       strokeWidth="1"
     />
-
-    {/* CPU Socket Area Outline */}
+    <rect
+      x="62"
+      y="22"
+      width="96"
+      height="21"
+      fill="url(#heatsinkFins)"
+      opacity="0.3"
+    />
+    {/* I/O Shroud (Left Side) */}
+    <path
+      d="M15 20 L 50 20 L 50 150 L 15 150 Z"
+      fill="url(#heatsinkGradient)"
+      stroke="#cbd5e1"
+      strokeWidth="1"
+    />
+    <text
+      writingMode="tb"
+      x="25"
+      y="50"
+      fontSize="12"
+      fill="#64748b"
+      fontWeight="bold"
+      fontFamily="sans-serif"
+      opacity="0.7"
+      style={{ letterSpacing: "3px" }}
+    >
+      PRO SERIES
+    </text>
+    {/* 4. CPU SOCKET (LGA 1700 style) */}
     <rect
       x="100"
       y="80"
       width="100"
       height="100"
-      fill="none"
-      stroke={dragType === "cpu" ? "#3b82f6" : "#94a3b8"}
-      strokeDasharray="4 4"
-      opacity="0.5"
+      rx="4"
+      fill="#f1f5f9"
+      stroke={dragType === "cpu" ? "#3b82f6" : "#cbd5e1"}
+      strokeWidth="2"
       style={
         dragType === "cpu" ? { filter: "drop-shadow(0 0 5px #3b82f6)" } : {}
       }
     />
-
-    {/* RAM Slots - Light Gray */}
+    {/* Inner Mechanism */}
+    <rect
+      x="110"
+      y="90"
+      width="80"
+      height="80"
+      rx="2"
+      fill="#e2e8f0"
+      stroke="#cbd5e1"
+    />
+    <rect
+      x="120"
+      y="100"
+      width="60"
+      height="60"
+      fill="none"
+      stroke="#94a3b8"
+      strokeDasharray="2 2"
+    />
+    {/* Locking Lever */}
+    <path
+      d="M195 90 L 195 160 L 205 160"
+      stroke="#cbd5e1"
+      strokeWidth="2"
+      fill="none"
+    />
+    {/* 5. RAM SLOTS (DIMM) */}
     <g transform="translate(220, 60)">
-      <rect
-        x="0"
-        y="0"
-        width="10"
-        height="140"
-        fill="#e2e8f0"
-        stroke={dragType === "ram" ? "#3b82f6" : "#cbd5e1"}
-        style={
-          dragType === "ram" ? { filter: "drop-shadow(0 0 5px #3b82f6)" } : {}
-        }
-      />
-      <rect
-        x="15"
-        y="0"
-        width="10"
-        height="140"
-        fill="#e2e8f0"
-        stroke="#cbd5e1"
-      />
-      <rect
-        x="30"
-        y="0"
-        width="10"
-        height="140"
-        fill="#e2e8f0"
-        stroke={dragType === "storage" ? "#3b82f6" : "#cbd5e1"}
-        style={
-          dragType === "storage"
-            ? { filter: "drop-shadow(0 0 5px #3b82f6)" }
-            : {}
-        }
-      />
-      {/* <rect
-        x="45"
-        y="0"
-        width="10"
-        height="140"
-        fill="#18181b"
-        stroke="#27272a"
-      /> */}
+      {/* 4 DIMM Slots with realistic latch details */}
+      {[0, 15, 30, 45].map((xOffset, i) => (
+        <g key={i}>
+          {/* Main Slot Body */}
+          <rect
+            x={xOffset}
+            y="0"
+            width="10"
+            height="140"
+            fill={i % 2 === 0 ? "#cbd5e1" : "#334155"} // Alternating colors
+            stroke={(dragType === "ram" && i!==0) ? "#3b82f6" : "#475569"}
+            strokeWidth="0"
+            style={
+              ((dragType === "ram" && i!==2 && i!==3) || dragType === "storage" &&i!==0 &&i!==1  && i!==3)
+                ? { filter: "drop-shadow(0 0 2px #3b82f6)" }
+                : {}
+            }
+          />
+          {/* Top Latch */}
+          {/* <rect
+            x={xOffset - 1}
+            y="-5"
+            width="12"
+            height="5"
+            fill="#334155"
+            rx="1"
+          /> */}
+          {/* Bottom Latch */}
+          {/* <rect
+            x={xOffset - 1}
+            y="140"
+            width="12"
+            height="5"
+            fill="#334155"
+            rx="1"
+          /> */}
+        </g>
+      ))}
     </g>
-
-    {/* PCIe Slots - Dark with subtle metallic accent */}
-    {/* <rect
-      x="40"
-      y="220"
-      width="220"
-      height="15"
-      fill="#18181b"
-      stroke="#52525b"
+    {/* 6. PCIE SLOTS (x16 and M.2) */}
+    {/* Top M.2 Heatsink (Above GPU) */}
+    <rect
+      x="100"
+      y="190"
+      width="100"
+      height="25"
+      rx="2"
+      fill="url(#heatsinkGradient)"
+      stroke="#cbd5e1"
       strokeWidth="1"
-    /> */}
-    {/* <rect
+    />
+    <text x="150" y="205" textAnchor="middle" fontSize="6" fill="#64748b">
+      M.2_1 GEN5
+    </text>
+    {/* Main x16 Slot (Reinforced) */}
+    <rect
       x="40"
-      y="260"
+      y="235"
       width="220"
-      height="15"
-      fill="#18181b"
-      stroke="#27272a"
-    /> */}
+      height="12"
+      fill="#e2e8f0" // Steel Armor Look
+      stroke="#94a3b8"
+      strokeWidth="1"
+    />
+    <rect x="42" y="237" width="216" height="8" fill="#0f172a" />{" "}
+    {/* The Slot itself */}
+    {/* GPU Placeholder Area (Matches GPU drag target) */}
     <rect
       x="40"
       y="250"
       width="220"
       height="58"
-      fill="#f1f5f9"
-      stroke={dragType === "gpu" ? "#3b82f6" : "#cbd5e1"}
+      fill="none" // Transparent styling placeholder
+      stroke={dragType === "gpu" ? "#3b82f6" : "none"}
       style={
         dragType === "gpu" ? { filter: "drop-shadow(0 0 5px #3b82f6)" } : {}
       }
     />
-
-    {/* Chipset Heatsink - Silver */}
+    {/* Secondary PCIe Slots */}
+    <rect x="40" y="310" width="220" height="8" fill="#334155" rx="1" />
+    {/* <rect x="40" y="330" width="220" height="8" fill="#334155" rx="1" /> */}
+    {/* 7. CHIPSET HEATSINK (Bottom Right) */}
     <rect
       x="180"
       y="330"
-      width="80"
-      height="50"
-      rx="5"
-      fill="#e2e8f0"
+      width="90"
+      height="60" // Slightly larger cover
+      rx="4"
+      fill="url(#heatsinkGradient)"
       stroke="#cbd5e1"
       strokeWidth="1"
     />
+    {/* Chipset Branding / RGB Zone */}
+    <rect
+      x="190"
+      y="340"
+      width="70"
+      height="40"
+      rx="2"
+      fill="#f8fafc"
+      opacity="0.5"
+    />
+    {/* Stylized Logo */}
+    <path d="M200 350 L 210 350 L 205 370 Z" fill="#3b82f6" opacity="0.8" />
     <text
-      x="220"
-      y="360"
+      x="225"
+      y="365"
       textAnchor="middle"
-      fill="#64748b"
-      fontSize="12"
+      fill="#334155"
+      fontSize="10"
       fontFamily="monospace"
       fontWeight="bold"
     >
       NEXGEN
     </text>
+    {/* 8. AUDIO CAPACITORS (Bottom Left) */}
+    <circle cx="30" cy="350" r="5" fill="#fbbf24" stroke="#d97706" />
+    <circle cx="30" cy="365" r="5" fill="#fbbf24" stroke="#d97706" />
+    <circle cx="30" cy="380" r="5" fill="#fbbf24" stroke="#d97706" />
+    <path d="M25 330 L 25 385" stroke="#cbd5e1" strokeWidth="0.5" />{" "}
+    {/* Audio Trace Separation */}
+    {/* 9. PSU SHROUD INDICATOR (Bottom) */}
+    <rect
+      x="10"
+      y="400" // Kept original Y
+      width="74"
+      height="40"
+      fill="none"
+      stroke={dragType === "psu" ? "#3b82f6" : "none"}
+    />
   </svg>
 );
 
@@ -588,93 +707,323 @@ export const GpuSVG = (props) => (
 );
 
 export const StorageSVG = ({ label, ...props }) => (
-  <svg viewBox="0 0 40 200" className="w-full h-full drop-shadow-md" {...props}>
-    {/* Vertical PCB */}
+  <svg
+    viewBox="0 0 40 300"
+    className="w-full h-full drop-shadow-[2px_2px_5px_rgba(0,0,0,0.2)]"
+    {...props}
+  >
+    <defs>
+      <linearGradient id="ssdGold" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stopColor="#b45309" />
+        <stop offset="50%" stopColor="#fbbf24" />
+        <stop offset="100%" stopColor="#b45309" />
+      </linearGradient>
+      <linearGradient id="ssdPcb" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stopColor="#1e293b" />
+        <stop offset="100%" stopColor="#0f172a" />
+      </linearGradient>
+      <linearGradient id="ssdLabel" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stopColor="#f8fafc" />
+        <stop offset="100%" stopColor="#e2e8f0" />
+      </linearGradient>
+    </defs>
+    {/* 1. M.2 PCB BODY */}
+    {/* Side depth (Thickness) */}
+    <path d="M5 20 L 5 180 L 10 185 L 10 15 Z" fill="#020617" opacity="0.6" />
+    {/* Main Face PCB */}
     <rect
       x="10"
-      y="-31"
+      y="15"
       width="20"
       height="260"
-      rx="2"
-      fill="#0f172a"
+      rx="1"
+      fill="url(#ssdPcb)"
       stroke="#334155"
-      strokeWidth="1"
+      strokeWidth="0.5"
     />
-
-    {/* Label Sticker - Vertical */}
+    {/* 2. GOLD CONNECTOR PINS (M-Key Style) */}
+    <g transform="translate(10, 175)">
+      {/* Contact Pads */}
+      <rect x="2" y="5" width="2" height="10" fill="url(#ssdGold)" />
+      <rect x="5" y="5" width="2" height="10" fill="url(#ssdGold)" />
+      <rect x="8" y="5" width="2" height="10" fill="url(#ssdGold)" />
+      <rect x="11" y="5" width="2" height="10" fill="url(#ssdGold)" />
+      <rect x="14" y="5" width="2" height="10" fill="url(#ssdGold)" />
+      {/* Notch Cutout */}
+      <rect x="16.5" y="5" width="1" height="10" fill="#0f172a" />
+    </g>
+    {/* 3. COMPONENT CHIPS */}
+    {/* Controller Chip (Square) */}
     <rect
       x="12"
-      y="30"
+      y="35"
       width="16"
-      height="120"
-      rx="1"
+      height="16"
       fill="#334155"
-      opacity="0.8"
+      stroke="#475569"
+      strokeWidth="0.5"
     />
-    <rect x="14" y="32" width="12" height="10" rx="1" fill="#22c55e" />
-
-    {/* Chips (hint) */}
-    <rect x="12" y="160" width="16" height="20" rx="1" fill="#cbd5e1" />
-
-    {/* Vertical Text */}
-    {/* <text
-      x="20"
-      y="100"
-      textAnchor="middle"
-      fontSize="8"
-      fill="#e2e8f0"
-      fontFamily="sans-serif"
-      transform="rotate(90 20 100)"
-    >
-      {label ? label.substring(0, 15) : "NVMe SSD"}
-    </text> */}
-  </svg>
-);
-
-export const CoolerSVG = ({ part }) => (
-  <svg
-    viewBox="0 0 120 120"
-    className="w-full h-full drop-shadow-[0_0_15px_rgba(59,130,246,0.4)]"
-  >
+    <circle cx="20" cy="43" r="2" fill="#475569" /> {/* Chip Logo */}
+    {/* NAND Flash Chips */}
     <rect
-      x="10"
-      y="10"
-      width="100"
-      height="100"
-      rx="50"
-      fill="#ffffff"
-      stroke={colors.primary}
-      strokeWidth="3"
+      x="12"
+      y="60"
+      width="16"
+      height="30"
+      fill="#1e293b"
+      stroke="#334155"
+      strokeWidth="0.5"
     />
-    <circle cx="60" cy="60" r="40" fill="url(#fanGradient)" opacity="0.8">
-      <animateTransform
-        attributeName="transform"
-        type="rotate"
-        from="0 60 60"
-        to="360 60 60"
-        dur="2s"
-        repeatCount="indefinite"
-      />
-    </circle>
-    <defs>
-      <radialGradient id="fanGradient">
-        <stop offset="30%" stopColor="#1e293b" />
-        <stop offset="90%" stopColor="#3b82f6" />
-        <stop offset="100%" stopColor="#60a5fa" />
-      </radialGradient>
-    </defs>
+    <rect
+      x="12"
+      y="95"
+      width="16"
+      height="30"
+      fill="#1e293b"
+      stroke="#334155"
+      strokeWidth="0.5"
+    />
+    {/* 4. THERMAL LABEL / STICKER */}
+    <rect
+      x="11"
+      y="55"
+      width="18"
+      height="80"
+      rx="1"
+      fill="url(#ssdLabel)"
+      opacity="0.95"
+    />
+    {/* Branding Text on Sticker */}
     <text
-      x="60"
-      y="65"
+      x="-95"
+      y="20"
+      transform="rotate(-90)"
       textAnchor="middle"
-      fontSize="12"
-      fill="white"
+      fontSize="4"
+      fill="#0f172a"
+      fontWeight="bold"
+      letterSpacing="1"
+    >
+      NEXGEN SSD
+    </text>
+    <text
+      x="-95"
+      y="26"
+      transform="rotate(-90)"
+      textAnchor="middle"
+      fontSize="3"
+      fill="#3b82f6"
       fontWeight="bold"
     >
-      {part?.specs?.coolerType === "Liquid" ? "Liquid" : "Air"}
+      GEN5 NVMe
     </text>
+    {/* 5. MOUNTING SCREW HOLE (Top Semi-circle) */}
+    <path
+      d="M15 15 A 5 5 0 0 0 25 15 L 25 15 L 15 15 Z"
+      fill="#0f172a"
+      stroke="none"
+    />
+    <circle cx="20" cy="15" r="2.5" fill="#e2e8f0" stroke="#94a3b8" />
+    <path
+      d="M19 15 L 21 15 M 20 14 L 20 16"
+      stroke="#fbbf24"
+      strokeWidth="0.5"
+    />{" "}
+    {/* Screw Head */}
   </svg>
 );
+
+export const CoolerSVG = ({ part }) => {
+  const isLiquid = part?.specs?.coolerType === "Liquid";
+
+  return (
+    <svg
+      viewBox="0 0 120 120"
+      className="w-full h-full drop-shadow-[0_5px_15px_rgba(0,0,0,0.2)]"
+    >
+      <defs>
+        {/* Pump Block / Heatsink Base Gradient */}
+        <linearGradient id="coolerBaseGradient" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#ffffff" />
+          <stop offset="100%" stopColor="#f1f5f9" />
+        </linearGradient>
+
+        {/* Display / Fan Center Gradient */}
+        <radialGradient id="centerGradient" cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0%" stopColor="#1e293b" />
+          <stop offset="100%" stopColor="#020617" />
+        </radialGradient>
+
+        {/* Copper Pipes / Contact Gradient */}
+        <linearGradient id="copperPipe" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="#b45309" />
+          <stop offset="50%" stopColor="#d97706" />
+          <stop offset="100%" stopColor="#b45309" />
+        </linearGradient>
+      </defs>
+
+      {/* 1. MOUNTING BRACKET (X-Shape behind) */}
+      <path
+        d="M10 10 L 110 110 M 110 10 L 10 110"
+        stroke="#cbd5e1"
+        strokeWidth="6"
+        strokeLinecap="round"
+      />
+
+      {isLiquid ? (
+        <>
+          {/* --- LIQUID AIO PUMP HEAD --- */}
+          {/* Tubes exiting the block */}
+          <path
+            d="M95 40 C 110 40, 115 35, 120 30"
+            stroke="#1e293b"
+            strokeWidth="8"
+            fill="none"
+          />
+          <path
+            d="M95 80 C 110 80, 115 85, 120 90"
+            stroke="#1e293b"
+            strokeWidth="8"
+            fill="none"
+          />
+
+          {/* Main Pump Housing */}
+          <rect
+            x="15"
+            y="15"
+            width="90"
+            height="90"
+            rx="20"
+            fill="url(#coolerBaseGradient)"
+            stroke="#e2e8f0"
+            strokeWidth="1"
+            filter="drop-shadow(0 4px 6px rgba(0,0,0,0.1))"
+          />
+
+          {/* Infinity Mirror Display Ring */}
+          <circle
+            cx="60"
+            cy="60"
+            r="32"
+            fill="#0f172a"
+            stroke="#334155"
+            strokeWidth="1"
+          />
+
+          {/* RGB Ring Glint */}
+          <circle
+            cx="60"
+            cy="60"
+            r="30"
+            fill="none"
+            stroke="#3b82f6"
+            strokeWidth="2"
+            filter="drop-shadow(0 0 4px #3b82f6)"
+            opacity="0.8"
+          />
+
+          {/* Display Content (Temp) */}
+          <circle cx="60" cy="60" r="28" fill="url(#centerGradient)" />
+          <text
+            x="60"
+            y="65"
+            textAnchor="middle"
+            fontSize="14"
+            fill="white"
+            fontWeight="bold"
+            fontFamily="sans-serif"
+          >
+            35°C
+          </text>
+          <text
+            x="60"
+            y="75"
+            textAnchor="middle"
+            fontSize="9"
+            fill="white"
+            fontWeight="bold"
+            fontFamily="sans-serif"
+            opacity="0.8"
+          >
+            LIQUID
+          </text>
+        </>
+      ) : (
+        <>
+          {/* --- AIR COOLER HEATSINK --- */}
+          {/* Heatpipes */}
+          <path
+            d="M20 10 V 110 M100 10 V 110"
+            stroke="url(#copperPipe)"
+            strokeWidth="4"
+          />
+
+          {/* Fins Stack (Top Down View) */}
+          <rect
+            x="15"
+            y="15"
+            width="90"
+            height="90"
+            rx="4"
+            fill="#e2e8f0"
+            stroke="#94a3b8"
+          />
+          {[25, 35, 45, 55, 65, 75, 85, 95].map((y) => (
+            <line
+              key={y}
+              x1="15"
+              y1={y}
+              x2="105"
+              y2={y}
+              stroke="#cbd5e1"
+              strokeWidth="1"
+            />
+          ))}
+
+          {/* Center Fan Hub */}
+          <circle
+            cx="60"
+            cy="60"
+            r="35"
+            fill="none"
+            stroke="#cbd5e1"
+            strokeWidth="2"
+          />
+          <circle cx="60" cy="60" r="10" fill="#334155" />
+
+          {/* Fan Blades Spin */}
+          <g transform="translate(60, 60)" opacity="0.6">
+            <path
+              d="M0 -30 Q 15 -10, 0 0 Q -15 -10, 0 -30 M0 30 Q -15 10, 0 0 Q 15 10, 0 30 M-30 0 Q -10 15, 0 0 Q -10 -15, -30 0 M30 0 Q 10 -15, 0 0 Q 10 15, 30 0"
+              fill="#64748b"
+            >
+              <animateTransform
+                attributeName="transform"
+                type="rotate"
+                from="0 0 0"
+                to="360 0 0"
+                dur="0.5s"
+                repeatCount="indefinite"
+              />
+            </path>
+          </g>
+
+          <text
+            x="60"
+            y="60" // Centered on hub
+            textAnchor="middle"
+            fontSize="4"
+            fill="#e2e8f0"
+            fontWeight="bold"
+            dy="1.5"
+          >
+            NEXGEN
+          </text>
+        </>
+      )}
+    </svg>
+  );
+};
 
 export const PsuSVG = ({ part }) => (
   <svg

@@ -34,6 +34,8 @@ import {
   PsuSVG,
 } from "./Builder Component/PCParts";
 import ComponentsList from "./Builder Component/ComponentsList";
+import BackgroundGears from "../../components/BackgroundGears";
+import DragIndicator from "./Builder Component/DragIndicator";
 
 import DraggablePartCard from "../../components/DraggablePartCard";
 import { useDrop } from "react-dnd";
@@ -163,7 +165,9 @@ const VisualizerPart = ({
         drop(node);
       }}
       className={`absolute transition-all duration-300 z-50 ${
-        isGhost ? " " : "drop-shadow-[0_0_1px_rgba(250,204,21,0.6)] scale-105"
+        isGhost
+          ? " grayscale "
+          : "drop-shadow-[0_0_1px_rgba(250,204,21,0.6)] scale-105"
       } `}
       style={getStyle(type)}
     >
@@ -182,12 +186,24 @@ const PCBuilder = () => {
   const dispatch = useDispatch();
   const [currentStep, setCurrentStep] = useState(0);
   const [draggedItem, setDraggedItem] = useState({});
+  
 
   console.log(draggedItem);
 
   const { selected, options, totalPrice, estimatedWattage } = useSelector(
     (state) => state.builder
   );
+
+  const [visible,setVisibile]=useState(true)
+
+
+  useEffect(()=>{
+
+    if(draggedItem?.part && visible){
+        setVisibile(false);  
+    }
+
+  },[draggedItem])
 
   const containerRef = useRef(null);
   const stepRef = useRef(null);
@@ -211,7 +227,7 @@ const PCBuilder = () => {
     dispatch(fetchComponents({ category: "cpu" }));
     dispatch(fetchComponents({ category: "storage" }));
   }, [id, dispatch]);
-//hello
+  //hello
   useEffect(() => {
     if (selected.cpu) {
       dispatch(
@@ -330,6 +346,9 @@ const PCBuilder = () => {
   return (
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,var(--tw-gradient-stops))] from-gray-50 via-gray-100 to-gray-200 text-gray-900 font-sans overflow-hidden flex flex-col selection:bg-blue-500/30">
       {/* Top Progress Bar */}
+       <DragIndicator
+              isVisible={visible}
+            />
       <div className="h-16 border-b border-gray-200 flex items-center px-6 overflow-x-auto no-scrollbar bg-white/90 backdrop-blur z-20">
         {STEPS.map((step, idx) => (
           <div
@@ -368,7 +387,8 @@ const PCBuilder = () => {
 
       <div className="flex-1 flex overflow-hidden">
         {/* Left: Visualizer (The "Case") */}
-        <div className="flex-1 relative bg-transparent flex items-center justify-center p-10 overflow-hidden perspective-[2000px]">
+        
+        <div className=" flex-1 relative bg-transparent flex items-center justify-center p-10 overflow-hidden perspective-[2000px]">
           {/* Ambient Glow */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-500/10 blur-[100px] rounded-full pointer-events-none mix-blend-multiply"></div>
 
@@ -382,6 +402,9 @@ const PCBuilder = () => {
             }}
           ></div>
 
+          {/* New Gear Animation Background */}
+          <BackgroundGears />
+
           <ComponentsList
             steps={STEPS}
             selected={selected}
@@ -392,7 +415,7 @@ const PCBuilder = () => {
 
           <div
             ref={caseFrameRef}
-            className="relative w-full max-w-[35rem] aspect-3/4 border border-gray-200 bg-gray-400/20 rounded-3xl shadow-xl backdrop-blur-md overflow-hidden ring-1 ring-black/5 "
+            className="relative -top-[3%] w-full max-w-[35rem] aspect-3/4 border border-gray-200 bg-gray-400/20 rounded-3xl shadow-xl backdrop-blur-md overflow-hidden ring-1 ring-black/5 "
           >
             {/* "Case" Frame */}
             <div className=" absolute inset-0 border-20 border-gray-400 rounded-3xl pointer-events-none z-20"></div>
@@ -417,6 +440,9 @@ const PCBuilder = () => {
                 {selected.case ? "Custom Build" : "Select a Case"}
               </h2>
             </div>
+
+            {/* Drag Indicator */}
+           
           </div>
         </div>
 
