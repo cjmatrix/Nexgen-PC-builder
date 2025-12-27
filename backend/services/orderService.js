@@ -4,6 +4,7 @@ import Component from "../models/Component.js";
 import Product from "../models/Product.js";
 import User from "../models/User.js";
 import mongoose from "mongoose";
+import AppError from "../utils/AppError.js";
 
 export const createOrder = async (userId, user, orderData) => {
   const session = await mongoose.startSession();
@@ -24,7 +25,7 @@ export const createOrder = async (userId, user, orderData) => {
       .session(session);
 
     if (!cart || cart.items.length === 0) {
-      throw new Error("Cart is empty");
+      throw new AppError("Cart is empty", 400);
     }
 
     const orderItems = [];
@@ -97,8 +98,9 @@ export const createOrder = async (userId, user, orderData) => {
       );
 
       if (!updatedComponent) {
-        throw new Error(
-          `Stock insufficient for component ID: ${compId}. Found while processing.`
+        throw new AppError(
+          `Stock insufficient for component ID: ${compId}. Found while processing.`,
+          400
         );
       }
     }
@@ -181,7 +183,7 @@ export const getOrderById = async (orderId) => {
     });
 
   if (!order) {
-    throw new Error("Order not found");
+    throw new AppError("Order not found", 404);
   }
   return order;
 };
@@ -237,11 +239,11 @@ export const updateOrderStatus = async (orderId, status) => {
   const order = await Order.findById(orderId);
 
   if (!order) {
-    throw new Error("Order not found");
+    throw new AppError("Order not found", 404);
   }
 
   if (order.status === "Delivered" || order.status === "Cancelled") {
-    throw new Error(`Cannot change status of a ${order.status} order.`);
+    throw new AppError(`Cannot change status of a ${order.status} order.`, 400);
   }
 
   order.status = status;
@@ -267,7 +269,7 @@ export const cancelOrder = async (orderId, itemId, reason) => {
     const order = await Order.findById(orderId).session(session);
 
     if (!order) {
-      throw new Error("Order not found");
+      throw new AppError("Order not found", 404);
     }
 
     if (
@@ -275,7 +277,10 @@ export const cancelOrder = async (orderId, itemId, reason) => {
       order.status === "Delivered" ||
       order.status === "Cancelled"
     ) {
-      throw new Error(`Cannot cancel order with status: ${order.status}`);
+      throw new AppError(
+        `Cannot cancel order with status: ${order.status}`,
+        400
+      );
     }
 
     const restoreStock = async (item) => {
@@ -304,11 +309,11 @@ export const cancelOrder = async (orderId, itemId, reason) => {
     if (itemId) {
       const item = order.orderItems.find((i) => i._id.toString() === itemId);
       if (!item) {
-        throw new Error("Item not found in order");
+        throw new AppError("Item not found in order", 404);
       }
 
       if (item.status === "Cancelled") {
-        throw new Error("Item already cancelled");
+        throw new AppError("Item already cancelled", 400);
       }
 
       await restoreStock(item);
@@ -350,23 +355,23 @@ export const requestReturn = async (orderId, itemId, reason) => {
   session.startTransaction();
   try {
     if (!reason) {
-      throw new Error("Return reason is mandatory");
+      throw new AppError("Return reason is mandatory", 400);
     }
 
     const order = await Order.findById(orderId).session(session);
 
     if (!order) {
-      throw new Error("Order not found");
+      throw new AppError("Order not found", 404);
     }
 
     if (order.status !== "Delivered" && order.status !== "Return Requested") {
-      throw new Error("Can only request return for delivered orders");
+      throw new AppError("Can only request return for delivered orders", 400);
     }
 
     if (itemId) {
       const item = order.orderItems.find((i) => i._id.toString() === itemId);
       if (!item) {
-        throw new Error("Item not found");
+        throw new AppError("Item not found", 404);
       }
 
       if (
@@ -374,7 +379,10 @@ export const requestReturn = async (orderId, itemId, reason) => {
         item.status === "Return Requested" ||
         item.status === "Return Approved"
       ) {
-        throw new Error("Return already requested or processed for item");
+        throw new AppError(
+          "Return already requested or processed for item",
+          400
+        );
       }
 
       item.status = "Return Requested";
@@ -422,7 +430,7 @@ export const approveReturn = async (orderId, itemId) => {
     const order = await Order.findById(orderId).session(session);
 
     if (!order) {
-      throw new Error("Order not found");
+      throw new AppError("Order not found", 404);
     }
 
     const restoreStock = async (item) => {
@@ -449,11 +457,11 @@ export const approveReturn = async (orderId, itemId) => {
     if (itemId) {
       const item = order.orderItems.find((i) => i._id.toString() === itemId);
       if (!item) {
-        throw new Error("Item not found");
+        throw new AppError("Item not found", 404);
       }
 
       if (item.status !== "Return Requested") {
-        throw new Error("Item is not in Return Requested state");
+        throw new AppError("Item is not in Return Requested state", 400);
       }
 
       await restoreStock(item);
@@ -472,7 +480,7 @@ export const approveReturn = async (orderId, itemId) => {
           (i) => i.status === "Return Requested"
         );
         if (!hasRequestedItems) {
-          throw new Error("Order is not in Return Requested state");
+          throw new AppError("Order is not in Return Requested state", 400);
         }
       }
 
@@ -510,17 +518,17 @@ export const rejectReturn = async (orderId, itemId) => {
     const order = await Order.findById(orderId).session(session);
 
     if (!order) {
-      throw new Error("Order not found");
+      throw new AppError("Order not found", 404);
     }
 
     if (itemId) {
       const item = order.orderItems.find((i) => i._id.toString() === itemId);
       if (!item) {
-        throw new Error("Item not found");
+        throw new AppError("Item not found", 404);
       }
 
       if (item.status !== "Return Requested") {
-        throw new Error("Item is not in Return Requested state");
+        throw new AppError("Item is not in Return Requested state", 400);
       }
 
       item.status = "Return Rejected";

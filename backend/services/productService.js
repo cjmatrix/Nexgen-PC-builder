@@ -1,20 +1,20 @@
 import Product from "../models/Product.js";
 import Category from "../models/Category.js";
+import AppError from "../utils/AppError.js";
 
 const createProduct = async (productData) => {
   if (!productData.slug) {
     productData.slug = productData.name.toLowerCase().split(" ").join("-");
   }
 
+  productData.discount =
+    productData.discount !== undefined ? productData.discount : 0;
+  const category = await Category.findOne({ name: productData.category });
+  if (!category) throw new AppError("Unmatched category", 400);
 
-  productData.discount =productData.discount!==undefined?productData.discount:0
-  const category=await Category.findOne({name:productData.category})
-  if(!category)
-    throw new Error('Unmatched category')
-
-  if(productData.discount>category.offer){
-    productData.applied_offer=productData.discount
-  }else {
+  if (productData.discount > category.offer) {
+    productData.applied_offer = productData.discount;
+  } else {
     productData.applied_offer = category.offer;
   }
 
@@ -122,23 +122,24 @@ const getProductById = async (req, id) => {
     { path: "default_config.cooler" },
   ]);
 
-  if (!product) throw new Error("Product not found");
+  if (!product) throw new AppError("Product not found", 404);
   return product;
 };
 
 const updateProduct = async (id, updateData) => {
   const product = await Product.findById(id);
 
-  if (!product) throw new Error("Product not found");
+  if (!product) throw new AppError("Product not found", 404);
 
   if (updateData.name && !updateData.slug) {
     updateData.slug = updateData.name.toLowerCase().split(" ").join("-");
   }
 
-  const category = await Category.findOne({ name: updateData.category || product.category});
-  
-  if (!category) throw new Error("Category not found");
+  const category = await Category.findOne({
+    name: updateData.category || product.category,
+  });
 
+  if (!category) throw new AppError("Category not found", 404);
 
   updateData.discount =
     updateData.discount !== undefined ? updateData.discount : product.discount;

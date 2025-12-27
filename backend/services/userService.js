@@ -1,6 +1,7 @@
 import User from "../models/User.js";
 import Address from "../models/Address.js";
 import sendEmail from "../utils/sendEmail.js";
+import AppError from "../utils/AppError.js";
 
 const getAllUsers = async (page, limit, search, status, sort) => {
   const query = { isDeleted: { $ne: true } };
@@ -38,7 +39,7 @@ const getAllUsers = async (page, limit, search, status, sort) => {
 
 const toggleBlockStatus = async (userId) => {
   const user = await User.findById(userId);
-  if (!user) throw new Error("User not found");
+  if (!user) throw new AppError("User not found", 404);
 
   user.status = user.status === "active" ? "suspended" : "active";
   await user.save();
@@ -47,11 +48,11 @@ const toggleBlockStatus = async (userId) => {
 
 const updateUserProfile = async (userId, updateData) => {
   const user = await User.findById(userId);
-  if (!user) throw new Error("User not found");
+  if (!user) throw new AppError("User not found", 404);
 
   if (updateData.email && updateData.email !== user.email) {
     const emailExists = await User.findOne({ email: updateData.email });
-    if (emailExists) throw new Error("Email already in use");
+    if (emailExists) throw new AppError("Email already in use", 400);
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const otpExpires = Date.now() + 10 * 60 * 1000;
@@ -74,7 +75,7 @@ const updateUserProfile = async (userId, updateData) => {
     } catch (error) {
       console.error("Email send failed:", error);
 
-      throw new Error("Email could not be sent");
+      throw new AppError("Email could not be sent", 500);
     }
 
     return { user, emailChanged: true, pendingMail: updateData.email };
@@ -94,7 +95,7 @@ const createAddress = async (id, payload) => {
 const updateAddress = async (userId, addressId, updateData) => {
   const address = await Address.findOne({ _id: addressId, user: userId });
   if (!address) {
-    throw new Error("Address not found or unauthorized");
+    throw new AppError("Address not found or unauthorized", 404);
   }
 
   // If setting as default, unset other default addresses for this user
@@ -113,7 +114,7 @@ const updateAddress = async (userId, addressId, updateData) => {
 const deleteAddress = async (userId, addressId) => {
   const address = await Address.findOne({ _id: addressId, user: userId });
   if (!address) {
-    throw new Error("Address not found or unauthorized");
+    throw new AppError("Address not found or unauthorized", 404);
   }
 
   address.isDeleted = true;

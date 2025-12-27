@@ -1,4 +1,5 @@
 import Component from "../models/Component.js";
+import AppError from "../utils/AppError.js";
 
 const createComponent = async (componentData) => {
   const component = await Component.create(componentData);
@@ -56,7 +57,7 @@ const deleteComponent = async (userId) => {
 const getComponentById = async (id) => {
   const component = await Component.findById(id);
   if (!component) {
-    throw new Error("Component not found");
+    throw new AppError("Component not found", 404);
   }
   return component;
 };
@@ -67,7 +68,7 @@ const updateComponent = async (id, updateData) => {
     runValidators: true,
   });
   if (!component) {
-    throw new Error("Component not found");
+    throw new AppError("Component not found", 404);
   }
   return component;
 };
@@ -92,7 +93,7 @@ const getPublicComponents = async (filters, page, limit, sort) => {
     query["specs.ramType"] = filters.ramType;
   }
 
- if (filters.formFactor && filters.category === "case") {
+  if (filters.formFactor && filters.category === "case") {
     if (filters.formFactor === "ITX") {
       query["specs.formFactor"] = { $in: ["ATX", "mATX", "ITX"] };
     } else if (filters.formFactor === "mATX") {

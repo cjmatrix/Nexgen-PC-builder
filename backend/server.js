@@ -12,6 +12,7 @@ import orderRoutes from "./routes/orderRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import aiRoutes from "./routes/aiRoutes.js";
 import cartRoutes from "./routes/cartRoutes.js";
+import couponRoutes from "./routes/couponRoutes.js";
 
 import userRoutes from "./routes/userRoutes.js";
 
@@ -41,8 +42,13 @@ app.use("/api/v1/products", productRoutes);
 app.use("/api/v1/cart", cartRoutes);
 app.use("/api/v1/orders", orderRoutes);
 app.use("/api/v1/ai", aiRoutes);
+app.use("/api/v1/coupons", couponRoutes);
 
 app.use("/api/v1/user", userRoutes);
+
+// Error Middleware
+import errorMiddleware from "./middleware/errorMiddleware.js";
+app.use(errorMiddleware);
 
 const connectDB = async () => {
   try {

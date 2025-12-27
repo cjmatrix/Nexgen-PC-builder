@@ -23,7 +23,7 @@ const navItems = [
   { name: "Order Management", icon: ShoppingCart, link: "/admin/orders" },
   { name: "User Management", icon: Users, link: "/admin" },
   { name: "Sales & Reporting", icon: BarChart2, link: "" },
-  { name: "Coupon Management", icon: Ticket, link: "" },
+  { name: "Coupon Management", icon: Ticket, link: "/admin/coupons" },
 ];
 
 const Sidebar = ({ isOpen, onClose }) => {

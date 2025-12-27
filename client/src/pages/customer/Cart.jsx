@@ -127,13 +127,10 @@ const Cart = () => {
                               </span>
                               <span className="text-lg font-bold text-gray-900">
                                 ₹{" "}
-                                {(
-                                  (item.product?.base_price / 100) *
-                                  (1 - item.product?.discount / 100)
-                                ).toLocaleString()}
+                                {(item.product?.final_price/100).toLocaleString()}
                               </span>
                               <span className="text-[10px] text-green-600 font-bold bg-green-100 px-1.5 py-0.5 rounded-full mt-0.5">
-                                {item.product?.discount}% OFF
+                                {item.product?.applied_offer}% OFF
                               </span>
                             </div>
                           ) : (

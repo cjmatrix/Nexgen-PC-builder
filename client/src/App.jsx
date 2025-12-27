@@ -20,6 +20,8 @@ import CreateComponent from "./pages/admin/admin pages/componentForm";
 import ComponentManagement from "./pages/admin/admin pages/ComponentManagement";
 import CategoryManagement from "./pages/admin/admin pages/CategoryManagement";
 import CategoryForm from "./pages/admin/admin pages/CategoryForm";
+import CouponManagement from "./pages/admin/admin pages/CouponManagement";
+import CouponForm from "./pages/admin/admin pages/CouponForm";
 import PCBuilder from "./pages/customer/PCBuilder";
 import ProductManagement from "./pages/admin/admin pages/ProductManagement";
 import OrderManagement from "./pages/admin/admin pages/OrderManagement";
@@ -99,6 +101,18 @@ const router = createBrowserRouter([
           {
             path: "/admin/categories/edit/:id",
             element: <CategoryForm />,
+          },
+          {
+            path: "/admin/coupons",
+            element: <CouponManagement />,
+          },
+          {
+            path: "/admin/coupons/create",
+            element: <CouponForm />,
+          },
+          {
+            path: "/admin/coupons/edit/:id",
+            element: <CouponForm />,
           },
           {
             path: "/admin/products",

@@ -1,6 +1,7 @@
 import Cart from "../models/Cart.js";
 import Product from "../models/Product.js";
 import Component from "../models/Component.js";
+import AppError from "../utils/AppError.js";
 
 const MAX_QTY_PER_PRODUCT = 5;
 
@@ -13,12 +14,11 @@ const calculateSummary = (items) => {
 
   const shipping = 5000;
 
-  // Calculate total discount
   const discount = items.reduce((sum, item) => {
-    const price = item.product?.base_price || 0;
-    const itemDiscount = item.product?.discount || 0;
-    const saving = price * (itemDiscount / 100);
-    return sum + saving * Number(item.quantity);
+    const baseprice = item.product?.base_price || 0;
+    const finalprice = item.product?.final_price || 0;
+
+    return sum + (baseprice - finalprice) * Number(item.quantity);
   }, 0);
 
   const total = subtotal + shipping - discount;
@@ -32,11 +32,33 @@ const calculateSummary = (items) => {
   };
 };
 
-const populateCart = async (cartId) => {
-  return await Cart.findById(cartId).populate({
-    path: "items.product",
-    select: "name base_price images category description discount",
+// const populateCart = async (cartId) => {
+//   return await Cart.findById(cartId).populate({
+//     path: "items.product",
+//     select: "name base_price images category description discount",
+//   });
+// };
+const populateCart= (cart) => {
+  const formattedItems = cart.items.map((item) => {
+
+    if (!item.product) return item;
+    const product = {...item.product.toObject()}; 
+    console.log(product)
+    return {
+      _id: item._id,
+      quantity: item.quantity,
+      product,
+    };
   });
+
+
+  return {
+    _id: cart._id,
+    user: cart.user,
+    items: formattedItems,
+    createdAt: cart.createdAt,
+    updatedAt: cart.updatedAt,
+  };
 };
 
 const checkStockAvailability = async (cartItems, newItem = null) => {
@@ -88,17 +110,26 @@ const checkStockAvailability = async (cartItems, newItem = null) => {
   for (const [compId, totalNeeded] of Object.entries(requiredStock)) {
     const component = await Component.findById(compId);
     if (component && component.stock < totalNeeded) {
-      throw new Error(
-        `Stock Limit Exceeded: You need ${totalNeeded} of ${component.name}, but we only have ${component.stock} left.`
+      throw new AppError(
+        `Stock Limit Exceeded: You need ${totalNeeded} of ${component.name}, but we only have ${component.stock} left.`,
+        400
       );
     }
   }
 };
 
+
+
+
+
+
+
 export const getCart = async (userId) => {
-  let cart = await Cart.findOne({ user: userId }).populate({
+ let cart= await Cart.findOne({ user: userId }).populate({
     path: "items.product",
-    select: "name base_price images category description discount",
+    populate: {
+      path: "default_config.cpu default_config.gpu default_config.motherboard default_config.ram default_config.storage default_config.case default_config.psu default_config.cooler",
+    },
   });
 
   if (!cart) {
@@ -109,96 +140,127 @@ export const getCart = async (userId) => {
   return { cart, summary };
 };
 
+
+
+
+
+
+
+
 export const addToCart = async (userId, productId, quantity = 1) => {
   const product = await Product.findById(productId).populate({
     path: "default_config.cpu default_config.gpu default_config.motherboard default_config.ram default_config.storage default_config.case default_config.psu default_config.cooler",
   });
 
   if (!product) {
-    throw new Error("Product not found");
+    throw new AppError("Product not found", 404);
   }
 
-  const cartForValidation = await Cart.findOne({ user: userId }).populate({
+  const cart = await Cart.findOne({ user: userId }).populate({
     path: "items.product",
     populate: {
       path: "default_config.cpu default_config.gpu default_config.motherboard default_config.ram default_config.storage default_config.case default_config.psu default_config.cooler",
     },
   });
 
-  const currentItems = cartForValidation ? cartForValidation.items : [];
 
-  await checkStockAvailability(currentItems, { product, quantity });
-
-  let cart = await Cart.findOne({ user: userId });
   if (!cart) {
     cart = await Cart.create({ user: userId, items: [] });
   }
+  
 
   const itemIndex = cart.items.findIndex(
-    (item) => item.product.toString() === productId
+    (item) => item.product._id.toString() === productId
   );
 
   if (itemIndex > -1) {
     if (cart.items[itemIndex].quantity + 1 > MAX_QTY_PER_PRODUCT) {
-      throw new Error(
-        `Limit reached: Maximum ${MAX_QTY_PER_PRODUCT} items allowed per product.`
+      throw new AppError(
+        `Limit reached: Maximum ${MAX_QTY_PER_PRODUCT} items allowed per product.`,
+        400
       );
     }
 
     cart.items[itemIndex].quantity += quantity;
   } else {
-    cart.items.push({ product: productId, quantity });
+    cart.items.push({ product:product, quantity });
   }
+
+  await checkStockAvailability(cart.items);
 
   await cart.save();
 
-  const populatedCart = await populateCart(cart._id);
+  const populatedCart =populateCart(cart);
   const summary = calculateSummary(populatedCart.items);
   return { cart: populatedCart, summary };
 };
+
+
+
+
+
+
+
+
+
+
 
 export const removeFromCart = async (userId, productId) => {
-  let cart = await Cart.findOne({ user: userId });
-
-  if (!cart) {
-    throw new Error("Cart not found");
-  }
-
-  cart.items = cart.items.filter(
-    (item) => item.product.toString() !== productId
-  );
-
-  await cart.save();
-
-  const populatedCart = await populateCart(cart._id);
-  const summary = calculateSummary(populatedCart.items);
-  return { cart: populatedCart, summary };
-};
-
-export const updateQuantity = async (userId, productId, quantity) => {
-  if (quantity < 1) {
-    throw new Error("Quantity must be at least 1");
-  }
-
-  if (quantity > MAX_QTY_PER_PRODUCT) {
-    throw new Error(
-      `Limit reached: Maximum ${MAX_QTY_PER_PRODUCT} items allowed per product.`
-    );
-  }
-
-  const cartForValidation = await Cart.findOne({ user: userId }).populate({
+  let cart= await Cart.findOne({ user: userId }).populate({
     path: "items.product",
     populate: {
       path: "default_config.cpu default_config.gpu default_config.motherboard default_config.ram default_config.storage default_config.case default_config.psu default_config.cooler",
     },
   });
 
-  if (!cartForValidation) {
-    throw new Error("Cart not found");
+  if (!cart) {
+    throw new AppError("Cart not found", 404);
+  }
+
+  cart.items = cart.items.filter(
+    (item) => item.product._id.toString() !== productId
+  );
+
+  await cart.save();
+
+  const populatedCart =populateCart(cart);
+  const summary = calculateSummary(populatedCart.items);
+  return { cart: populatedCart, summary };
+};
+
+
+
+
+
+
+
+
+
+export const updateQuantity = async (userId, productId, quantity) => {
+  if (quantity < 1) {
+    throw new AppError("Quantity must be at least 1", 400);
+  }
+
+  if (quantity > MAX_QTY_PER_PRODUCT) {
+    throw new AppError(
+      `Limit reached: Maximum ${MAX_QTY_PER_PRODUCT} items allowed per product.`,
+      400
+    );
+  }
+
+  const cart= await Cart.findOne({ user: userId }).populate({
+    path: "items.product",
+    populate: {
+      path: "default_config.cpu default_config.gpu default_config.motherboard default_config.ram default_config.storage default_config.case default_config.psu default_config.cooler",
+    },
+  });
+
+  if (!cart) {
+    throw new AppError("Cart not found", 404);
   }
 
   let itemFound = false;
-  const simulatedItems = cartForValidation.items.map((item) => {
+  const simulatedItems = cart.items.map((item) => {
     if (item.product._id.toString() === productId) {
       itemFound = true;
       return { ...item.toObject(), quantity: quantity, product: item.product };
@@ -207,27 +269,35 @@ export const updateQuantity = async (userId, productId, quantity) => {
   });
 
   if (!itemFound) {
-    throw new Error("Item not found in cart");
+    throw new AppError("Item not found in cart", 404);
   }
 
   await checkStockAvailability(simulatedItems);
 
-  let cart = await Cart.findOne({ user: userId });
   const itemIndex = cart.items.findIndex(
-    (item) => item.product.toString() === productId
+    (item) => item.product._id.toString() === productId
   );
 
   if (itemIndex > -1) {
     cart.items[itemIndex].quantity = quantity;
     await cart.save();
 
-    const populatedCart = await populateCart(cart._id);
+    const populatedCart = populateCart(cart);
     const summary = calculateSummary(populatedCart.items);
     return { cart: populatedCart, summary };
   } else {
-    throw new Error("Item not found in cart");
+    throw new AppError("Item not found in cart", 404);
   }
 };
+
+
+
+
+
+
+
+
+
 
 export const validateCart = async (userId) => {
   const cartForValidation = await Cart.findOne({

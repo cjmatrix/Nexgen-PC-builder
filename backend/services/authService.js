@@ -2,6 +2,7 @@ import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 import sendEmail from "../utils/sendEmail.js";
 import crypto from "crypto";
+import AppError from "../utils/AppError.js";
 
 const generateTokens = async (userId) => {
   const accessToken = jwt.sign(
@@ -31,23 +32,21 @@ const registerUser = async (userData) => {
   const { name, email, password } = userData;
 
   if (!name || !email || !password) {
-    throw new Error("Please add all fields");
+    throw new AppError("Please add all fields", 400);
   }
 
   let user = await User.findOne({ email });
   if (user) {
     if (!user.isVerified) {
-
     } else {
-      throw new Error("User already exists");
+      throw new AppError("User already exists", 400);
     }
   }
-//x+10
+  //x+10
 
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   const otpExpires = Date.now() + 10 * 60 * 1000;
 
- 
   if (user) {
     user.name = name;
     user.password = password;
@@ -73,7 +72,7 @@ const registerUser = async (userData) => {
     });
   } catch (error) {
     console.error("Email send failed:", error);
-    throw new Error("Email could not be sent");
+    throw new AppError("Email could not be sent", 500);
   }
 
   return { message: "OTP sent to email" };
@@ -84,20 +83,20 @@ const verifyOTP = async (email, otp) => {
     $or: [{ email: email }, { tempEmail: email }],
   }).select("+otp +otpExpires +tempEmail");
   if (!user) {
-    throw new Error("User not found");
+    throw new AppError("User not found", 404);
   }
 
-  console.log(user)
+  console.log(user);
   if (!user.otp || !user.otpExpires) {
-    throw new Error("No OTP found");
+    throw new AppError("No OTP found", 404);
   }
 
   if (user.otp !== otp) {
-    throw new Error("Invalid OTP");
+    throw new AppError("Invalid OTP", 400);
   }
 
   if (user.otpExpires < Date.now()) {
-    throw new Error("OTP expired");
+    throw new AppError("OTP expired", 400);
   }
 
   if (user.otp === otp) {
@@ -121,7 +120,7 @@ const resendOTP = async (email) => {
     $or: [{ email: email }, { tempEmail: email }],
   });
   if (!user) {
-    throw new Error("User not found");
+    throw new AppError("User not found", 404);
   }
 
   console.log(email, "this wone");
@@ -147,18 +146,19 @@ const loginUser = async (email, password) => {
   const user = await User.findOne({ email }).select("+password");
 
   if (!user) {
-    throw new Error("Invalid credentials");
+    throw new AppError("Invalid credentials", 401);
   }
 
   if (user.status === "suspended" || user.status === "banned") {
-    throw new Error(
-      "Your account has been suspended or banned. Please contact support."
+    throw new AppError(
+      "Your account has been suspended or banned. Please contact support.",
+      403
     );
   }
 
   const isMatch = await user.matchPassword(password);
   if (!isMatch) {
-    throw new Error("Invalid credentials");
+    throw new AppError("Invalid credentials", 401);
   }
 
   user.lastLogin = Date.now();
@@ -186,7 +186,7 @@ const logoutUser = async (incomingRefreshToken) => {
 };
 
 const refreshAccessToken = async (incomingRefreshToken) => {
-  if (!incomingRefreshToken) throw new Error("No token");
+  if (!incomingRefreshToken) throw new AppError("No token", 401);
 
   const decoded = jwt.verify(
     incomingRefreshToken,
@@ -199,7 +199,7 @@ const refreshAccessToken = async (incomingRefreshToken) => {
       user.refreshTokens = [];
       await user.save();
     }
-    throw new Error("Invalid refresh token (Reuse detected)");
+    throw new AppError("Invalid refresh token (Reuse detected)", 403);
   }
 
   const newAccessToken = jwt.sign(
@@ -225,7 +225,7 @@ const refreshAccessToken = async (incomingRefreshToken) => {
 const forgotPassword = async (email) => {
   const user = await User.findOne({ email });
   if (!user) {
-    throw new Error("User not found");
+    throw new AppError("User not found", 404);
   }
 
   const resetToken = crypto.randomBytes(20).toString("hex");
@@ -256,7 +256,7 @@ const forgotPassword = async (email) => {
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;
     await user.save();
-    throw new Error("Email could not be sent");
+    throw new AppError("Email could not be sent", 500);
   }
 };
 
@@ -272,7 +272,7 @@ const resetPassword = async (resetToken, password) => {
   });
 
   if (!user) {
-    throw new Error("Invalid token");
+    throw new AppError("Invalid token", 400);
   }
 
   user.password = password;
@@ -287,16 +287,16 @@ const changePassword = async (userId, currentPassword, newPassword) => {
   const user = await User.findById(userId).select("+password");
 
   if (!user) {
-    throw new Error("User not found");
+    throw new AppError("User not found", 404);
   }
 
   const isMatch = await user.matchPassword(currentPassword);
   if (!isMatch) {
-    throw new Error("Invalid current password");
+    throw new AppError("Invalid current password", 401);
   }
 
   user.password = newPassword;
-  user.passwordChangedAt= Date.now();
+  user.passwordChangedAt = Date.now();
   await user.save();
 
   return { message: "Password changed successfully" };
