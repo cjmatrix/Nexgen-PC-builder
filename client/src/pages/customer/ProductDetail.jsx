@@ -15,16 +15,18 @@ const ProductDetail = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { currentProduct: product, loading ,error} = useSelector(
-    (state) => state.products
-  );
+  const {
+    currentProduct: product,
+    loading,
+    error,
+  } = useSelector((state) => state.products);
   const [selectedImage, setSelectedImage] = useState(0);
   const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 });
   const [isZooming, setIsZooming] = useState(false);
 
   useEffect(() => {
     if (id) {
-      dispatch(fetchPublicProductById(id))
+      dispatch(fetchPublicProductById(id));
     }
   }, [dispatch, id]);
 
@@ -77,8 +79,6 @@ const ProductDetail = () => {
       });
     }
   };
-
- 
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
@@ -141,18 +141,14 @@ const ProductDetail = () => {
               <h1 className="text-4xl font-extrabold text-gray-900 mb-4">
                 {product.name}
               </h1>
-              {product.discount > 0 ? (
+              {product.applied_offer > 0 ? (
                 <div className="mb-6">
                   <div className="flex items-center gap-3">
                     <p className="text-3xl font-bold text-red-600">
-                      ₹
-                      {(
-                        (product.base_price / 100) *
-                        (1 - product.discount / 100)
-                      ).toLocaleString()}
+                      ₹{(product.final_price / 100).toLocaleString()}
                     </p>
                     <span className="bg-red-100 text-red-700 text-sm font-bold px-3 py-1 rounded-full">
-                      {product.discount}% OFF
+                      {product.applied_offer}% OFF
                     </span>
                   </div>
                   <p className="text-gray-400 text-lg line-through mt-1">

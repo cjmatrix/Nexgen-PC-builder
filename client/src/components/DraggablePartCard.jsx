@@ -59,8 +59,26 @@ function DraggablePartCard({
                 ))}
           </div>
         </div>
-        <div className="font-bold text-gray-900 tabular-nums tracking-tight">
-          ₹{(opt.price / 100).toLocaleString()}
+        <div className="text-right">
+          {opt.applied_offer > 0 ? (
+            <div className="flex flex-col items-end">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-400 line-through">
+                  ₹{(opt.base_price / 100).toLocaleString()}
+                </span>
+                <span className="font-bold text-gray-900 tabular-nums tracking-tight">
+                  ₹{(opt.final_price / 100).toLocaleString()}
+                </span>
+              </div>
+              <span className="text-[10px] text-green-600 font-bold bg-green-100 px-1.5 py-0.5 rounded-full mt-1">
+                {opt.applied_offer}% OFF
+              </span>
+            </div>
+          ) : (
+            <div className="font-bold text-gray-900 tabular-nums tracking-tight">
+              ₹{(opt.base_price / 100).toLocaleString()}
+            </div>
+          )}
         </div>
       </div>
     </div>

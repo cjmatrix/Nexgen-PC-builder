@@ -3,12 +3,15 @@ import {
   createCoupon,
   deleteCoupon,
   getAllCoupons,
+  getAvailableCoupons,
   getCouponById,
   updateCoupon,
 } from "../controllers/couponController.js";
 import { protect, admin } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
+
+router.get("/available", protect, getAvailableCoupons);
 
 router
   .route("/")

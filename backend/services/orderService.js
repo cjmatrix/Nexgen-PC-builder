@@ -22,6 +22,7 @@ export const createOrder = async (userId, user, orderData) => {
           path: "default_config.cpu default_config.gpu default_config.motherboard default_config.ram default_config.storage default_config.case default_config.psu default_config.cooler",
         },
       })
+      .populate("coupon")
       .session(session);
 
     if (!cart || cart.items.length === 0) {
@@ -72,7 +73,7 @@ export const createOrder = async (userId, user, orderData) => {
         qty: item.quantity,
         image: product.images?.[0] || "https://placehold.co/100",
         price: product.base_price,
-        discount: product.discount || 0,
+        discount: product.applied_offer || 0,
         product: product._id,
         components: {
           cpu: createSnapshot(config.cpu),
@@ -134,12 +135,20 @@ export const createOrder = async (userId, user, orderData) => {
       itemsPrice,
       taxPrice,
       shippingPrice,
-      totalPrice: itemsPrice + shippingPrice + taxPrice,
+      totalPrice: itemsPrice + shippingPrice + taxPrice - (cart.discount*100 || 0),
+      coupon: cart.coupon,
+      couponDiscount: cart.discount || 0,
     });
 
     const createdOrder = await order.save({ session });
-
+   if (cart.coupon) {
+      cart.coupon.usageCount += 1;
+      cart.coupon.usedBy.push(userId);
+      await cart.coupon.save({ session }); 
+    }
     cart.items = [];
+    cart.coupon = null; 
+    cart.discount = 0; 
     await cart.save({ session });
 
     await session.commitTransaction();

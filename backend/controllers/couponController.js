@@ -1,6 +1,5 @@
 import * as couponService from "../services/couponService.js";
 
-
 export const createCoupon = async (req, res, next) => {
   try {
     const coupon = await couponService.createCoupon(req.body);
@@ -8,6 +7,19 @@ export const createCoupon = async (req, res, next) => {
     res.status(201).json({
       success: true,
       coupon,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getAvailableCoupons = async (req, res, next) => {
+  try {
+    const coupons = await couponService.getAvailableCoupons(req.user._id);
+
+    res.status(200).json({
+      success: true,
+      coupons,
     });
   } catch (error) {
     next(error);
@@ -46,9 +58,6 @@ export const getCouponById = async (req, res, next) => {
     next(error);
   }
 };
-
-
-
 
 export const updateCoupon = async (req, res, next) => {
   try {

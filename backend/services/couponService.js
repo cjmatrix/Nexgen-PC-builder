@@ -18,7 +18,7 @@ const createCoupon = async (data) => {
   }
 
   const coupon = await Coupon.create({
-    code,
+    code: code.toUpperCase(),
     discountType,
     discountValue,
     expiryDate,
@@ -79,6 +79,8 @@ const updateCoupon = async (id, updateData) => {
       code: updateData.code.toUpperCase(),
     });
     if (existing) throw new AppError("Coupon code already exists", 400);
+
+    updateData.code = updateData.code.toUpperCase();
   }
 
   const updatedCoupon = await Coupon.findByIdAndUpdate(id, updateData, {
@@ -103,10 +105,79 @@ const deleteCoupon = async (id) => {
   return coupon;
 };
 
+const validateCoupon = async (code, cartTotal, userId) => {
+  if (!code) throw new AppError("Coupon code is required", 400);
+
+  const coupon = await Coupon.findOne({ code: code.toUpperCase() });
+
+  if (!coupon) throw new AppError("Invalid coupon code", 404);
+
+  if (!coupon.isActive) throw new AppError("Coupon is inactive", 400);
+
+  if (coupon.usedBy.includes(userId)) {
+    throw new AppError("You have already used this coupon", 400);
+  }
+
+  if (new Date() > new Date(coupon.expiryDate)) {
+    throw new AppError("Coupon has expired", 400);
+  }
+
+  if (coupon.usageCount >= coupon.usageLimit) {
+    throw new AppError("Coupon usage limit reached", 400);
+  }
+
+  if (cartTotal < coupon.minOrderValue) {
+    throw new AppError(
+      `Minimum order value of ₹${coupon.minOrderValue} required`,
+      400
+    );
+  }
+
+  let discountAmount = 0;
+  if (coupon.discountType === "percentage") {
+    discountAmount = Math.round((cartTotal * coupon.discountValue) / 100);
+  } else {
+    discountAmount = coupon.discountValue;
+  }
+
+  if (discountAmount > cartTotal) {
+    discountAmount = cartTotal;
+  }
+
+  return {
+    coupon,
+    discountAmount,
+  };
+};
+
+const getAvailableCoupons = async (userId) => {
+  const currentDate = new Date();
+
+  const coupons = await Coupon.find({
+    isActive: true,
+    expiryDate: { $gt: currentDate }, // Not expired
+    $expr: { $lt: ["$usageCount", "$usageLimit"] }, // Not exhausted
+    usedBy: { $ne: userId }, // Not used by this user
+  });
+
+  // Filter out private coupons not meant for this user
+  const validCoupons = coupons.filter((coupon) => {
+    // If allowedUsers is empty, it's public
+    if (!coupon.allowedUsers || coupon.allowedUsers.length === 0) return true;
+
+    // If restricted, check if user is in allowed list
+    return coupon.allowedUsers.includes(userId);
+  });
+
+  return validCoupons;
+};
+
 export {
   createCoupon,
   getAllCoupons,
   getCouponById,
   updateCoupon,
   deleteCoupon,
+  validateCoupon,
+  getAvailableCoupons,
 };

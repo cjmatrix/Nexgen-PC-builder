@@ -2,10 +2,11 @@ import Cart from "../models/Cart.js";
 import Product from "../models/Product.js";
 import Component from "../models/Component.js";
 import AppError from "../utils/AppError.js";
+import { validateCoupon } from "./couponService.js";
 
 const MAX_QTY_PER_PRODUCT = 5;
 
-const calculateSummary = (items) => {
+const calculateSummary = (items, cartDiscount = 0) => {
   const subtotal = items.reduce(
     (sum, item) =>
       sum + (item.product?.base_price || 0) * Number(item.quantity),
@@ -14,21 +15,23 @@ const calculateSummary = (items) => {
 
   const shipping = 5000;
 
-  const discount = items.reduce((sum, item) => {
+  const itemDiscount = items.reduce((sum, item) => {
     const baseprice = item.product?.base_price || 0;
     const finalprice = item.product?.final_price || 0;
 
     return sum + (baseprice - finalprice) * Number(item.quantity);
   }, 0);
 
-  const total = subtotal + shipping - discount;
+
+  const total = subtotal + shipping - itemDiscount - cartDiscount * 100;
 
   return {
     subtotal: subtotal / 100,
     shipping: 50,
-    discount: discount / 100,
+    discount: itemDiscount / 100 + cartDiscount,
     tax: 0,
-    total: total / 100,
+    total: total > 0 ? total / 100 : 0,
+    couponDiscount: cartDiscount,
   };
 };
 
@@ -38,12 +41,11 @@ const calculateSummary = (items) => {
 //     select: "name base_price images category description discount",
 //   });
 // };
-const populateCart= (cart) => {
+const populateCart = (cart) => {
   const formattedItems = cart.items.map((item) => {
-
     if (!item.product) return item;
-    const product = {...item.product.toObject()}; 
-    console.log(product)
+    const product = { ...item.product.toObject() };
+   
     return {
       _id: item._id,
       quantity: item.quantity,
@@ -51,11 +53,12 @@ const populateCart= (cart) => {
     };
   });
 
-
   return {
     _id: cart._id,
     user: cart.user,
     items: formattedItems,
+    coupon: cart.coupon,
+    discount: cart.discount,
     createdAt: cart.createdAt,
     updatedAt: cart.updatedAt,
   };
@@ -118,14 +121,8 @@ const checkStockAvailability = async (cartItems, newItem = null) => {
   }
 };
 
-
-
-
-
-
-
 export const getCart = async (userId) => {
- let cart= await Cart.findOne({ user: userId }).populate({
+  let cart = await Cart.findOne({ user: userId }).populate({
     path: "items.product",
     populate: {
       path: "default_config.cpu default_config.gpu default_config.motherboard default_config.ram default_config.storage default_config.case default_config.psu default_config.cooler",
@@ -136,16 +133,9 @@ export const getCart = async (userId) => {
     cart = await Cart.create({ user: userId, items: [] });
   }
 
-  const summary = calculateSummary(cart.items);
+  const summary = calculateSummary(cart.items,cart.discount);
   return { cart, summary };
 };
-
-
-
-
-
-
-
 
 export const addToCart = async (userId, productId, quantity = 1) => {
   const product = await Product.findById(productId).populate({
@@ -163,11 +153,9 @@ export const addToCart = async (userId, productId, quantity = 1) => {
     },
   });
 
-
   if (!cart) {
     cart = await Cart.create({ user: userId, items: [] });
   }
-  
 
   const itemIndex = cart.items.findIndex(
     (item) => item.product._id.toString() === productId
@@ -183,30 +171,20 @@ export const addToCart = async (userId, productId, quantity = 1) => {
 
     cart.items[itemIndex].quantity += quantity;
   } else {
-    cart.items.push({ product:product, quantity });
+    cart.items.push({ product: product, quantity });
   }
 
   await checkStockAvailability(cart.items);
 
   await cart.save();
 
-  const populatedCart =populateCart(cart);
+  const populatedCart = populateCart(cart);
   const summary = calculateSummary(populatedCart.items);
   return { cart: populatedCart, summary };
 };
 
-
-
-
-
-
-
-
-
-
-
 export const removeFromCart = async (userId, productId) => {
-  let cart= await Cart.findOne({ user: userId }).populate({
+  let cart = await Cart.findOne({ user: userId }).populate({
     path: "items.product",
     populate: {
       path: "default_config.cpu default_config.gpu default_config.motherboard default_config.ram default_config.storage default_config.case default_config.psu default_config.cooler",
@@ -216,25 +194,16 @@ export const removeFromCart = async (userId, productId) => {
   if (!cart) {
     throw new AppError("Cart not found", 404);
   }
-
   cart.items = cart.items.filter(
     (item) => item.product._id.toString() !== productId
   );
 
   await cart.save();
 
-  const populatedCart =populateCart(cart);
+  const populatedCart = populateCart(cart);
   const summary = calculateSummary(populatedCart.items);
   return { cart: populatedCart, summary };
 };
-
-
-
-
-
-
-
-
 
 export const updateQuantity = async (userId, productId, quantity) => {
   if (quantity < 1) {
@@ -248,7 +217,7 @@ export const updateQuantity = async (userId, productId, quantity) => {
     );
   }
 
-  const cart= await Cart.findOne({ user: userId }).populate({
+  const cart = await Cart.findOne({ user: userId }).populate({
     path: "items.product",
     populate: {
       path: "default_config.cpu default_config.gpu default_config.motherboard default_config.ram default_config.storage default_config.case default_config.psu default_config.cooler",
@@ -290,14 +259,68 @@ export const updateQuantity = async (userId, productId, quantity) => {
   }
 };
 
+export const applyCouponToCart = async (userId, couponCode) => {
+  let cart = await Cart.findOne({ user: userId }).populate({
+    path: "items.product",
+    populate: {
+      path: "default_config.cpu default_config.gpu default_config.motherboard default_config.ram default_config.storage default_config.case default_config.psu default_config.cooler",
+    },
+  });
+
+  if (!cart) {
+    throw new AppError("Cart not found", 404);
+  }
+
+  
+  const currentSummary = calculateSummary(cart.items);
+
+  const { coupon, discountAmount } = await validateCoupon(
+    couponCode,
+    currentSummary.subtotal, // Subtotal in Rupees
+    userId
+  );
+
+
+  cart.coupon = coupon._id;
+  cart.discount = discountAmount;
+
+  await cart.save();
+
+ 
+  const populatedCart = populateCart(cart);
+ 
+  populatedCart.coupon = coupon; // Send full coupon object back for display
+
+  const summary = calculateSummary(populatedCart.items, cart.discount);
+
+  return { cart: populatedCart, summary };
+};
+
+export const removeCouponFromCart = async (userId) => {
+    console.log('removeing')
+  const cart = await Cart.findOne({ user: userId }).populate({
+    path: "items.product",
+    populate: {
+      path: "default_config.cpu default_config.gpu default_config.motherboard default_config.ram default_config.storage default_config.case default_config.psu default_config.cooler",
+    },
+  });
 
 
 
+  if (!cart) {
+    throw new AppError("Cart not found", 404);
+  }
 
+  cart.coupon = null;
+  cart.discount = 0;
 
+  await cart.save();
 
+  const populatedCart = populateCart(cart);
+  const summary = calculateSummary(populatedCart.items, 0);
 
-
+  return { cart: populatedCart, summary };
+};
 
 export const validateCart = async (userId) => {
   const cartForValidation = await Cart.findOne({

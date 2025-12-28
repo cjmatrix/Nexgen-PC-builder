@@ -1,24 +1,75 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
-import { Minus, Plus, Trash2, ArrowRight } from "lucide-react";
+import { Minus, Plus, Trash2, ArrowRight, Tag, X } from "lucide-react";
 import api from "../../api/axios";
+import { useQuery } from "@tanstack/react-query";
 import {
   fetchCart,
   removeFromCart,
   updateQuantity,
+  applyCoupon,
+  removeCoupon,
 } from "../../store/slices/cartSlice";
 
 const Cart = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { items, summary, loading } = useSelector((state) => state.cart);
+  const { items, summary, loading, coupon } = useSelector(
+    (state) => state.cart
+  );
+  const [couponCode, setCouponCode] = useState("");
+  const [couponError, setCouponError] = useState("");
+  const [isCouponModalOpen, setIsCouponModalOpen] = useState(false);
+
+  // Fetch Available Coupons
+  const { data: availableCoupons, isLoading: couponsLoading } = useQuery({
+    queryKey: ["availableCoupons"],
+    queryFn: async () => {
+      const res = await api.get("/coupons/available");
+      return res.data.coupons;
+    },
+    enabled: isCouponModalOpen, // Only fetch when modal is open
+    staleTime: 1000 * 60 * 5, // Cache for 5 mins
+  });
 
   useEffect(() => {
     dispatch(fetchCart());
   }, [dispatch]);
 
   const [errors, setErrors] = useState({});
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode) return;
+    setCouponError("");
+    try {
+      await dispatch(applyCoupon(couponCode)).unwrap();
+      setCouponCode("");
+    } catch (error) {
+      setCouponError(error);
+    }
+
+    //------------or-----------
+    //   dispatch(applyCoupon(couponCode))
+    // .unwrap()
+    // .then((data) => {
+    //    console.log("Success:", data);
+    //    // Clear error, maybe close modal
+    //    setCouponError(null);
+    // })
+    // .catch((errorMessage) => {
+    //    // 'errorMessage' is your string "You have already used..."
+    //    setCouponError(errorMessage);
+    // });
+  };
+
+  const handleRemoveCoupon = async () => {
+    try {
+      await dispatch(removeCoupon()).unwrap();
+    } catch (error) {
+      console.error("Failed to remove coupon", error);
+    }
+  };
 
   const handleUpdateQuantity = async (productId, newQuantity) => {
     if (newQuantity < 1) return;
@@ -31,6 +82,8 @@ const Cart = () => {
       setErrors((prev) => ({ ...prev, [productId]: error }));
     }
   };
+
+  console.log(items);
 
   const handleRemove = (productId) => {
     dispatch(removeFromCart(productId));
@@ -117,7 +170,7 @@ const Cart = () => {
 
                       <div className="flex justify-between items-end mt-4 sm:mt-0">
                         <div>
-                          {item.product?.discount > 0 ? (
+                          {item.product?.applied_offer > 0 ? (
                             <div className="flex flex-col items-start bg-gray-50 p-2 rounded-lg">
                               <span className="text-xs text-gray-400 line-through">
                                 ₹
@@ -127,7 +180,9 @@ const Cart = () => {
                               </span>
                               <span className="text-lg font-bold text-gray-900">
                                 ₹{" "}
-                                {(item.product?.final_price/100).toLocaleString()}
+                                {(
+                                  item.product?.final_price / 100
+                                ).toLocaleString()}
                               </span>
                               <span className="text-[10px] text-green-600 font-bold bg-green-100 px-1.5 py-0.5 rounded-full mt-0.5">
                                 {item.product?.applied_offer}% OFF
@@ -225,16 +280,56 @@ const Cart = () => {
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Coupon Code
                       </label>
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          placeholder="Enter coupon code"
-                          className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none"
-                        />
-                        <button className="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors">
-                          Apply
-                        </button>
-                      </div>
+
+                      {coupon ? (
+                        <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg p-3">
+                          <div>
+                            <p className="text-sm font-medium text-green-800">
+                              Coupon Applied
+                            </p>
+                            <p className="text-xs text-green-600 font-bold uppercase">
+                              {coupon.code}
+                            </p>
+                          </div>
+                          <button
+                            onClick={handleRemoveCoupon}
+                            className="text-gray-400 hover:text-red-500 transition-colors p-1"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={couponCode}
+                            onChange={(e) => setCouponCode(e.target.value)}
+                            placeholder="Enter coupon code"
+                            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none uppercase"
+                          />
+                          <button
+                            onClick={handleApplyCoupon}
+                            disabled={!couponCode}
+                            className="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            Apply
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Available Coupons Button */}
+                      <button
+                        onClick={() => setIsCouponModalOpen(true)}
+                        className="text-blue-600 text-xs font-semibold mt-2 hover:underline flex items-center gap-1"
+                      >
+                        <Tag className="h-3 w-3" /> View Available Coupons
+                      </button>
+
+                      {couponError && (
+                        <p className="text-red-500 text-xs mt-2">
+                          {couponError}
+                        </p>
+                      )}
                     </div>
 
                     <div className="flex justify-between items-center mb-6">
@@ -259,6 +354,69 @@ const Cart = () => {
           )}
         </div>
       </div>
+
+      {/* Available Coupons Modal */}
+      {isCouponModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+              <h3 className="font-bold text-gray-900 flex items-center gap-2">
+                <Tag className="h-5 w-5 text-blue-600" /> Available Coupons
+              </h3>
+              <button
+                onClick={() => setIsCouponModalOpen(false)}
+                className="p-1 hover:bg-gray-200 rounded-full transition-colors"
+              >
+                <X className="h-5 w-5 text-gray-500" />
+              </button>
+            </div>
+            <div className="p-4 max-h-[60vh] overflow-y-auto space-y-3">
+              {couponsLoading ? (
+                <div className="text-center py-8 text-gray-500">
+                  Loading offers...
+                </div>
+              ) : availableCoupons?.length > 0 ? (
+                availableCoupons.map((c) => (
+                  <div
+                    key={c._id}
+                    className="border border-dashed border-blue-200 bg-blue-50/50 rounded-xl p-4 hover:border-blue-400 transition-all group"
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <span className="font-black text-gray-900 text-lg uppercase tracking-wide">
+                          {c.code}
+                        </span>
+                        <p className="text-sm text-gray-600 font-medium">
+                          {c.discountType === "percentage"
+                            ? `${c.discountValue}% OFF`
+                            : `₹${c.discountValue} FLAT OFF`}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setCouponCode(c.code);
+                          setIsCouponModalOpen(false);
+                        }}
+                        className="text-xs bg-white border border-blue-200 text-blue-700 font-bold px-3 py-1.5 rounded-lg shadow-sm group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600 transition-all"
+                      >
+                        Apply
+                      </button>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      Min order: ₹{c.minOrderValue} • Expires:{" "}
+                      {new Date(c.expiryDate).toLocaleDateString()}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  No coupons available for you right now.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

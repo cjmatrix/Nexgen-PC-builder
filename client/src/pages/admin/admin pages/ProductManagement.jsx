@@ -121,7 +121,10 @@ const ProductManagement = () => {
         </div>
         <select
           className="border rounded-lg px-4 py-2 outline-none"
-          onChange={(e) =>{ setCategory(e.target.value);setPage(1);}}
+          onChange={(e) => {
+            setCategory(e.target.value);
+            setPage(1);
+          }}
         >
           <option value="">All Categories</option>
           {statusList}
@@ -148,8 +151,24 @@ const ProductManagement = () => {
                   {product.name}
                 </td>
                 <td className="px-6 py-4 text-gray-500">{product.category}</td>
-                <td className="px-6 py-4 font-mono text-gray-700">
-                  ₹{(product.base_price / 100).toLocaleString()}
+                <td className="px-6 py-4">
+                  {product.applied_offer > 0 ? (
+                    <div className="flex flex-col">
+                      <span className="text-xs text-gray-400 line-through">
+                        ₹{(product.base_price / 100).toLocaleString()}
+                      </span>
+                      <span className="font-mono font-medium text-gray-900">
+                        ₹{(product.final_price / 100).toLocaleString()}
+                      </span>
+                      <span className="text-[10px] text-green-600 font-bold bg-green-50 w-fit px-1.5 py-0.5 rounded-full mt-0.5">
+                        {product.applied_offer}% OFF
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="font-mono text-gray-700">
+                      ₹{(product.base_price / 100).toLocaleString()}
+                    </span>
+                  )}
                 </td>
                 <td className="px-6 py-4">
                   <span

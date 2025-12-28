@@ -59,7 +59,7 @@ export const MotherboardSVG = ({ dragType, dragPart }) => (
       width="280"
       height="380"
       rx="10"
-      fill="url(#moboPcbGradient)"
+      fill="white"
       stroke={dragType === "motherboard" ? "#3b82f6" : "#cbd5e1"}
       strokeWidth="2"
       style={

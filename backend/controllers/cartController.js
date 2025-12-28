@@ -32,3 +32,14 @@ export const validate = async (req, res) => {
   await cartService.validateCart(req.user._id);
   res.status(200).json({ success: true, message: "valid" });
 };
+
+export const applyCoupon = async (req, res) => {
+  const { couponCode } = req.body;
+  const result = await cartService.applyCouponToCart(req.user._id, couponCode);
+  res.status(200).json({ success: true, ...result });
+};
+
+export const removeCoupon = async (req, res) => {
+  const result = await cartService.removeCouponFromCart(req.user._id);
+  res.status(200).json({ success: true, ...result });
+};

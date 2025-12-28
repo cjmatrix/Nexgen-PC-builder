@@ -150,7 +150,7 @@ const updateProduct = async (id, updateData) => {
     product.applied_offer = category.offer;
   }
 
-  console.log(updateData.applied_offer);
+ 
 
   Object.keys(updateData).forEach((key) => {
     if (key !== "applied_offer") {

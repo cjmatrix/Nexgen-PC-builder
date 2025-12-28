@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import api from "../../api/axios";
 import { fetchCart } from "../../store/slices/cartSlice";
-import AddAddressModal from "./user profile/components/AddAddressModal"; 
+import AddAddressModal from "./user profile/components/AddAddressModal";
 
 const Checkout = () => {
   const dispatch = useDispatch();
@@ -29,14 +29,12 @@ const Checkout = () => {
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const isSubmittingRef = useRef(false); 
+  const isSubmittingRef = useRef(false);
 
- 
   useEffect(() => {
     dispatch(fetchCart());
   }, [dispatch]);
 
- 
   const { data: addresses, isLoading: isAddressLoading } = useQuery({
     queryKey: ["userAddresses"],
     queryFn: async () => {
@@ -45,15 +43,13 @@ const Checkout = () => {
     },
   });
 
-
-
   const createOrderMutation = useMutation({
     mutationFn: async (orderData) => {
       const response = await api.post("/orders", orderData);
       return response.data;
     },
     onSuccess: () => {
-      setStep(3); 
+      setStep(3);
       dispatch(fetchCart());
     },
     onError: (error) => {
@@ -64,17 +60,16 @@ const Checkout = () => {
   });
 
   const handlePlaceOrder = () => {
-    if (isSubmittingRef.current) return; 
+    if (isSubmittingRef.current) return;
     if (!selectedAddress) return alert("Please select a shipping address");
 
     isSubmittingRef.current = true;
     setIsProcessing(true);
 
     const orderData = {
-      
       shippingAddress: {
         fullName: selectedAddress.fullName,
-        address: selectedAddress.street, 
+        address: selectedAddress.street,
         city: selectedAddress.city,
         postalCode: selectedAddress.postalCode,
         country: selectedAddress.country,
@@ -89,6 +84,7 @@ const Checkout = () => {
     createOrderMutation.mutate(orderData);
   };
 
+  console.log(summary)
 
   useEffect(() => {
     if (addresses && addresses.length > 0 && !selectedAddress) {
@@ -105,7 +101,6 @@ const Checkout = () => {
     );
   }
 
- 
   const renderStep1 = () => (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -122,34 +117,33 @@ const Checkout = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {addresses?.map((addr) => {
-
-          return(
-
-          <div
-            key={addr._id}
-            onClick={() => setSelectedAddress(addr)}
-            className={`cursor-pointer border rounded-xl p-4 transition-all ${
-              selectedAddress?._id === addr._id
-                ? "border-blue-600 bg-blue-50 ring-1 ring-blue-600"
-                : "border-gray-200 hover:border-gray-300"
-            }`}
-          >
-            <div className="flex justify-between items-start mb-2">
-              <span className="font-bold text-gray-900">{addr.fullName}</span>
-              <span className="text-xs font-semibold px-2 py-0.5 rounded bg-gray-200 text-gray-700">
-                {addr.type}
-              </span>
+          return (
+            <div
+              key={addr._id}
+              onClick={() => setSelectedAddress(addr)}
+              className={`cursor-pointer border rounded-xl p-4 transition-all ${
+                selectedAddress?._id === addr._id
+                  ? "border-blue-600 bg-blue-50 ring-1 ring-blue-600"
+                  : "border-gray-200 hover:border-gray-300"
+              }`}
+            >
+              <div className="flex justify-between items-start mb-2">
+                <span className="font-bold text-gray-900">{addr.fullName}</span>
+                <span className="text-xs font-semibold px-2 py-0.5 rounded bg-gray-200 text-gray-700">
+                  {addr.type}
+                </span>
+              </div>
+              <div className="text-sm text-gray-600 space-y-0.5">
+                <p>{addr.street}</p>
+                <p>
+                  {addr.city}, {addr.state} {addr.postalCode}
+                </p>
+                <p>{addr.country}</p>
+                <p className="mt-2 text-gray-500">{addr.phone}</p>
+              </div>
             </div>
-            <div className="text-sm text-gray-600 space-y-0.5">
-              <p>{addr.street}</p>
-              <p>
-                {addr.city}, {addr.state} {addr.postalCode}
-              </p>
-              <p>{addr.country}</p>
-              <p className="mt-2 text-gray-500">{addr.phone}</p>
-            </div>
-          </div>
-        )})}
+          );
+        })}
 
         {(!addresses || addresses.length === 0) && (
           <div className="col-span-full py-8 text-center bg-gray-50 rounded-xl border border-dashed border-gray-300">
@@ -175,7 +169,6 @@ const Checkout = () => {
       </div>
     </div>
   );
-
 
   const renderStep2 = () => (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -204,13 +197,39 @@ const Checkout = () => {
                   <span className="text-sm font-medium text-gray-500">
                     Qty: {item.quantity}
                   </span>
-                  <span className="font-bold text-gray-900">
-                    ₹
-                    {(
-                      (item.product.base_price * item.quantity) /
-                      100
-                    ).toLocaleString()}
-                  </span>
+                  <div className="text-right">
+                    {item.product?.applied_offer > 0 ? (
+                      <div className="flex flex-col items-end">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-gray-400 line-through">
+                            ₹
+                            {(
+                              (item.product?.base_price * item.quantity) /
+                              100
+                            ).toLocaleString()}
+                          </span>
+                          <span className="font-bold text-gray-900">
+                            ₹
+                            {(
+                              (item.product?.final_price * item.quantity) /
+                              100
+                            ).toLocaleString()}
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-green-600 font-bold bg-green-100 px-1.5 py-0.5 rounded-full mt-1">
+                          {item.product?.applied_offer}% OFF
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="font-bold text-gray-900">
+                        ₹
+                        {(
+                          (item.product?.base_price * item.quantity) /
+                          100
+                        ).toLocaleString()}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -234,7 +253,6 @@ const Checkout = () => {
         </div>
       </div>
 
-  
       <div className="lg:col-span-1">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 sticky top-24">
           <h2 className="text-lg font-bold text-gray-900 mb-6">
@@ -255,7 +273,6 @@ const Checkout = () => {
             <div className="flex justify-between text-sm text-gray-600">
               <span>Tax (Included)</span>
               <span>₹0</span>
-            
             </div>
             <div className="pt-3 border-t border-gray-100 flex justify-between items-center">
               <span className="font-bold text-lg text-gray-900">Total</span>
@@ -296,7 +313,6 @@ const Checkout = () => {
     </div>
   );
 
-
   const renderStep3 = () => (
     <div className="max-w-xl mx-auto text-center pt-12 pb-20">
       <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -317,7 +333,6 @@ const Checkout = () => {
         >
           Continue Shopping
         </Link>
-    
       </div>
     </div>
   );
@@ -325,7 +340,6 @@ const Checkout = () => {
   return (
     <div className="min-h-screen bg-gray-50 pt-24 pb-12 px-4 sm:px-6 lg:px-8 font-sans">
       <div className="max-w-7xl mx-auto">
-      
         {step < 3 && (
           <div className="flex justify-center mb-12">
             <div className="flex items-center">

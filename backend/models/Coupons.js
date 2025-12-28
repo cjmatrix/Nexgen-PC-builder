@@ -25,6 +25,8 @@ const couponSchema = new mongoose.Schema(
     ],
     applicableCategories: [{ type: String }], // e.g., ["Gaming", "Office"]
 
+    usedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+
     isActive: {
       type: Boolean,
       default: true,

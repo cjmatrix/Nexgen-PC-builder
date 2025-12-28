@@ -33,7 +33,6 @@ const LandingPage = () => {
     () => {
       const tl = gsap.timeline();
 
-     
       tl.from(".hero-content > *", {
         y: 100,
         opacity: 0,
@@ -42,7 +41,6 @@ const LandingPage = () => {
         ease: "power4.out",
       });
 
-  
       gsap.from(".feature-card", {
         scrollTrigger: {
           trigger: featuresRef.current,
@@ -55,7 +53,6 @@ const LandingPage = () => {
         ease: "power3.out",
       });
 
-  
       gsap.from(".category-card", {
         scrollTrigger: {
           trigger: categoriesRef.current,
@@ -68,7 +65,6 @@ const LandingPage = () => {
         ease: "back.out(1.7)",
       });
 
-     
       gsap.from(".step-item", {
         scrollTrigger: {
           trigger: howItWorksRef.current,
@@ -91,12 +87,10 @@ const LandingPage = () => {
     >
       <Navbar />
 
-
       <div
         ref={heroRef}
         className="relative h-screen flex items-center justify-center overflow-hidden"
       >
- 
         <div
           className="absolute inset-0 z-0"
           style={{
@@ -106,8 +100,7 @@ const LandingPage = () => {
             backgroundPosition: "center",
           }}
         >
-          
-          <div className="absolute inset-0 bg-gradient-to-b from-white/90 via-white/70 to-gray-50 z-10"></div>
+          <div className="absolute inset-0 bg-gradient-to-b from-gray-900/80 via-gray-900/60 to-gray-50 z-10"></div>
         </div>
 
         <div className="container relative z-20 px-4 mx-auto text-center hero-content">
@@ -116,13 +109,13 @@ const LandingPage = () => {
               Next Generation Performance
             </span>
           </div>
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-gray-900 mb-6 leading-tight tracking-tight">
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-white mb-6 leading-tight tracking-tight">
             BUILD YOUR <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
               LEGACY
             </span>
           </h1>
-          <p className="max-w-2xl mx-auto text-lg md:text-xl text-gray-600 md:leading-relaxed mb-10 font-light">
+          <p className="max-w-2xl mx-auto text-lg md:text-xl text-gray-200 md:leading-relaxed mb-10 font-light">
             Experience the pinnacle of custom PC engineering. Meticulously
             crafted for gamers, creators, and professionals who demand nothing
             but the best.
@@ -140,14 +133,13 @@ const LandingPage = () => {
             </Link>
             <Link
               to="/ai-assistant"
-              className="group px-8 py-4 bg-transparent border border-gray-300 text-gray-900 font-bold text-lg rounded-xl hover:bg-white/50 backdrop-blur-sm transition-all duration-300 flex items-center justify-center gap-2"
+              className="group px-8 py-4 bg-transparent border border-white/20 text-white font-bold text-lg rounded-xl hover:bg-white/10 backdrop-blur-sm transition-all duration-300 flex items-center justify-center gap-2"
             >
-              <Zap className="w-5 h-5 text-yellow-500" /> AI Recommendation
+              <Zap className="w-5 h-5 text-yellow-400" /> AI Recommendation
             </Link>
           </div>
         </div>
       </div>
-
 
       <section ref={featuresRef} className="py-24 bg-gray-50 relative">
         <div className="container mx-auto px-4">
@@ -185,7 +177,6 @@ const LandingPage = () => {
           </div>
         </div>
       </section>
-
 
       <section ref={categoriesRef} className="py-24 bg-white">
         <div className="container mx-auto px-4">
@@ -227,7 +218,6 @@ const LandingPage = () => {
         </div>
       </section>
 
-
       <section
         ref={howItWorksRef}
         className="py-24 bg-gray-50 border-t border-gray-200"
@@ -238,7 +228,6 @@ const LandingPage = () => {
           </div>
 
           <div className="flex flex-col md:flex-row justify-between items-center relative space-y-12 md:space-y-0">
-
             <div className="hidden md:block absolute top-1/2 left-0 w-full h-1 bg-gray-200 -translate-y-1/2 z-0"></div>
 
             <StepItem
@@ -292,7 +281,6 @@ const LandingPage = () => {
     </div>
   );
 };
-
 
 const FeatureCard = ({ icon, title, desc }) => (
   <div className="feature-card p-8 rounded-2xl bg-white border border-gray-100 shadow-lg hover:shadow-xl hover:border-blue-100 transition-all duration-300">
