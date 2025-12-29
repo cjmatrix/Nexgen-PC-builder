@@ -76,6 +76,13 @@ const userSchema = new mongoose.Schema(
       default: Date.now,
     },
 
+    referralToken:[
+      {
+        type: String,
+        select: false,
+      },
+    ],
+
     original_order_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Order",

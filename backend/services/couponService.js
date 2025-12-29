@@ -8,10 +8,11 @@ const createCoupon = async (data) => {
     discountValue,
     expiryDate,
     minOrderValue,
+    allowedUsers,
     usageLimit,
   } = data;
 
-  // Check if coupon exists
+
   const existingCoupon = await Coupon.findOne({ code: code.toUpperCase() });
   if (existingCoupon) {
     throw new AppError("Coupon code already exists", 400);
@@ -24,6 +25,7 @@ const createCoupon = async (data) => {
     expiryDate,
     minOrderValue: minOrderValue || 0,
     usageLimit: usageLimit || 1000,
+    allowedUsers,
     isActive: true,
   });
 
@@ -98,7 +100,7 @@ const deleteCoupon = async (id) => {
     throw new AppError("Coupon not found", 404);
   }
 
-  // Toggle isActive
+  
   coupon.isActive = !coupon.isActive;
   await coupon.save();
 
@@ -155,17 +157,16 @@ const getAvailableCoupons = async (userId) => {
 
   const coupons = await Coupon.find({
     isActive: true,
-    expiryDate: { $gt: currentDate }, // Not expired
-    $expr: { $lt: ["$usageCount", "$usageLimit"] }, // Not exhausted
-    usedBy: { $ne: userId }, // Not used by this user
+    expiryDate: { $gt: currentDate }, 
+    $expr: { $lt: ["$usageCount", "$usageLimit"] }, 
+    usedBy: { $ne: userId }, 
   });
 
-  // Filter out private coupons not meant for this user
+  
   const validCoupons = coupons.filter((coupon) => {
-    // If allowedUsers is empty, it's public
+   
     if (!coupon.allowedUsers || coupon.allowedUsers.length === 0) return true;
 
-    // If restricted, check if user is in allowed list
     return coupon.allowedUsers.includes(userId);
   });
 

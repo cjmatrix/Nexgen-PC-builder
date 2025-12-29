@@ -6,6 +6,7 @@ import {
   updateProfile,
   updateAddresses,
   deleteAddresses,
+  verifyEmailChange,
 } from "../controllers/userController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
@@ -15,6 +16,7 @@ router.use(protect);
 
 router.get("/profile", getProfile);
 router.put("/profile", updateProfile);
+router.post("/verify-email-change", verifyEmailChange);
 
 router.post("/address", postAddress);
 router.get("/address", getAddresses);

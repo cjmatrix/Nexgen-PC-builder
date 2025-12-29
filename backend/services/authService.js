@@ -28,8 +28,10 @@ const generateTokens = async (userId) => {
   return { accessToken, refreshToken };
 };
 
+import { createCoupon } from "./couponService.js";
+
 const registerUser = async (userData) => {
-  const { name, email, password } = userData;
+  const { name, email, password, referralToken } = userData;
 
   if (!name || !email || !password) {
     throw new AppError("Please add all fields", 400);
@@ -42,16 +44,25 @@ const registerUser = async (userData) => {
       throw new AppError("User already exists", 400);
     }
   }
-  //x+10
 
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   const otpExpires = Date.now() + 10 * 60 * 1000;
+
+  let referrer = null;
+  if (referralToken) {
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(referralToken)
+      .digest("hex");
+    referrer = await User.findOne({ referralToken: hashedToken });
+  }
 
   if (user) {
     user.name = name;
     user.password = password;
     user.otp = otp;
     user.otpExpires = otpExpires;
+    // user.referralToken = [];
     await user.save();
   } else {
     user = await User.create({
@@ -62,6 +73,40 @@ const registerUser = async (userData) => {
       otpExpires,
       isVerified: false,
     });
+  }
+
+  if (referrer && user) {
+    try {
+      const referrerCouponCode = `REF-${referrer.name
+        .substring(0, 3)
+        .toUpperCase()}-${Date.now().toString().slice(-4)}`;
+      await createCoupon({
+        code: referrerCouponCode,
+        discountType: "fixed",
+        discountValue: 500,
+        expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), 
+        minOrderValue: 2000,
+        usageLimit: 1,
+        allowedUsers: [referrer._id],
+      });
+
+      const newUserCouponCode = `WELCOME-${name
+        .substring(0, 3)
+        .toUpperCase()}-${Math.floor(Math.random() * 1000)}`;
+      await createCoupon({
+        code: newUserCouponCode,
+        discountType: "percentage", 
+        discountValue: 10,
+        minOrderValue: 1000,
+        expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), 
+
+        usageLimit: 1,
+        allowedUsers: [user._id],
+      });
+      console.log("Referral rewards distributed successfully");
+    } catch (err) {
+      console.error("Failed to distribute referral rewards:", err);
+    }
   }
 
   try {
@@ -80,8 +125,8 @@ const registerUser = async (userData) => {
 
 const verifyOTP = async (email, otp) => {
   const user = await User.findOne({
-    $or: [{ email: email }, { tempEmail: email }],
-  }).select("+otp +otpExpires +tempEmail");
+    email: email,
+  }).select("+otp +otpExpires"); 
   if (!user) {
     throw new AppError("User not found", 404);
   }
@@ -99,12 +144,6 @@ const verifyOTP = async (email, otp) => {
     throw new AppError("OTP expired", 400);
   }
 
-  if (user.otp === otp) {
-    if (user.tempEmail) {
-      user.email = user.tempEmail;
-      user.tempEmail = undefined;
-    }
-  }
 
   user.isVerified = true;
   user.otp = undefined;

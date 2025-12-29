@@ -13,6 +13,7 @@ import productRoutes from "./routes/productRoutes.js";
 import aiRoutes from "./routes/aiRoutes.js";
 import cartRoutes from "./routes/cartRoutes.js";
 import couponRoutes from "./routes/couponRoutes.js";
+import referralRoutes from "./routes/referralRoutes.js";
 
 import userRoutes from "./routes/userRoutes.js";
 
@@ -28,7 +29,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
-      "https://bdghml9c-5173.euw.devtunnels.ms/",
+      "https://bdghml9c-5173.euw.devtunnels.ms",
     ],
     credentials: true,
   })
@@ -43,6 +44,7 @@ app.use("/api/v1/cart", cartRoutes);
 app.use("/api/v1/orders", orderRoutes);
 app.use("/api/v1/ai", aiRoutes);
 app.use("/api/v1/coupons", couponRoutes);
+app.use("/api/v1/referral", referralRoutes);
 
 app.use("/api/v1/user", userRoutes);
 

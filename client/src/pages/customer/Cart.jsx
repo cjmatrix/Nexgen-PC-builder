@@ -29,7 +29,7 @@ const Cart = () => {
       const res = await api.get("/coupons/available");
       return res.data.coupons;
     },
-    enabled: isCouponModalOpen, // Only fetch when modal is open
+    enabled: isCouponModalOpen,
     staleTime: 1000 * 60 * 5, // Cache for 5 mins
   });
 
@@ -39,11 +39,13 @@ const Cart = () => {
 
   const [errors, setErrors] = useState({});
 
-  const handleApplyCoupon = async () => {
-    if (!couponCode) return;
+  const handleApplyCoupon = async (codeToApply) => {
+    if (!couponCode &&!codeToApply) return;
     setCouponError("");
+
+
     try {
-      await dispatch(applyCoupon(couponCode)).unwrap();
+      await dispatch(applyCoupon( codeToApply ||couponCode)).unwrap();
       setCouponCode("");
     } catch (error) {
       setCouponError(error);
@@ -308,7 +310,7 @@ const Cart = () => {
                             className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none uppercase"
                           />
                           <button
-                            onClick={handleApplyCoupon}
+                            onClick={()=>handleApplyCoupon()}
                             disabled={!couponCode}
                             className="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           >
@@ -395,6 +397,7 @@ const Cart = () => {
                       <button
                         onClick={() => {
                           setCouponCode(c.code);
+                          handleApplyCoupon(c.code);
                           setIsCouponModalOpen(false);
                         }}
                         className="text-xs bg-white border border-blue-200 text-blue-700 font-bold px-3 py-1.5 rounded-lg shadow-sm group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600 transition-all"

@@ -27,7 +27,7 @@ const calculateSummary = (items, cartDiscount = 0) => {
 
   return {
     subtotal: subtotal / 100,
-    shipping: 50,
+    shipping: shipping/100,
     discount: itemDiscount / 100 + cartDiscount,
     tax: 0,
     total: total > 0 ? total / 100 : 0,
@@ -276,7 +276,7 @@ export const applyCouponToCart = async (userId, couponCode) => {
 
   const { coupon, discountAmount } = await validateCoupon(
     couponCode,
-    currentSummary.subtotal, // Subtotal in Rupees
+    currentSummary.subtotal, 
     userId
   );
 
@@ -289,7 +289,7 @@ export const applyCouponToCart = async (userId, couponCode) => {
  
   const populatedCart = populateCart(cart);
  
-  populatedCart.coupon = coupon; // Send full coupon object back for display
+  populatedCart.coupon = coupon; 
 
   const summary = calculateSummary(populatedCart.items, cart.discount);
 

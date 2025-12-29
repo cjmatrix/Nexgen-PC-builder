@@ -16,7 +16,7 @@ export const createCoupon = async (req, res, next) => {
 export const getAvailableCoupons = async (req, res, next) => {
   try {
     const coupons = await couponService.getAvailableCoupons(req.user._id);
-
+    
     res.status(200).json({
       success: true,
       coupons,

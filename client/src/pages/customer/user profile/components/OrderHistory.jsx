@@ -20,17 +20,17 @@ const OrderHistory = () => {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["myOrders", search,page],
-   queryFn: async () => {
-  const response = await api.get("/orders/myorders", {
-    params: {
-      search: search || "",
-      page: page,
-      limit: 10,
+    queryKey: ["myOrders", search, page],
+    queryFn: async () => {
+      const response = await api.get("/orders/myorders", {
+        params: {
+          search: search || "",
+          page: page,
+          limit: 10,
+        },
+      });
+      return response.data;
     },
-  });
-  return response.data;
-}
   });
 
   const handleViewDetails = (order) => {
@@ -62,14 +62,46 @@ const OrderHistory = () => {
     const tableRows = [];
 
     order.orderItems.forEach((item) => {
+      const basePrice = item.price / 100;
+      const discount = item.discount || 0;
+      const discountedPrice = basePrice * (1 - discount / 100);
+      const lineTotal = discountedPrice * item.qty;
+
+      const priceDisplay =
+        discount > 0
+          ? `${basePrice.toLocaleString()} (-${discount}%)`
+          : `${basePrice.toLocaleString()}`;
+
       const itemData = [
         item.name,
         item.qty,
-        `${(item.price/100).toLocaleString()}`,
-        `${((item.price * item.qty)/100).toLocaleString()}`,
+        priceDisplay,
+        `${lineTotal.toLocaleString()}`,
       ];
       tableRows.push(itemData);
     });
+
+    // Add Shipping if applicable
+    const shipping = (order.shippingPrice || 0) / 100;
+    if (shipping > 0) {
+      tableRows.push([
+        "Shipping Charges",
+        "",
+        "",
+        `${shipping.toLocaleString()}`,
+      ]);
+    }
+
+    // Add Coupon Discount if applicable
+    const coupon = order.couponDiscount || 0;
+    if (coupon > 0) {
+      tableRows.push([
+        "Coupon Discount",
+        "",
+        "",
+        `-${coupon.toLocaleString()}`,
+      ]);
+    }
 
     autoTable(doc, {
       head: [tableColumn],
@@ -79,7 +111,7 @@ const OrderHistory = () => {
 
     const finalY = doc.lastAutoTable.finalY || 90;
     doc.text(
-      `Total Amount: ${(order.totalPrice/100).toLocaleString()}`,
+      `Total Amount: ${(order.totalPrice / 100).toLocaleString()}`,
       14,
       finalY + 10
     );
@@ -175,7 +207,7 @@ const OrderHistory = () => {
                         <StatusBadge status={order.status} />
                       </td>
                       <td className="px-6 py-4 text-right font-medium text-gray-900">
-                        ₹{(order.totalPrice/100).toLocaleString()}
+                        ₹{(order.totalPrice / 100).toLocaleString()}
                       </td>
                       <td className="px-6 py-4 text-center">
                         <button
@@ -211,11 +243,13 @@ const OrderHistory = () => {
           />
         </div>
       </div>
-      {
-        !isLoading&&<Pagination pagination={data.pagination} page={page} setPage={setPage}>
-
-      </Pagination>
-      }
+      {!isLoading && (
+        <Pagination
+          pagination={data.pagination}
+          page={page}
+          setPage={setPage}
+        ></Pagination>
+      )}
     </div>
   );
 };

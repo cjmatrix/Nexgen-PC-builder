@@ -5,6 +5,7 @@ import {
   updateUserProfile,
   updateAddress,
   deleteAddress,
+  verifyEmailChangeOTP,
 } from "../services/userService.js";
 import AppError from "../utils/AppError.js";
 
@@ -44,6 +45,12 @@ const updateProfile = async (req, res) => {
   res.status(200).json({ success: true, ...result });
 };
 
+const verifyEmailChange = async (req, res) => {
+  const { email, otp } = req.body;
+  const result = await verifyEmailChangeOTP(email, otp);
+  res.status(200).json({ success: true, ...result });
+};
+
 export {
   getProfile,
   postAddress,
@@ -51,4 +58,5 @@ export {
   updateProfile,
   updateAddresses,
   deleteAddresses,
+  verifyEmailChange,
 };

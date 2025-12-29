@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import {
   register as registerUser,
@@ -76,7 +76,6 @@ const Signup = () => {
     return () => clearInterval(interval);
   }, [step, timer]);
 
-
   useEffect(() => {
     return () => {
       dispatch(reset());
@@ -88,12 +87,16 @@ const Signup = () => {
     setValue("otp", otpString);
   }, [otpValues, setValue]);
 
+  const [searchParams] = useSearchParams();
+  const referralToken = searchParams.get("ref");
+
   const onSignupSubmit = (data) => {
     setEmailForOtp(data.email);
     const userData = {
       name: data.name,
       email: data.email,
       password: data.password,
+      referralToken: referralToken || undefined,
     };
     dispatch(registerUser(userData))
       .unwrap()

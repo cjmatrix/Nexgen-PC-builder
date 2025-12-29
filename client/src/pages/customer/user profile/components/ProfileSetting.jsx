@@ -190,7 +190,7 @@ const ProfileSetting = () => {
 
   const verifyOTPMutation = useMutation({
     mutationFn: async (otp) => {
-      const response = await api.post("/auth/verify-otp", {
+      const response = await api.post("/user/verify-email-change", {
         email: pendingEmail,
         otp,
       });

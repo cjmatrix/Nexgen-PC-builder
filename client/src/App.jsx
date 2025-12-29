@@ -37,6 +37,7 @@ import UserDashboard from "./pages/customer/user profile/UserDashboard";
 
 import ProfileSetting from "./pages/customer/user profile/components/ProfileSetting";
 import OrderHistory from "./pages/customer/user profile/components/OrderHistory";
+import Referral from "./pages/customer/user profile/components/Referral";
 
 import CustomerPage from "./pages/customer/CustomerPage";
 
@@ -189,6 +190,10 @@ const router = createBrowserRouter([
               {
                 path: "/user/orders",
                 element: <OrderHistory />,
+              },
+              {
+                path: "/user/referral",
+                element: <Referral />,
               },
             ],
           },

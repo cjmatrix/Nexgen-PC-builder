@@ -7,6 +7,7 @@ const AccountSidebar = () => {
     { label: "Saved Builds / Wishlist", path: "/user/wishlist" },
     { label: "Profile Settings", path: "/user/profile" },
     { label: "Wallet", path: "/user/wallet" },
+    { label: "Refer & Earn", path: "/user/referral" },
   ];
 
   return (

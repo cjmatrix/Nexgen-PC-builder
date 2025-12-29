@@ -98,7 +98,6 @@ const updateAddress = async (userId, addressId, updateData) => {
     throw new AppError("Address not found or unauthorized", 404);
   }
 
-  // If setting as default, unset other default addresses for this user
   if (updateData.isDefault) {
     await Address.updateMany(
       { user: userId, _id: { $ne: addressId } },
@@ -133,6 +132,44 @@ const getAddressesByUserId = async (userId) => {
   return addresses;
 };
 
+const verifyEmailChangeOTP = async (tempEmail, otp) => {
+  const user = await User.findOne({
+    tempEmail: tempEmail,
+  }).select("+otp +otpExpires +tempEmail");
+
+  if (!user) {
+    throw new AppError("Invalid or expired verification attempt", 404);
+  }
+
+  if (!user.otp || !user.otpExpires) {
+    throw new AppError("No OTP found", 404);
+  }
+
+  if (user.otp !== otp) {
+    throw new AppError("Invalid OTP", 400);
+  }
+
+  if (user.otpExpires < Date.now()) {
+    throw new AppError("OTP expired", 400);
+  }
+
+ 
+  const existingUser = await User.findOne({ email: tempEmail });
+  if (existingUser) {
+    throw new AppError("Email has already been taken by another user", 400);
+  }
+
+
+  user.email = user.tempEmail;
+  user.tempEmail = undefined;
+  user.otp = undefined;
+  user.otpExpires = undefined;
+
+  await user.save();
+
+  return { message: "Email changed successfully", user };
+};
+
 export {
   getAllUsers,
   toggleBlockStatus,
@@ -141,4 +178,5 @@ export {
   getAddressesByUserId,
   updateAddress,
   deleteAddress,
+  verifyEmailChangeOTP,
 };
