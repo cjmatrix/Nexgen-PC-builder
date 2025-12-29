@@ -16,6 +16,9 @@ import couponRoutes from "./routes/couponRoutes.js";
 import referralRoutes from "./routes/referralRoutes.js";
 
 import userRoutes from "./routes/userRoutes.js";
+import paymentRoutes from "./routes/paymentRoutes.js";
+
+import errorMiddleware from "./middleware/errorMiddleware.js";
 
 import morgan from "morgan";
 
@@ -45,11 +48,11 @@ app.use("/api/v1/orders", orderRoutes);
 app.use("/api/v1/ai", aiRoutes);
 app.use("/api/v1/coupons", couponRoutes);
 app.use("/api/v1/referral", referralRoutes);
+app.use("/api/payment", paymentRoutes);
 
 app.use("/api/v1/user", userRoutes);
 
-// Error Middleware
-import errorMiddleware from "./middleware/errorMiddleware.js";
+
 app.use(errorMiddleware);
 
 const connectDB = async () => {

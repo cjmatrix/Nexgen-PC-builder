@@ -43,6 +43,63 @@ const Checkout = () => {
     },
   });
 
+   const initiatePaymentMutation = useMutation({
+    mutationFn: async (orderData) => {
+      const response = await api.post("/payment/create-order", { orderData });
+      return response.data;
+    },
+    onSuccess: (data) => {
+      handleRazorpayScreen(data.razorpayOrder, data.order);
+    },
+    onError: (error) => {
+      alert("Payment initialization failed");
+      setIsProcessing(false);
+    }
+  });
+  const verifyPaymentMutation = useMutation({
+    mutationFn: async (paymentData) => {
+      return await api.post("/payment/verify", paymentData);
+    },
+    onSuccess: () => {
+      setStep(3); // Show Success Screen
+      dispatch(fetchCart());
+    }
+  });
+
+
+  const handleRazorpayScreen = (razorpayOrder, dbOrder) => {
+    const options = {
+      key: "YOUR_RAZORPAY_KEY_ID_PUBLIC", // Add to .env.local
+      amount: razorpayOrder.amount,
+      currency: razorpayOrder.currency,
+      name: "Nexgen PC Builder",
+      description: "Order Payment",
+      order_id: razorpayOrder.id,
+      handler: function (response) {
+        // Payment Success! Verify it on backend
+        verifyPaymentMutation.mutate({
+          razorpay_order_id: response.razorpay_order_id,
+          razorpay_payment_id: response.razorpay_payment_id,
+          razorpay_signature: response.razorpay_signature,
+          orderId: dbOrder._id
+        });
+      },
+      prefill: {
+        name: selectedAddress.fullName,
+        email: "user@example.com", // Get from User State
+        contact: selectedAddress.phone,
+      },
+      theme: { color: "#0f172a" },
+    };
+    const rzp1 = new window.Razorpay(options);
+    rzp1.on("payment.failed", function (response){
+        alert("Payment Failed: " + response.error.description);
+        setIsProcessing(false);
+    });
+    rzp1.open();
+  };
+
+
   const createOrderMutation = useMutation({
     mutationFn: async (orderData) => {
       const response = await api.post("/orders", orderData);
@@ -75,13 +132,17 @@ const Checkout = () => {
         country: selectedAddress.country,
         phone: selectedAddress.phone,
       },
-      paymentMethod: "COD",
+      paymentMethod: "online",
       taxPrice: 0,
       shippingPrice: summary.shipping,
       totalPrice: summary.total,
     };
 
-    createOrderMutation.mutate(orderData);
+   if (paymentMethod === "COD") {
+      createOrderMutation.mutate({ ...orderData, paymentMethod: "COD" });
+    } else {
+      initiatePaymentMutation.mutate(orderData);
+    }
   };
 
   console.log(summary)

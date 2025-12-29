@@ -22,7 +22,7 @@ const Cart = () => {
   const [couponError, setCouponError] = useState("");
   const [isCouponModalOpen, setIsCouponModalOpen] = useState(false);
 
-  // Fetch Available Coupons
+
   const { data: availableCoupons, isLoading: couponsLoading } = useQuery({
     queryKey: ["availableCoupons"],
     queryFn: async () => {
