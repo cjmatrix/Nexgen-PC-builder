@@ -72,9 +72,6 @@ export const updateCoupon = async (req, res, next) => {
   }
 };
 
-// @desc    Delete (Soft) coupon
-// @route   DELETE /api/admin/coupons/:id
-// @access  Private/Admin
 export const deleteCoupon = async (req, res, next) => {
   try {
     const coupon = await couponService.deleteCoupon(req.params.id);

@@ -6,8 +6,9 @@ import {
   fetchPublicProductById,
 } from "../../store/slices/productSlice";
 import { addToCart } from "../../store/slices/cartSlice";
+import { useWishlist } from "../../hooks/useWishlist";
 
-import { ShoppingCart, Settings, ArrowLeft } from "lucide-react";
+import { ShoppingCart, Settings, ArrowLeft, Heart } from "lucide-react";
 
 import Swal from "sweetalert2";
 
@@ -20,6 +21,12 @@ const ProductDetail = () => {
     loading,
     error,
   } = useSelector((state) => state.products);
+  const {
+    items: wishlistItems,
+    addToWishlist,
+    removeFromWishlist,
+  } = useWishlist();
+
   const [selectedImage, setSelectedImage] = useState(0);
   const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 });
   const [isZooming, setIsZooming] = useState(false);
@@ -29,6 +36,16 @@ const ProductDetail = () => {
       dispatch(fetchPublicProductById(id));
     }
   }, [dispatch, id]);
+
+  const isInWishlist = wishlistItems?.some((item) => item.product?._id === id);
+
+  const handleWishlistToggle = async () => {
+    if (isInWishlist) {
+      removeFromWishlist(id);
+    } else {
+      addToWishlist(id);
+    }
+  };
 
   if (loading || !product) {
     return (
@@ -185,6 +202,21 @@ const ProductDetail = () => {
                 >
                   <ShoppingCart className="h-5 w-5" />
                   {isOutOfStock ? "Out of Stock" : "Add to Cart"}
+                </button>
+                <button
+                  onClick={handleWishlistToggle}
+                  className={`px-4 py-4 rounded-xl border-2 transition-all ${
+                    isInWishlist
+                      ? "bg-red-50 border-red-200 text-red-500"
+                      : "bg-white border-gray-200 text-gray-400 hover:border-red-200 hover:text-red-500"
+                  }`}
+                  title={
+                    isInWishlist ? "Remove from Wishlist" : "Add to Wishlist"
+                  }
+                >
+                  <Heart
+                    className={`h-6 w-6 ${isInWishlist ? "fill-current" : ""}`}
+                  />
                 </button>
               </div>
             </div>

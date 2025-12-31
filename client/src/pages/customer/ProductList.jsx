@@ -4,11 +4,20 @@ import { fetchPublicProducts } from "../../store/slices/productSlice";
 import Pagination from "../../components/Pagination";
 import { Search, Filter, ShoppingCart, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useWishlist } from "../../hooks/useWishlist";
+import { Heart as HeartIcon } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import api from "../../api/axios";
 
 const ProductList = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { items, pagination, loading } = useSelector((state) => state.products);
+  const {
+    items: wishlistItems,
+    addToWishlist,
+    removeFromWishlist,
+  } = useWishlist();
 
   const [filters, setFilters] = useState({
     search: "",
@@ -32,6 +41,28 @@ const ProductList = () => {
   useEffect(() => {
     dispatch(fetchPublicProducts({ ...filters, page }));
   }, [dispatch, filters, page]);
+
+  const isInWishlist = (productId) => {
+    if (!wishlistItems) return false;
+    return wishlistItems.some((item) => item.product?._id === productId);
+  };
+
+  const handleWishlistToggle = async (e, productId) => {
+    e.stopPropagation(); // Prevent card click navigation
+    if (isInWishlist(productId)) {
+      removeFromWishlist(productId);
+    } else {
+      addToWishlist(productId);
+    }
+  };
+
+  const {data:categories}=useQuery({
+    queryKey:["category"],
+    queryFn:async ()=>{
+      const response= await api.get("/category")
+      return response?.data.categories
+    }
+  })
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
@@ -111,7 +142,7 @@ const ProductList = () => {
                 className="group bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden flex flex-col"
               >
                 <div className="relative aspect-[4/3] bg-gray-100 overflow-hidden">
-                  {(product.applied_offer>0 ) && (
+                  {product.applied_offer > 0 && (
                     <div className="absolute top-3 left-3 bg-red-600 text-white text-xs font-bold px-2.5 py-1 rounded-md shadow-sm z-10">
                       {product.applied_offer}% OFF
                     </div>
@@ -124,6 +155,18 @@ const ProductList = () => {
                     alt={product.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
+                  <button
+                    onClick={(e) => handleWishlistToggle(e, product._id)}
+                    className="absolute top-3 right-3 p-2 bg-white/90 backdrop-blur rounded-full text-gray-500 hover:text-red-500 transition-colors shadow-sm z-20"
+                  >
+                    <HeartIcon
+                      className={`h-5 w-5 ${
+                        isInWishlist(product._id)
+                          ? "fill-red-500 text-red-500"
+                          : "text-gray-600"
+                      }`}
+                    />
+                  </button>
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
                 </div>
 
@@ -149,7 +192,10 @@ const ProductList = () => {
                           </span>
                           <p className="text-lg font-bold text-red-600">
                             ₹
-                            {(product.final_price/100 || product.base_price/100 ).toLocaleString()}
+                            {(
+                              product.final_price / 100 ||
+                              product.base_price / 100
+                            ).toLocaleString()}
                           </p>
                         </div>
                       ) : (

@@ -4,7 +4,7 @@ import AppError from "../utils/AppError.js";
 
 export const getCategories = async (req, res) => {
   const { search, page, limit, status } = req.query;
-
+ 
   let query = {};
   if (search) {
     query.name = { $regex: search, $options: "i" };
@@ -12,6 +12,10 @@ export const getCategories = async (req, res) => {
 
   if (status) {
     query.isActive = status === "Active" ? true : false;
+  }
+
+  if(req.user.role==="customer"){
+    query.isActive=true;
   }
 
   const categories = await Category.find(query)

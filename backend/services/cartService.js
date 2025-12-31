@@ -22,12 +22,11 @@ const calculateSummary = (items, cartDiscount = 0) => {
     return sum + (baseprice - finalprice) * Number(item.quantity);
   }, 0);
 
-
   const total = subtotal + shipping - itemDiscount - cartDiscount * 100;
 
   return {
     subtotal: subtotal / 100,
-    shipping: shipping/100,
+    shipping: shipping / 100,
     discount: itemDiscount / 100 + cartDiscount,
     tax: 0,
     total: total > 0 ? total / 100 : 0,
@@ -45,7 +44,7 @@ const populateCart = (cart) => {
   const formattedItems = cart.items.map((item) => {
     if (!item.product) return item;
     const product = { ...item.product.toObject() };
-   
+
     return {
       _id: item._id,
       quantity: item.quantity,
@@ -133,7 +132,7 @@ export const getCart = async (userId) => {
     cart = await Cart.create({ user: userId, items: [] });
   }
 
-  const summary = calculateSummary(cart.items,cart.discount);
+  const summary = calculateSummary(cart.items, cart.discount);
   return { cart, summary };
 };
 
@@ -271,41 +270,36 @@ export const applyCouponToCart = async (userId, couponCode) => {
     throw new AppError("Cart not found", 404);
   }
 
-  
   const currentSummary = calculateSummary(cart.items);
 
   const { coupon, discountAmount } = await validateCoupon(
     couponCode,
-    currentSummary.subtotal, 
+    currentSummary.total,
     userId
   );
-
 
   cart.coupon = coupon._id;
   cart.discount = discountAmount;
 
   await cart.save();
 
- 
   const populatedCart = populateCart(cart);
- 
-  populatedCart.coupon = coupon; 
 
+  populatedCart.coupon = coupon;
+  
   const summary = calculateSummary(populatedCart.items, cart.discount);
 
   return { cart: populatedCart, summary };
 };
 
 export const removeCouponFromCart = async (userId) => {
-    console.log('removeing')
+  console.log("removeing");
   const cart = await Cart.findOne({ user: userId }).populate({
     path: "items.product",
     populate: {
       path: "default_config.cpu default_config.gpu default_config.motherboard default_config.ram default_config.storage default_config.case default_config.psu default_config.cooler",
     },
   });
-
-
 
   if (!cart) {
     throw new AppError("Cart not found", 404);

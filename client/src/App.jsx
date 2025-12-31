@@ -12,6 +12,7 @@ import Signup from "./pages/auth/Signup";
 import AdminLogin from "./pages/auth/AdminLogin";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
+import Wishlist from "./pages/customer/Wishlist";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import CustomerDashboard from "./pages/customer/CustomerDashboard";
 
@@ -173,6 +174,10 @@ const router = createBrowserRouter([
           {
             path: "/cart",
             element: <Cart />,
+          },
+          {
+            path: "/user/wishlist",
+            element: <Wishlist />,
           },
           {
             path: "/checkout",
