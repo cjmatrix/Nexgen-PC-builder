@@ -135,20 +135,24 @@ export const createOrder = async (userId, user, orderData) => {
       itemsPrice,
       taxPrice,
       shippingPrice,
-      totalPrice: itemsPrice + shippingPrice + taxPrice - (cart.discount*100 || 0),
+      totalPrice:
+        itemsPrice + shippingPrice + taxPrice - (cart.discount * 100 || 0),
       coupon: cart.coupon,
       couponDiscount: cart.discount || 0,
+      isPaid: orderData.isPaid || false,
+      paidAt: orderData.paidAt || null,
+      paymentResult: orderData.paymentResult || {},
     });
 
     const createdOrder = await order.save({ session });
-   if (cart.coupon) {
+    if (cart.coupon) {
       cart.coupon.usageCount += 1;
       cart.coupon.usedBy.push(userId);
-      await cart.coupon.save({ session }); 
+      await cart.coupon.save({ session });
     }
     cart.items = [];
-    cart.coupon = null; 
-    cart.discount = 0; 
+    cart.coupon = null;
+    cart.discount = 0;
     await cart.save({ session });
 
     await session.commitTransaction();

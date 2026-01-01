@@ -15,11 +15,12 @@ import cartRoutes from "./routes/cartRoutes.js";
 import couponRoutes from "./routes/couponRoutes.js";
 import referralRoutes from "./routes/referralRoutes.js";
 
-import categoryRoutes from "./routes/categoryRoutes.js"
+import categoryRoutes from "./routes/categoryRoutes.js";
 
 import userRoutes from "./routes/userRoutes.js";
 
 import wishlistRoutes from "./routes/wishlistRoutes.js";
+import paymentRoutes from "./routes/paymentRoutes.js";
 
 import errorMiddleware from "./middleware/errorMiddleware.js";
 
@@ -51,9 +52,10 @@ app.use("/api/v1/orders", orderRoutes);
 app.use("/api/v1/ai", aiRoutes);
 app.use("/api/v1/coupons", couponRoutes);
 app.use("/api/v1/referral", referralRoutes);
-app.use("/api/v1/category",categoryRoutes)
+app.use("/api/v1/category", categoryRoutes);
 
 app.use("/api/v1/wishlist", wishlistRoutes);
+app.use("/api/v1/config", paymentRoutes);
 
 app.use("/api/v1/user", userRoutes);
 

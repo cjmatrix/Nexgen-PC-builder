@@ -11,6 +11,7 @@ import {
   Archive,
   MapPin,
 } from "lucide-react";
+import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import api from "../../api/axios";
 import { fetchCart } from "../../store/slices/cartSlice";
 import AddAddressModal from "./user profile/components/AddAddressModal";
@@ -29,7 +30,22 @@ const Checkout = () => {
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("COD");
+  const [paypalClientId, setPaypalClientId] = useState("");
   const isSubmittingRef = useRef(false);
+
+  useEffect(() => {
+    const getPaypalConfig = async () => {
+      try {
+        const { data } = await api.get("/config/paypal");
+        console.log("PAYPAL CONFIG:", data);
+        setPaypalClientId(data.clientId);
+      } catch (error) {
+        console.error("Failed to load PayPal config", error);
+      }
+    };
+    getPaypalConfig();
+  }, []);
 
   useEffect(() => {
     dispatch(fetchCart());
@@ -82,6 +98,53 @@ const Checkout = () => {
     };
 
     createOrderMutation.mutate({ ...orderData, paymentMethod: "COD" });
+  };
+
+  const onApprove = async (data, actions) => {
+    return actions.order.capture().then(async (details) => {
+      isSubmittingRef.current = true;
+      setIsProcessing(true);
+      const orderData = {
+        shippingAddress: {
+          fullName: selectedAddress.fullName,
+          address: selectedAddress.street,
+          city: selectedAddress.city,
+          postalCode: selectedAddress.postalCode,
+          country: selectedAddress.country,
+          phone: selectedAddress.phone,
+        },
+        paymentMethod: "PayPal",
+        taxPrice: 0,
+        shippingPrice: summary.shipping,
+        totalPrice: summary.total,
+        isPaid: true,
+        paidAt: Date.now(),
+        paymentResult: {
+          id: details.id,
+          status: details.status,
+          update_time: details.update_time,
+          email_address: details.payer.email_address,
+        },
+      };
+
+      try {
+        await createOrderMutation.mutateAsync(orderData);
+      } catch (err) {
+        console.error(err);
+      }
+    });
+  };
+
+  const createPaypalOrder = (data, actions) => {
+    return actions.order.create({
+      purchase_units: [
+        {
+          amount: {
+            value: summary.total.toFixed(2), 
+          },
+        },
+      ],
+    });
   };
 
   console.log(summary);
@@ -286,20 +349,79 @@ const Checkout = () => {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Payment Method
             </label>
-            <div className="flex items-center gap-3 p-3 border border-blue-200 bg-blue-50 rounded-lg text-blue-800">
+
+            {/* COD OPTION */}
+            <div
+              className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-all mb-3 ${
+                paymentMethod === "COD"
+                  ? "border-blue-600 bg-blue-50 text-blue-800 ring-1 ring-blue-600"
+                  : "border-gray-200 hover:border-gray-300"
+              }`}
+              onClick={() => setPaymentMethod("COD")}
+            >
+              <div className="w-4 h-4 rounded-full border border-gray-400 flex items-center justify-center">
+                {paymentMethod === "COD" && (
+                  <div className="w-2 h-2 rounded-full bg-blue-600"></div>
+                )}
+              </div>
               <CreditCard className="h-5 w-5" />
               <span className="font-medium">Cash on Delivery (COD)</span>
+            </div>
+
+            {/* PAYPAL OPTION */}
+            <div
+              className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-all ${
+                paymentMethod === "PayPal"
+                  ? "border-blue-600 bg-blue-50 text-blue-800 ring-1 ring-blue-600"
+                  : "border-gray-200 hover:border-gray-300"
+              }`}
+              onClick={() => setPaymentMethod("PayPal")}
+            >
+              <div className="w-4 h-4 rounded-full border border-gray-400 flex items-center justify-center">
+                {paymentMethod === "PayPal" && (
+                  <div className="w-2 h-2 rounded-full bg-blue-600"></div>
+                )}
+              </div>
+              <img
+                src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg"
+                alt="PayPal"
+                className="h-5 w-auto"
+              />
+              <span className="font-medium">PayPal or Credit Card</span>
             </div>
           </div>
 
           <div className="flex flex-col gap-3">
-            <button
-              onClick={handlePlaceOrder}
-              disabled={isProcessing}
-              className="w-full bg-gray-900 text-white py-3.5 rounded-lg font-bold hover:bg-gray-800 transition-all shadow-lg shadow-gray-900/10 flex items-center justify-center gap-2 disabled:opacity-70"
-            >
-              {isProcessing ? "Processing..." : "Place Order"}
-            </button>
+            {paymentMethod === "COD" ? (
+              <button
+                onClick={handlePlaceOrder}
+                disabled={isProcessing}
+                className="w-full bg-gray-900 text-white py-3.5 rounded-lg font-bold hover:bg-gray-800 transition-all shadow-lg shadow-gray-900/10 flex items-center justify-center gap-2 disabled:opacity-70"
+              >
+                {isProcessing ? "Processing..." : "Place Order (COD)"}
+              </button>
+            ) : (
+             
+              <div className="w-full relative z-0">
+                
+                {paypalClientId && (
+                  <PayPalScriptProvider
+                    options={{ "client-id": paypalClientId, currency: "USD" }}
+                  >
+                    <PayPalButtons
+                      createOrder={createPaypalOrder}
+                      onApprove={onApprove}
+                      onError={(err) => {
+                        console.error("PayPal Error:", err);
+                        alert("PayPal Payment Failed");
+                      }}
+                      style={{ layout: "horizontal" }}
+                    />
+                  </PayPalScriptProvider>
+                )}
+              </div>
+            )}
+
             <button
               onClick={() => setStep(1)}
               disabled={isProcessing}
