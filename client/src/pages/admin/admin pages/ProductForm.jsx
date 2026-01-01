@@ -130,7 +130,7 @@ const AddProductForm = () => {
           reset({
             name: data.name,
             description: data.description,
-            category: data.category,
+            category: data.category?._id || data.category, 
             base_price: data.base_price / 100,
             discount: data.discount || 0,
             images: data.images || [],
@@ -310,7 +310,9 @@ const AddProductForm = () => {
   }
 
   useEffect(() => {
-    if (data.categories && !isEditMode) setValue("category", "Gaming");
+    if (data.categories && data.categories.length > 0 && !isEditMode) {
+      setValue("category", data.categories[0]._id);
+    }
   }, [data.categories, isEditMode]);
 
   return (
@@ -382,7 +384,7 @@ const AddProductForm = () => {
                       >
                         {data.categories.map((category) => {
                           return (
-                            <option value={category.name} key={category._id}>
+                            <option value={category._id} key={category._id}>
                               {category.name}
                             </option>
                           );
@@ -408,7 +410,7 @@ const AddProductForm = () => {
                               "Price should be greater or equal to total cost"
                             );
                         },
-                        onChange:()=>trigger('base_price')
+                        onChange: () => trigger("base_price"),
                       })}
                     />
                     {errors.base_price && (
@@ -431,28 +433,27 @@ const AddProductForm = () => {
                       type="number"
                       className="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="0"
-            
                       {...register("discount", {
                         min: { value: 0, message: "Min 0%" },
                         max: { value: 99, message: "Max 99%" },
-                        onChange: () => trigger("discount")
-
+                        onChange: () => trigger("discount"),
                       })}
                     />
-                    {!errors.discount && <p className="text-xs text-gray-500 mt-1">
-                      Final Price: ₹
-                      {(
-                        (watch("base_price") || totalPrice / 100) *
-                        (1 - (watch("discount") || 0) / 100)
-                      ).toLocaleString()}
-                    </p>}
+                    {!errors.discount && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        Final Price: ₹
+                        {(
+                          (watch("base_price") || totalPrice / 100) *
+                          (1 - (watch("discount") || 0) / 100)
+                        ).toLocaleString()}
+                      </p>
+                    )}
                     {errors.discount && (
                       <p className="text-red-500 text-xs mt-1">
                         {errors.discount.message}
                       </p>
                     )}
                   </div>
-                    
                 </div>
 
                 <div>
@@ -652,23 +653,26 @@ const AddProductForm = () => {
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-orange-600">Discount</span>
                   <span className="font-small text-orange-600">
-                    {watch('discount')?watch('discount')+' %':'N/A'} 
+                    {watch("discount") ? watch("discount") + " %" : "N/A"}
                   </span>
                 </div>
                 <div className="flex justify-between items-center text-lg font-bold text-green-600 mt-2">
-                    <span>Final Price</span>
-                    <span>₹{(
-                        (watch("base_price") || totalPrice / 100) *
-                        (1 - (watch("discount") || 0) / 100)
-                      ).toLocaleString()}</span>
-                  </div>
+                  <span>Final Price</span>
+                  <span>
+                    ₹
+                    {(
+                      (watch("base_price") || totalPrice / 100) *
+                      (1 - (watch("discount") || 0) / 100)
+                    ).toLocaleString()}
+                  </span>
+                </div>
                 {basePrice && (
                   <div className="flex justify-between items-center text-lg font-bold text-green-600 mt-2">
                     <span>Selling Price</span>
-                    <span>₹{(Number(basePrice)).toLocaleString()}</span>
+                    <span>₹{Number(basePrice).toLocaleString()}</span>
                   </div>
                 )}
-              </div>  
+              </div>
 
               <button
                 type="submit"

@@ -48,7 +48,7 @@ const ProductList = () => {
   };
 
   const handleWishlistToggle = async (e, productId) => {
-    e.stopPropagation(); // Prevent card click navigation
+    e.stopPropagation();
     if (isInWishlist(productId)) {
       removeFromWishlist(productId);
     } else {
@@ -105,9 +105,10 @@ const ProductList = () => {
                 }
               >
                 <option value="">All Categories</option>
-                <option value="Gaming">Gaming</option>
-                <option value="Office">Office</option>
-                <option value="Workstation">Workstation</option>
+                {categories?.map((category)=>{
+                  return  <option value={category.name}>{category.name}</option>
+                })}
+               
               </select>
             </div>
 

@@ -18,7 +18,8 @@ const productSchema = new mongoose.Schema(
       required: [true, "Please add a description"],
     },
     category: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Category",
       required: [true, "Please select a category"],
       index: true,
     },
@@ -123,7 +124,11 @@ const productSchema = new mongoose.Schema(
 );
 
 productSchema.pre("save", function () {
-  if (this.isModified("base_price") || this.isModified("discount") ||this.isModified("applied_offer")) {
+  if (
+    this.isModified("base_price") ||
+    this.isModified("discount") ||
+    this.isModified("applied_offer")
+  ) {
     const price = this.base_price || 0;
     const applied_offer = this.applied_offer || 0;
     this.final_price = Math.round(price * (1 - applied_offer / 100));
@@ -132,7 +137,6 @@ productSchema.pre("save", function () {
   if (this.isModified("name")) {
     this.slug = this.name.toLowerCase().split(" ").join("-");
   }
-
 });
 
 export default mongoose.model("Product", productSchema);

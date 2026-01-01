@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Product from "../models/Product.js";
 import Category from "../models/Category.js";
 import AppError from "../utils/AppError.js";
@@ -9,8 +10,13 @@ const createProduct = async (productData) => {
 
   productData.discount =
     productData.discount !== undefined ? productData.discount : 0;
+
+  // Find category by name (assuming frontend still sends name)
   const category = await Category.findOne({ name: productData.category });
   if (!category) throw new AppError("Unmatched category", 400);
+
+  // Set the category ID for the product
+  productData.category = category._id;
 
   if (productData.discount > category.offer) {
     productData.applied_offer = productData.discount;
@@ -30,7 +36,13 @@ const getAdminProducts = async (page, limit, search, category, status) => {
   }
 
   if (category) {
-    query.category = category;
+    // Check if category is name or ID. If Name, look it up.
+    if (mongoose.Types.ObjectId.isValid(category)) {
+      query.category = category;
+    } else {
+      const catDoc = await Category.findOne({ name: category });
+      if (catDoc) query.category = catDoc._id;
+    }
   }
 
   if (status === "active") query.isActive = true;
@@ -39,6 +51,7 @@ const getAdminProducts = async (page, limit, search, category, status) => {
   const total = await Product.countDocuments(query);
 
   const products = await Product.find(query)
+    .populate("category")
     .populate("default_config.cpu", "name")
     .sort({ createdAt: -1 })
     .limit(limit)
@@ -55,13 +68,38 @@ const getAdminProducts = async (page, limit, search, category, status) => {
 const getPublicProducts = async ({ page, limit, search, category, sort }) => {
   let sortLogic = { createdAt: -1 };
 
-  const query = { isActive: true };
-  if (search) {
-    query.name = { $regex: search, $options: "i" };
+
+  const activeCategories = await Category.find({ isActive: true });
+  const activeCategoryIds = activeCategories.map((cat) => cat._id);
+
+
+  const query = {
+    isActive: true,
+    category: { $in: activeCategoryIds },
+  };
+
+ 
+  if (category) {
+   
+    const requestedCategory = activeCategories.find(
+      (cat) => cat.name === category
+    );
+
+    if (requestedCategory) {
+      query.category = requestedCategory._id;
+    } else {
+     
+      return {
+        products: [],
+        total: 0,
+        totalPages: 0,
+        currentPage: page,
+      };
+    }
   }
 
-  if (category) {
-    query.category = category;
+  if (search) {
+    query.name = { $regex: search, $options: "i" };
   }
 
   if (sort) {
@@ -74,8 +112,11 @@ const getPublicProducts = async ({ page, limit, search, category, sort }) => {
     }
   }
 
+  console.log(query)
+
   const total = await Product.countDocuments(query);
   const products = await Product.find(query)
+    .populate("category", "name") 
     .populate([
       { path: "default_config.cpu", select: "name" },
       { path: "default_config.gpu", select: "name" },
@@ -90,12 +131,8 @@ const getPublicProducts = async ({ page, limit, search, category, sort }) => {
     .limit(limit)
     .skip((page - 1) * limit);
 
-  // const items=await Product.find({})
-
-  // for(let item of items){
-  //   item.applied_offer=0;
-  //   await item.save()
-  // }
+    console.log(products);
+    
 
   return {
     products,
@@ -111,16 +148,18 @@ const getProductById = async (req, id) => {
     query.isActive = true;
   }
 
-  const product = await Product.findOne(query).populate([
-    { path: "default_config.cpu" },
-    { path: "default_config.gpu" },
-    { path: "default_config.motherboard" },
-    { path: "default_config.ram" },
-    { path: "default_config.storage" },
-    { path: "default_config.case" },
-    { path: "default_config.psu" },
-    { path: "default_config.cooler" },
-  ]);
+  const product = await Product.findOne(query)
+    .populate("category")
+    .populate([
+      { path: "default_config.cpu" },
+      { path: "default_config.gpu" },
+      { path: "default_config.motherboard" },
+      { path: "default_config.ram" },
+      { path: "default_config.storage" },
+      { path: "default_config.case" },
+      { path: "default_config.psu" },
+      { path: "default_config.cooler" },
+    ]);
 
   if (!product) throw new AppError("Product not found", 404);
   return product;
@@ -135,11 +174,23 @@ const updateProduct = async (id, updateData) => {
     updateData.slug = updateData.name.toLowerCase().split(" ").join("-");
   }
 
-  const category = await Category.findOne({
-    name: updateData.category || product.category,
-  });
+  let category;
 
-  if (!category) throw new AppError("Category not found", 404);
+  if (updateData.category) {
+    
+    category = await Category.findOne({ name: updateData.category });
+    if (!category)
+      throw new AppError(`Category ${updateData.category} not found`, 404);
+  } else {
+   
+    category = await Category.findById(product.category);
+    if (!category) throw new AppError("Original Category not found", 404);
+  }
+
+
+  if (updateData.category) {
+    updateData.category = category._id;
+  }
 
   updateData.discount =
     updateData.discount !== undefined ? updateData.discount : product.discount;
@@ -149,8 +200,6 @@ const updateProduct = async (id, updateData) => {
   } else {
     product.applied_offer = category.offer;
   }
-
- 
 
   Object.keys(updateData).forEach((key) => {
     if (key !== "applied_offer") {

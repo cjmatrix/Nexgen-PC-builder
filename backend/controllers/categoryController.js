@@ -4,7 +4,7 @@ import AppError from "../utils/AppError.js";
 
 export const getCategories = async (req, res) => {
   const { search, page, limit, status } = req.query;
- 
+
   let query = {};
   if (search) {
     query.name = { $regex: search, $options: "i" };
@@ -14,8 +14,8 @@ export const getCategories = async (req, res) => {
     query.isActive = status === "Active" ? true : false;
   }
 
-  if(req.user.role==="customer"){
-    query.isActive=true;
+  if (req.user.role === "customer") {
+    query.isActive = true;
   }
 
   const categories = await Category.find(query)
@@ -47,7 +47,7 @@ export const createCategory = async (req, res) => {
 
   const category = await Category.create({ name, offer: newOffer });
 
-  const products = await Product.find({ category: category.name });
+  const products = await Product.find({ category: category._id });
 
   const bulkOps = products.map((product) => {
     const bestDiscount = Math.max(product.discount || 0, newOffer || 0);
@@ -58,7 +58,7 @@ export const createCategory = async (req, res) => {
       updateOne: {
         filter: { _id: product._id },
         update: {
-          category: name,
+         
           final_price: Math.round(newEffectivePrice),
           applied_offer: bestDiscount,
         },
@@ -79,14 +79,17 @@ export const updateCategory = async (req, res) => {
   const category = await Category.findById(req.params.id);
   if (!category) throw new AppError("Category not found", 404);
 
-  const products = await Product.find({ category: category.name });
+ 
+  const products = await Product.find({ category: category._id });
 
   offer = offer !== undefined ? offer : category.offer;
 
+  
   category.name = name;
   category.offer = offer;
   const updatedCategory = await category.save();
 
+  
   const bulkOps = products.map((product) => {
     const bestDiscount = Math.max(product.discount || 0, offer || 0);
     const newEffectivePrice =
@@ -96,7 +99,7 @@ export const updateCategory = async (req, res) => {
       updateOne: {
         filter: { _id: product._id },
         update: {
-          category: name,
+         
           final_price: Math.round(newEffectivePrice),
           applied_offer: bestDiscount,
         },

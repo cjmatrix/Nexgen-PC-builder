@@ -32,6 +32,7 @@ const ProductManagement = () => {
     queryKey: ["adminCategory"],
     queryFn: async () => {
       const response = await api.get("/admin/category");
+      console.log(response.data);
       return response.data;
     },
   });
@@ -150,7 +151,9 @@ const ProductManagement = () => {
                 <td className="px-6 py-4 font-medium text-gray-900">
                   {product.name}
                 </td>
-                <td className="px-6 py-4 text-gray-500">{product.category}</td>
+                <td className="px-6 py-4 text-gray-500">
+                  {product.category?.name || "N/A"}
+                </td>
                 <td className="px-6 py-4">
                   {product.applied_offer > 0 ? (
                     <div className="flex flex-col">
