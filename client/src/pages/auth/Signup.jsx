@@ -18,6 +18,7 @@ import {
   ArrowRight,
   ArrowLeft,
 } from "lucide-react";
+import CustomModal from "../../components/CustomModal";
 
 const Signup = () => {
   const [step, setStep] = useState(1);
@@ -30,6 +31,17 @@ const Signup = () => {
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
+
+  const [modalConfig, setModalConfig] = useState({
+    isOpen: false,
+    type: "info",
+    title: "",
+    message: "",
+  });
+
+  const closeModal = () => {
+    setModalConfig((prev) => ({ ...prev, isOpen: false }));
+  };
 
   const { user, isLoading, isError, isSuccess, message } = useSelector(
     (state) => state.auth
@@ -107,14 +119,24 @@ const Signup = () => {
         dispatch(reset());
       })
       .catch((error) => {
-        alert(error || "Registration failed");
+        setModalConfig({
+          isOpen: true,
+          type: "error",
+          title: "Registration Failed",
+          message: error || "Registration failed",
+        });
         dispatch(reset());
       });
   };
 
   const onOtpSubmit = (data) => {
     if (data.otp.length !== 6) {
-      alert("Please enter a valid 6-digit OTP");
+      setModalConfig({
+        isOpen: true,
+        type: "error",
+        title: "Invalid OTP",
+        message: "Please enter a valid 6-digit OTP",
+      });
       return;
     }
     dispatch(verifyOTP({ email: emailForOtp, otp: data.otp }))
@@ -124,7 +146,12 @@ const Signup = () => {
         dispatch(reset());
       })
       .catch((error) => {
-        alert(error || "Verification failed");
+        setModalConfig({
+          isOpen: true,
+          type: "error",
+          title: "Verification Failed",
+          message: error || "Verification failed",
+        });
         dispatch(reset());
       });
   };
@@ -134,7 +161,12 @@ const Signup = () => {
       dispatch(resendOTP(emailForOtp));
       setTimer(60);
       setCanResend(false);
-      alert("OTP Resent!");
+      setModalConfig({
+        isOpen: true,
+        type: "success",
+        title: "OTP Resent",
+        message: "A new code has been sent to your email.",
+      });
     }
   };
 
@@ -484,6 +516,15 @@ const Signup = () => {
           )}
         </div>
       </div>
+      <CustomModal
+        isOpen={modalConfig.isOpen}
+        onClose={closeModal}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        type={modalConfig.type}
+        confirmText="Okay"
+        onConfirm={closeModal}
+      />
     </div>
   );
 };

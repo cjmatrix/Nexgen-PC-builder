@@ -4,11 +4,23 @@ import { useNavigate, Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { login, reset } from "../../store/slices/authSlice";
 import { Cpu, Eye, EyeOff, Mail, Lock, Github, ArrowLeft } from "lucide-react";
+import CustomModal from "../../components/CustomModal";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const dispatch = useDispatch();
+
+  const [modalConfig, setModalConfig] = useState({
+    isOpen: false,
+    type: "info",
+    title: "",
+    message: "",
+  });
+
+  const closeModal = () => {
+    setModalConfig((prev) => ({ ...prev, isOpen: false }));
+  };
 
   const { user, isLoading, isError, isSuccess, message } = useSelector(
     (state) => state.auth
@@ -27,7 +39,12 @@ const Login = () => {
 
   useEffect(() => {
     if (isError) {
-      alert(message);
+      setModalConfig({
+        isOpen: true,
+        type: "error",
+        title: "Login Failed",
+        message: message,
+      });
       dispatch(reset());
     }
 
@@ -242,6 +259,16 @@ const Login = () => {
           </div>
         </div>
       </div>
+
+      <CustomModal
+        isOpen={modalConfig.isOpen}
+        onClose={closeModal}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        type={modalConfig.type}
+        confirmText="Okay"
+        onConfirm={closeModal}
+      />
     </div>
   );
 };

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { Minus, Plus, Trash2, ArrowRight, Tag, X } from "lucide-react";
+import CustomModal from "../../components/CustomModal";
 import api from "../../api/axios";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -21,10 +22,19 @@ const Cart = () => {
   const [couponCode, setCouponCode] = useState("");
   const [couponError, setCouponError] = useState("");
   const [isCouponModalOpen, setIsCouponModalOpen] = useState(false);
+  const [modalConfig, setModalConfig] = useState({
+    isOpen: false,
+    type: "info",
+    title: "",
+    message: "",
+  });
 
+  const closeModal = () => {
+    setModalConfig((prev) => ({ ...prev, isOpen: false }));
+  };
 
   const { data: availableCoupons, isLoading: couponsLoading } = useQuery({
-    queryKey: ["availableCoupons"],
+    queryKey: ["adminCoupons"],
     queryFn: async () => {
       const res = await api.get("/coupons/available");
       return res.data.coupons;
@@ -40,12 +50,11 @@ const Cart = () => {
   const [errors, setErrors] = useState({});
 
   const handleApplyCoupon = async (codeToApply) => {
-    if (!couponCode &&!codeToApply) return;
+    if (!couponCode && !codeToApply) return;
     setCouponError("");
 
-
     try {
-      await dispatch(applyCoupon( codeToApply ||couponCode)).unwrap();
+      await dispatch(applyCoupon(codeToApply || couponCode)).unwrap();
       setCouponCode("");
     } catch (error) {
       setCouponError(error);
@@ -96,7 +105,12 @@ const Cart = () => {
       const response = await api.get("/cart/validate");
       navigate("/checkout");
     } catch (error) {
-      alert(error.response.data.message);
+      setModalConfig({
+        isOpen: true,
+        type: "error",
+        title: "Checkout Failed",
+        message: error.response?.data?.message || "Something went wrong",
+      });
       return;
     }
   };
@@ -310,7 +324,7 @@ const Cart = () => {
                             className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none uppercase"
                           />
                           <button
-                            onClick={()=>handleApplyCoupon()}
+                            onClick={() => handleApplyCoupon()}
                             disabled={!couponCode}
                             className="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           >
@@ -420,6 +434,16 @@ const Cart = () => {
           </div>
         </div>
       )}
+
+      <CustomModal
+        isOpen={modalConfig.isOpen}
+        onClose={closeModal}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        type={modalConfig.type}
+        confirmText="Okay"
+        onConfirm={closeModal}
+      />
     </>
   );
 };

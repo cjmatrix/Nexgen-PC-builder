@@ -3,8 +3,8 @@ import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { login, reset, logout } from "../../store/slices/authSlice";
-import { EyeOff } from "lucide-react";
-import { Eye } from "lucide-react";
+import { EyeOff, Eye } from "lucide-react";
+import CustomModal from "../../components/CustomModal";
 
 const AdminLogin = () => {
   const navigate = useNavigate();
@@ -24,11 +24,26 @@ const AdminLogin = () => {
   const { user, isLoading, isError, isSuccess, message } = useSelector(
     (state) => state.auth
   );
-  const [showPassword,setShowPassword]=useState(false)
+  const [showPassword, setShowPassword] = useState(false);
+  const [modalConfig, setModalConfig] = useState({
+    isOpen: false,
+    type: "info",
+    title: "",
+    message: "",
+  });
+
+  const closeModal = () => {
+    setModalConfig((prev) => ({ ...prev, isOpen: false }));
+  };
 
   useEffect(() => {
     if (isError) {
-      alert(message);
+      setModalConfig({
+        isOpen: true,
+        type: "error",
+        title: "Login Failed",
+        message: message,
+      });
       dispatch(reset());
     }
 
@@ -36,8 +51,12 @@ const AdminLogin = () => {
       if (user?.role === "admin") {
         navigate("/admin");
       } else if (user) {
-        
-        alert("Access Denied: You do not have admin privileges.");
+        setModalConfig({
+          isOpen: true,
+          type: "error",
+          title: "Access Denied",
+          message: "You do not have admin privileges.",
+        });
         dispatch(logout());
         dispatch(reset());
       }
@@ -99,7 +118,7 @@ const AdminLogin = () => {
               Password
             </label>
             <input
-              type={showPassword?'text':'password'}
+              type={showPassword ? "text" : "password"}
               id="password"
               className={`shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline ${
                 errors.password ? "border-red-500" : ""
@@ -108,22 +127,21 @@ const AdminLogin = () => {
               {...register("password", {
                 required: "Password is required",
               })}
-              
             />
             <div className="absolute inset-y-0 right-0 pr-3 flex items-center top-3">
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="text-gray-400 hover:text-gray-500 focus:outline-none"
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-5 w-5" />
-                    ) : (
-                      <Eye className="h-5 w-5" />
-                    )}
-                  </button>
-                </div>
-            
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="text-gray-400 hover:text-gray-500 focus:outline-none"
+              >
+                {showPassword ? (
+                  <EyeOff className="h-5 w-5" />
+                ) : (
+                  <Eye className="h-5 w-5" />
+                )}
+              </button>
+            </div>
+
             {errors.password && (
               <p className="text-red-500 text-xs italic mt-1">
                 {errors.password.message}
@@ -140,6 +158,16 @@ const AdminLogin = () => {
           </div>
         </form>
       </div>
+
+      <CustomModal
+        isOpen={modalConfig.isOpen}
+        onClose={closeModal}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        type={modalConfig.type}
+        confirmText="Okay"
+        onConfirm={closeModal}
+      />
     </div>
   );
 };

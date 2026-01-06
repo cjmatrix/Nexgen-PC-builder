@@ -18,12 +18,10 @@ const couponSchema = new mongoose.Schema(
 
     allowedUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
 
-    // 4. Product Restrictions (Scenario B)
-    // If empty = Applies to whole cart. If populated = Only applies to these items.
     applicableProducts: [
       { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
     ],
-    applicableCategories: [{ type: String }], // e.g., ["Gaming", "Office"]
+    applicableCategories: [{ type: String }], 
 
     usedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
 
@@ -34,5 +32,15 @@ const couponSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+
+couponSchema.pre('validate', function() {
+  console.log(this.minOrderValue,this.discountValue,"im hereeeeeeeee");
+
+  if (this.discountType === 'fixed' && this.discountValue >= this.minOrderValue) {
+     this.invalidate('discountValue', 'Fixed discount value cannot exceed or equal minimum order value');
+  }
+  
+});
 
 export default mongoose.model("Coupon", couponSchema);

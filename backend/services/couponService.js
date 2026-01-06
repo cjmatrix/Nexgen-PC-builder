@@ -17,6 +17,10 @@ const createCoupon = async (data) => {
   if (existingCoupon) {
     throw new AppError("Coupon code already exists", 400);
   }
+  console.log(discountType,discountValue,minOrderValue)
+  if(discountType==="fixed" && discountValue>= minOrderValue){
+    throw new AppError('Fixed discount value cannot exceed or equal minimum order value',400)
+  }
 
   const coupon = await Coupon.create({
     code: code.toUpperCase(),
@@ -69,13 +73,26 @@ const getCouponById = async (id) => {
 };
 
 const updateCoupon = async (id, updateData) => {
+
+  
+
+  
+
   const coupon = await Coupon.findById(id);
 
-  if (!coupon) {
-    throw new AppError("Coupon not found", 404);
-  }
+  // let newDiscount=updateData.discountValue || coupon.discountValue
+  // let newMinOrder=updateData.minOrderValue || coupon.minOrderValue
+  // let newType=updateData.discountType|| coupon.discountType
 
-  // prevent duplicate code update
+  // if(newType==="fixed" && newDiscount>=newMinOrder ){
+  //   throw new AppError('Fixed discount value cannot exceed or equal minimum order value',400)
+  // }
+
+  // if (!coupon) {
+  //   throw new AppError("Coupon not found", 404);
+  // }
+
+
   if (updateData.code && updateData.code.toUpperCase() !== coupon.code) {
     const existing = await Coupon.findOne({
       code: updateData.code.toUpperCase(),

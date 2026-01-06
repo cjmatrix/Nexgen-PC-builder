@@ -4,6 +4,7 @@ import Product from "../models/Product.js";
 import cloudinary from "../config/cloudinary.js";
 import streamifier from "streamifier";
 import AppError from "../utils/AppError.js";
+import Category from "../models/Category.js"
 
 const uploadToCloudinary = (buffer) => {
   return new Promise((resolve, reject) => {
@@ -34,19 +35,26 @@ const aiController = async (req, res) => {
     specs: c.specs,
   }));
 
+  const simplifiedCategory= await Category.find({isActive:true})
+  const categories=simplifiedCategory.map((category)=>({
+    category:category.name,
+    id:category._id
+  }))
+
+
   const selectionPrompt = `
       You are a PC building expert. A user wants: "${prompt}".
       Available components are provided below in JSON format.
       
       Select the best compatible components (cpu, gpu, motherboard, ram, storage, case, psu, cooler) from the list.
       Ensure compatibility (socket, wattage, form factor, etc.).
-      Also determine the best category for this build from these options: "Gaming", "Office", "Workstation".
+      Also determine the best category for this build from these options: ${simplifiedCategory}.
       
       Return ONLY a JSON object with this exact structure (no markdown, no extra text):
       {
         "name": "Suggested Build Name",
         "description": "Short description of why this build is good.",
-        "category": "Gaming", 
+        "category": "ID_HERE", 
         "components": {
            "cpu": "ID_HERE",
            "gpu": "ID_HERE",
@@ -154,11 +162,7 @@ const aiController = async (req, res) => {
     imageUrls.push("https://res.cloudinary.com/demo/image/upload/v1/sample");
   }
 
-  // 5. Save Product
-  const validCategories = ["Gaming", "Office", "Workstation"];
-  const category = validCategories.includes(buildData.category)
-    ? buildData.category
-    : "Prebuilt";
+
 
   const newProduct = new Product({
     name: buildData.name,

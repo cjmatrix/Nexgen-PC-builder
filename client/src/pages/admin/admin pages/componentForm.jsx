@@ -138,6 +138,8 @@ const ComponentForm = () => {
       stock: Number(data.stock),
     };
 
+    console.log(data)
+
     try {
       if (isEditMode) {
         await dispatch(updateComponent({ id, data: payload })).unwrap();

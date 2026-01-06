@@ -32,7 +32,7 @@ export const getAllOrders = async (req, res) => {
     search,
     status,
   });
-  res.json(result);
+  res.status(200).json(result);
 };
 
 export const updateOrderStatus = async (req, res) => {
@@ -49,7 +49,9 @@ export const cancelOrder = async (req, res) => {
   const updatedOrder = await orderService.cancelOrder(
     req.params.id,
     itemId,
-    reason
+    reason,
+    req.user._id
+
   );
   res.json(updatedOrder);
 };
@@ -66,7 +68,7 @@ export const requestReturn = async (req, res) => {
 
 export const approveReturn = async (req, res) => {
   const { itemId } = req.body;
-  const updatedOrder = await orderService.approveReturn(req.params.id, itemId);
+  const updatedOrder = await orderService.approveReturn(req.params.id, itemId,req.user._id);
   res.json(updatedOrder);
 };
 

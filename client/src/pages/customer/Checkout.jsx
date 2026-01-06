@@ -15,6 +15,8 @@ import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import api from "../../api/axios";
 import { fetchCart } from "../../store/slices/cartSlice";
 import AddAddressModal from "./user profile/components/AddAddressModal";
+import PaymentSuccessFull from "./PaymentSuccessFull";
+import CustomModal from "../../components/CustomModal";
 
 const Checkout = () => {
   const dispatch = useDispatch();
@@ -34,11 +36,44 @@ const Checkout = () => {
   const [paypalClientId, setPaypalClientId] = useState("");
   const isSubmittingRef = useRef(false);
 
+
+  const [modalConfig, setModalConfig] = useState({
+    isOpen: false,
+    type: "info",
+    title: "",
+    message: "",
+    onConfirm: undefined,
+    confirmText: "OK",
+    cancelText: "Cancel",
+  });
+
+  const showModal = ({
+    type = "info",
+    title,
+    message,
+    onConfirm,
+    confirmText = "OK",
+    cancelText = "Cancel",
+  }) => {
+    setModalConfig({
+      isOpen: true,
+      type,
+      title,
+      message,
+      onConfirm,
+      confirmText,
+      cancelText,
+    });
+  };
+
+  const closeModal = () => {
+    setModalConfig((prev) => ({ ...prev, isOpen: false }));
+  };
+
   useEffect(() => {
     const getPaypalConfig = async () => {
       try {
-        const { data } = await api.get("/config/paypal");
-        console.log("PAYPAL CONFIG:", data);
+        const { data } = await api.get("/payment/paypal/config");
         setPaypalClientId(data.clientId);
       } catch (error) {
         console.error("Failed to load PayPal config", error);
@@ -64,12 +99,12 @@ const Checkout = () => {
       const response = await api.post("/orders", orderData);
       return response.data;
     },
-    onSuccess: () => {
-      setStep(3);
-      dispatch(fetchCart());
-    },
     onError: (error) => {
-      alert(error.response?.data?.message || "Failed to place order");
+      showModal({
+        type: "error",
+        title: "Order Failed",
+        message: error.response?.data?.message || "Failed to place order",
+      });
       setIsProcessing(false);
       isSubmittingRef.current = false;
     },
@@ -77,7 +112,15 @@ const Checkout = () => {
 
   const handlePlaceOrder = () => {
     if (isSubmittingRef.current) return;
-    if (!selectedAddress) return alert("Please select a shipping address");
+    if (!selectedAddress) {
+      return showModal({
+        type: "confirmation",
+        title: "Address Required",
+        message: "Please select a shipping address to continue.",
+        confirmText: "Add Address",
+        onConfirm: () => setIsAddressModalOpen(true),
+      });
+    }
 
     isSubmittingRef.current = true;
     setIsProcessing(true);
@@ -97,13 +140,25 @@ const Checkout = () => {
       totalPrice: summary.total,
     };
 
-    createOrderMutation.mutate({ ...orderData, paymentMethod: "COD" });
+    createOrderMutation.mutate(
+      { ...orderData, paymentMethod: "COD" },
+      {
+        onSuccess: () => {
+          setStep(3);
+          dispatch(fetchCart());
+        },
+      }
+    );
   };
 
   const onApprove = async (data, actions) => {
-    return actions.order.capture().then(async (details) => {
-      isSubmittingRef.current = true;
-      setIsProcessing(true);
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
+    setIsProcessing(true);
+    let orderId = undefined;
+    try {
+      const details = await actions.order.capture();
+
       const orderData = {
         shippingAddress: {
           fullName: selectedAddress.fullName,
@@ -117,8 +172,7 @@ const Checkout = () => {
         taxPrice: 0,
         shippingPrice: summary.shipping,
         totalPrice: summary.total,
-        isPaid: true,
-        paidAt: Date.now(),
+        isPaid: false,
         paymentResult: {
           id: details.id,
           status: details.status,
@@ -127,12 +181,54 @@ const Checkout = () => {
         },
       };
 
-      try {
-        await createOrderMutation.mutateAsync(orderData);
-      } catch (err) {
-        console.error(err);
+      const createdOrder = await createOrderMutation.mutateAsync(orderData);
+      if (createdOrder) {
+        orderId = createdOrder._id;
+      } else {
+        return showModal({
+          type: "error",
+          title: "Order Creation Failed",
+          message:
+            "Order could not be created internally. Please contact support.",
+        });
       }
-    });
+
+      const verifyResponse = await api.post("/payment/paypal/verify", {
+        r_orderID: details.id,
+        db_orderID: createdOrder._id,
+      });
+
+      if (verifyResponse.data.verified) {
+        setStep(3);
+        dispatch(fetchCart());
+      } else {
+        showModal({
+          type: "error",
+          title: "Verification Failed",
+          message:
+            "Payment was captured but server verification failed. Please check your order status.",
+          confirmText: "Check Order",
+          onConfirm: () => navigate(`/payment/retry/${orderId}`),
+        });
+      }
+    } catch (err) {
+      console.error("Payment Error:", err);
+
+      isSubmittingRef.current = false;
+      setIsProcessing(false);
+
+      const msg = err.response?.data?.message || "Payment processing failed";
+
+      showModal({
+        type: "error",
+        title: "Payment Error",
+        message: msg,
+        confirmText: orderId ? "Retry Payment" : "OK",
+        onConfirm: orderId
+          ? () => navigate(`/payment/retry/${orderId}`)
+          : undefined,
+      });
+    }
   };
 
   const createPaypalOrder = (data, actions) => {
@@ -140,14 +236,12 @@ const Checkout = () => {
       purchase_units: [
         {
           amount: {
-            value: summary.total.toFixed(2), 
+            value: summary.total.toFixed(2),
           },
         },
       ],
     });
   };
-
-  console.log(summary);
 
   useEffect(() => {
     if (addresses && addresses.length > 0 && !selectedAddress) {
@@ -401,9 +495,7 @@ const Checkout = () => {
                 {isProcessing ? "Processing..." : "Place Order (COD)"}
               </button>
             ) : (
-             
               <div className="w-full relative z-0">
-                
                 {paypalClientId && (
                   <PayPalScriptProvider
                     options={{ "client-id": paypalClientId, currency: "USD" }}
@@ -413,7 +505,12 @@ const Checkout = () => {
                       onApprove={onApprove}
                       onError={(err) => {
                         console.error("PayPal Error:", err);
-                        alert("PayPal Payment Failed");
+                        showModal({
+                          type: "error",
+                          title: "PayPal Payment Failed",
+                          message:
+                            "There was an issue processing your PayPal payment.",
+                        });
                       }}
                       style={{ layout: "horizontal" }}
                     />
@@ -431,30 +528,6 @@ const Checkout = () => {
             </button>
           </div>
         </div>
-      </div>
-    </div>
-  );
-
-  const renderStep3 = () => (
-    <div className="max-w-xl mx-auto text-center pt-12 pb-20">
-      <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
-        <CheckCircle className="h-10 w-10" />
-      </div>
-      <h1 className="text-3xl font-extrabold text-gray-900 mb-4">
-        Order Placed Successfully!
-      </h1>
-      <p className="text-gray-600 mb-8 max-w-sm mx-auto">
-        Thank you for your purchase. We have received your order and are getting
-        it ready for shipment.
-      </p>
-
-      <div className="flex flex-col sm:flex-row justify-center gap-4">
-        <Link
-          to="/products"
-          className="bg-gray-900 text-white px-8 py-3 rounded-lg font-bold hover:bg-gray-800 transition-colors"
-        >
-          Continue Shopping
-        </Link>
       </div>
     </div>
   );
@@ -537,7 +610,7 @@ const Checkout = () => {
 
         {step === 1 && renderStep1()}
         {step === 2 && renderStep2()}
-        {step === 3 && renderStep3()}
+        {step === 3 && <PaymentSuccessFull />}
       </div>
 
       <AddAddressModal
@@ -548,6 +621,17 @@ const Checkout = () => {
           queryClient.invalidateQueries(["userAddresses"]);
         }}
         isEditMode={false}
+      />
+
+      <CustomModal
+        isOpen={modalConfig.isOpen}
+        onClose={closeModal}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        type={modalConfig.type}
+        onConfirm={modalConfig.onConfirm}
+        confirmText={modalConfig.confirmText}
+        cancelText={modalConfig.cancelText}
       />
     </div>
   );

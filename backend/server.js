@@ -21,6 +21,7 @@ import userRoutes from "./routes/userRoutes.js";
 
 import wishlistRoutes from "./routes/wishlistRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
+import walletRoutes from "./routes/walletRoutes.js";
 
 import errorMiddleware from "./middleware/errorMiddleware.js";
 
@@ -55,7 +56,8 @@ app.use("/api/v1/referral", referralRoutes);
 app.use("/api/v1/category", categoryRoutes);
 
 app.use("/api/v1/wishlist", wishlistRoutes);
-app.use("/api/v1/config", paymentRoutes);
+app.use("/api/v1/payment", paymentRoutes);
+app.use("/api/v1/wallet", walletRoutes);
 
 app.use("/api/v1/user", userRoutes);
 

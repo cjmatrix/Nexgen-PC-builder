@@ -33,12 +33,14 @@ import AIPCAssistant from "./pages/customer/AIPCAssistant";
 import Cart from "./pages/customer/Cart";
 import Checkout from "./pages/customer/Checkout";
 import AdminRoutes from "./protectedroutes/AdminRoute";
+import PaymentRetry from "./pages/customer/PaymentRetry";
 
 import UserDashboard from "./pages/customer/user profile/UserDashboard";
 
 import ProfileSetting from "./pages/customer/user profile/components/ProfileSetting";
 import OrderHistory from "./pages/customer/user profile/components/OrderHistory";
 import Referral from "./pages/customer/user profile/components/Referral";
+import Wallet from "./pages/customer/user profile/components/Wallet";
 
 import CustomerPage from "./pages/customer/CustomerPage";
 
@@ -184,6 +186,10 @@ const router = createBrowserRouter([
             element: <Checkout />,
           },
           {
+            path: "/payment/retry/:orderId",
+            element: <PaymentRetry></PaymentRetry>,
+          },
+          {
             path: "/user",
             element: <UserDashboard></UserDashboard>,
 
@@ -199,6 +205,10 @@ const router = createBrowserRouter([
               {
                 path: "/user/referral",
                 element: <Referral />,
+              },
+              {
+                path: "/user/wallet",
+                element: <Wallet />,
               },
             ],
           },

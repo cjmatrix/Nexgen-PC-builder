@@ -11,11 +11,12 @@ const createProduct = async (productData) => {
   productData.discount =
     productData.discount !== undefined ? productData.discount : 0;
 
-  // Find category by name (assuming frontend still sends name)
-  const category = await Category.findOne({ name: productData.category });
+ 
+  const category = await Category.findById(productData.category);
+ 
   if (!category) throw new AppError("Unmatched category", 400);
 
-  // Set the category ID for the product
+
   productData.category = category._id;
 
   if (productData.discount > category.offer) {
@@ -112,7 +113,6 @@ const getPublicProducts = async ({ page, limit, search, category, sort }) => {
     }
   }
 
-  console.log(query)
 
   const total = await Product.countDocuments(query);
   const products = await Product.find(query)
@@ -131,7 +131,7 @@ const getPublicProducts = async ({ page, limit, search, category, sort }) => {
     .limit(limit)
     .skip((page - 1) * limit);
 
-    console.log(products);
+   
     
 
   return {
@@ -177,8 +177,9 @@ const updateProduct = async (id, updateData) => {
   let category;
 
   if (updateData.category) {
-    
-    category = await Category.findOne({ name: updateData.category });
+
+      category = await Category.findById(updateData.category);
+      console.log(category)
     if (!category)
       throw new AppError(`Category ${updateData.category} not found`, 404);
   } else {

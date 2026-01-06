@@ -1,10 +1,11 @@
 import express from "express";
 import { getPaypalClientId } from "../controllers/paymentController.js";
 import { protect } from "../middleware/authMiddleware.js";
-
+import { verifyPayment } from "../controllers/paymentController.js";
 const router = express.Router();
 
-router.get("/paypal", protect, getPaypalClientId);
+router.get("/paypal/config", protect, getPaypalClientId);
+router.post("/paypal/verify",protect,verifyPayment)
 
 export default router;
     

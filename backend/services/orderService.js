@@ -5,6 +5,40 @@ import Product from "../models/Product.js";
 import User from "../models/User.js";
 import mongoose from "mongoose";
 import AppError from "../utils/AppError.js";
+import Wallet from "../models/WalletTransaction.js";
+import * as walletService from "../services/walletService.js";
+
+import { PRICING } from "../constants/pricing.js";
+
+const calculateRefundAmount = (order, itemId) => {
+  if (!itemId) {
+    return order.totalPrice;
+  }
+
+  const item = order.orderItems.find(
+    (i) => i._id.toString() === itemId.toString()
+  );
+  if (!item) return 0;
+
+  const itemPriceAfterOffer = item.price * (1 - (item.discount || 0) / 100);
+  const itemEffectiveTotal = itemPriceAfterOffer * item.qty;
+
+  if (!order.couponDiscount || order.couponDiscount === 0) {
+    return Math.round(itemEffectiveTotal);
+  }
+
+  const totalItemsPrice = order.orderItems.reduce((acc, i) => {
+    const effectivePrice = i.price * (1 - (i.discount || 0) / 100);
+    return acc + effectivePrice * i.qty;
+  }, 0);
+
+  if (totalItemsPrice === 0) return 0;
+
+  const itemShareParams = itemEffectiveTotal / totalItemsPrice;
+  const proRatedDiscount = order.couponDiscount * 100 * itemShareParams;
+
+  return Math.round(itemEffectiveTotal - proRatedDiscount);
+};
 
 export const createOrder = async (userId, user, orderData) => {
   const session = await mongoose.startSession();
@@ -12,8 +46,8 @@ export const createOrder = async (userId, user, orderData) => {
   try {
     const { shippingAddress, paymentMethod } = orderData;
 
-    const shippingPrice = 5000;
-    const taxPrice = 0;
+    const shippingPrice = PRICING.SHIPPING_CHARGE;
+    const taxPrice = PRICING.TAX_CHARGE;
 
     const cart = await Cart.findOne({ user: userId })
       .populate({
@@ -139,9 +173,9 @@ export const createOrder = async (userId, user, orderData) => {
         itemsPrice + shippingPrice + taxPrice - (cart.discount * 100 || 0),
       coupon: cart.coupon,
       couponDiscount: cart.discount || 0,
-      isPaid: orderData.isPaid || false,
-      paidAt: orderData.paidAt || null,
-      paymentResult: orderData.paymentResult || {},
+      isPaid: false,
+      paidAt: null,
+      paymentResult: {},
     });
 
     const createdOrder = await order.save({ session });
@@ -275,7 +309,7 @@ export const updateOrderStatus = async (orderId, status) => {
   return updatedOrder;
 };
 
-export const cancelOrder = async (orderId, itemId, reason) => {
+export const cancelOrder = async (orderId, itemId, reason, userId) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
@@ -321,6 +355,29 @@ export const cancelOrder = async (orderId, itemId, reason) => {
 
     if (itemId) {
       const item = order.orderItems.find((i) => i._id.toString() === itemId);
+
+      let amount = calculateRefundAmount(order, itemId);
+    
+      
+      const otherActiveItems = order.orderItems.filter(
+        (i) => i.status !== "Cancelled" && i._id.toString() !== itemId
+      );
+
+      if (otherActiveItems.length === 0) {
+        amount += order.shippingPrice || 0;
+      }
+      
+      if (order.isPaid) {
+        await walletService.addFunds(
+          userId,
+          amount,
+          "CREDIT",
+          order._id,
+          `Refund for Order Cancellation of ${item.name}`,
+          session
+        );
+      }
+
       if (!item) {
         throw new AppError("Item not found in order", 404);
       }
@@ -341,8 +398,10 @@ export const cancelOrder = async (orderId, itemId, reason) => {
         order.cancellationReason = "All items cancelled";
       }
     } else {
+      let refundSum = 0;
       for (const item of order.orderItems) {
         if (item.status !== "Cancelled") {
+          refundSum += calculateRefundAmount(order, item._id);
           await restoreStock(item);
           item.status = "Cancelled";
           item.cancellationReason = reason;
@@ -350,9 +409,21 @@ export const cancelOrder = async (orderId, itemId, reason) => {
       }
       order.status = "Cancelled";
       order.cancellationReason = reason;
+
+      if (order.isPaid) {
+        await walletService.addFunds(
+          userId,
+          refundSum,
+          "CREDIT",
+          order._id,
+          "Refund for Order Cancellation",
+          session
+        );
+      }
     }
 
     const updatedOrder = await order.save({ session });
+
     await session.commitTransaction();
     session.endSession();
     return updatedOrder;
@@ -436,7 +507,7 @@ export const requestReturn = async (orderId, itemId, reason) => {
   }
 };
 
-export const approveReturn = async (orderId, itemId) => {
+export const approveReturn = async (orderId, itemId, userId) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
@@ -469,6 +540,17 @@ export const approveReturn = async (orderId, itemId) => {
 
     if (itemId) {
       const item = order.orderItems.find((i) => i._id.toString() === itemId);
+      const amount = calculateRefundAmount(order, itemId);
+
+      await walletService.addFunds(
+        userId,
+        amount,
+        "CREDIT",
+        order._id,
+        "Refund for Order return",
+        session
+      );
+
       if (!item) {
         throw new AppError("Item not found", 404);
       }
@@ -488,6 +570,7 @@ export const approveReturn = async (orderId, itemId) => {
         order.isReturned = true;
       }
     } else {
+      let refundSum = 0;
       if (order.status !== "Return Requested") {
         const hasRequestedItems = order.orderItems.some(
           (i) => i.status === "Return Requested"
@@ -499,6 +582,8 @@ export const approveReturn = async (orderId, itemId) => {
 
       for (const item of order.orderItems) {
         if (item.status === "Return Requested") {
+          refundSum += calculateRefundAmount(order, item._id);
+
           await restoreStock(item);
           item.status = "Return Approved";
         }
@@ -511,9 +596,19 @@ export const approveReturn = async (orderId, itemId) => {
         order.status = "Return Approved";
         order.isReturned = true;
       }
+
+      await walletService.addFunds(
+        userId,
+        refundSum,
+        "CREDIT",
+        order._id,
+        "Refund for Order return",
+        session
+      );
     }
 
     const updatedOrder = await order.save({ session });
+
     await session.commitTransaction();
     session.endSession();
     return updatedOrder;
