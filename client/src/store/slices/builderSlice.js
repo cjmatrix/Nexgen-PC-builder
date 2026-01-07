@@ -25,7 +25,7 @@ const initialState = {
     ram: null,
     gpu: null,
     storage: null,
-    case: null,
+    case: null, 
     psu: null,
     cooler: null,
   },

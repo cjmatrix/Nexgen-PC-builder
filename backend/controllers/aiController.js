@@ -4,7 +4,7 @@ import Product from "../models/Product.js";
 import cloudinary from "../config/cloudinary.js";
 import streamifier from "streamifier";
 import AppError from "../utils/AppError.js";
-import Category from "../models/Category.js"
+import Category from "../models/Category.js";
 
 const uploadToCloudinary = (buffer) => {
   return new Promise((resolve, reject) => {
@@ -35,20 +35,22 @@ const aiController = async (req, res) => {
     specs: c.specs,
   }));
 
-  const simplifiedCategory= await Category.find({isActive:true})
-  const categories=simplifiedCategory.map((category)=>({
-    category:category.name,
-    id:category._id
-  }))
-
+  const simplifiedCategory = await Category.find({ isActive: true });
+  const categories = simplifiedCategory.map((category) => ({
+    category: category.name,
+    id: category._id,
+  }));
 
   const selectionPrompt = `
       You are a PC building expert. A user wants: "${prompt}".
       Available components are provided below in JSON format.
       
       Select the best compatible components (cpu, gpu, motherboard, ram, storage, case, psu, cooler) from the list.
+      Select the best compatible components (cpu, gpu, motherboard, ram, storage, case, psu, cooler) from the list.
       Ensure compatibility (socket, wattage, form factor, etc.).
-      Also determine the best category for this build from these options: ${simplifiedCategory}.
+      Also determine the best category for this build from these options: ${JSON.stringify(
+        categories
+      )}.
       
       Return ONLY a JSON object with this exact structure (no markdown, no extra text):
       {
@@ -162,12 +164,10 @@ const aiController = async (req, res) => {
     imageUrls.push("https://res.cloudinary.com/demo/image/upload/v1/sample");
   }
 
-
-
   const newProduct = new Product({
     name: buildData.name,
     description: buildData.description,
-    category: category,
+    category: buildData.category,
     base_price: totalPrice,
     images: imageUrls,
     default_config: buildData.components,

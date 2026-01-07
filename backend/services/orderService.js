@@ -178,6 +178,24 @@ export const createOrder = async (userId, user, orderData) => {
       paymentResult: {},
     });
 
+   if (paymentMethod === "wallet") {
+      if (user.walletBalance < order.totalPrice) {
+        throw new AppError("Insufficient wallet balance", 400);
+      }
+      
+      await walletService.deductFunds(
+        userId,
+        order.totalPrice,
+        "DEBIT",
+        order._id,
+        "Order Payment", 
+        session          
+      );
+     
+      order.isPaid = true;
+      order.paidAt = Date.now();
+    }
+
     const createdOrder = await order.save({ session });
     if (cart.coupon) {
       cart.coupon.usageCount += 1;

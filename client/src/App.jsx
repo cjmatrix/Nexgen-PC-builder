@@ -15,6 +15,7 @@ import ResetPassword from "./pages/auth/ResetPassword";
 import Wishlist from "./pages/customer/Wishlist";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import CustomerDashboard from "./pages/customer/CustomerDashboard";
+import SalesReport from "./pages/admin/admin pages/SalesReport";
 
 import UserManagement from "./pages/admin/admin pages/UserManagement";
 import CreateComponent from "./pages/admin/admin pages/componentForm";
@@ -125,6 +126,10 @@ const router = createBrowserRouter([
           {
             path: "/admin/orders",
             element: <OrderManagement />,
+          },
+          {
+            path: "/admin/sales-report",
+            element: <SalesReport />,
           },
           {
             path: "/admin/products/bui",

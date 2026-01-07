@@ -37,7 +37,7 @@ import ComponentsList from "./Builder Component/ComponentsList";
 import BackgroundGears from "../../components/BackgroundGears";
 import DragIndicator from "./Builder Component/DragIndicator";
 
-import DraggablePartCard from "../../components/DraggablePartCard";
+import DraggablePartCard from "./Builder Component/DraggablePartCard";
 import { useDrop } from "react-dnd";
 
 const STEPS = [
@@ -198,11 +198,9 @@ const PCBuilder = () => {
 
 
   useEffect(()=>{
-
     if(draggedItem?.part && visible){
         setVisibile(false);  
     }
-
   },[draggedItem])
 
   const containerRef = useRef(null);

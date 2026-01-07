@@ -34,9 +34,22 @@ const Checkout = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("COD");
   const [paypalClientId, setPaypalClientId] = useState("");
+  const [walletBalance, setWalletBalance] = useState(0);
   const isSubmittingRef = useRef(false);
 
-
+  useEffect(() => {
+    const fetchWallet = async () => {
+      try {
+        const res = await api.get("/wallet");
+        console.log(res.data)
+        setWalletBalance((res?.data?.data.balance/100));
+      } catch (error) {
+        console.error("Failed to fetch wallet balance", error);
+      }
+    };
+    fetchWallet();
+  }, []);
+ 
   const [modalConfig, setModalConfig] = useState({
     isOpen: false,
     type: "info",
@@ -134,14 +147,14 @@ const Checkout = () => {
         country: selectedAddress.country,
         phone: selectedAddress.phone,
       },
-      paymentMethod: "COD",
+      paymentMethod: paymentMethod,
       taxPrice: 0,
       shippingPrice: summary.shipping,
       totalPrice: summary.total,
     };
 
     createOrderMutation.mutate(
-      { ...orderData, paymentMethod: "COD" },
+      { ...orderData, paymentMethod: paymentMethod },
       {
         onSuccess: () => {
           setStep(3);
@@ -483,16 +496,63 @@ const Checkout = () => {
               />
               <span className="font-medium">PayPal or Credit Card</span>
             </div>
+            {/* WALLET OPTION */}
+            <div
+              className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-all ${
+                paymentMethod === "wallet"
+                  ? "border-blue-600 bg-blue-50 text-blue-800 ring-1 ring-blue-600"
+                  : "border-gray-200 hover:border-gray-300"
+              } ${
+                walletBalance < summary.total
+                  ? "opacity-60 cursor-not-allowed"
+                  : ""
+              }`}
+              onClick={() => {
+                if (walletBalance >= summary.total) {
+                  setPaymentMethod("wallet");
+                }
+              }}
+            >
+              <div className="w-4 h-4 rounded-full border border-gray-400 flex items-center justify-center">
+                {paymentMethod === "wallet" && (
+                  <div className="w-2 h-2 rounded-full bg-blue-600"></div>
+                )}
+              </div>
+              <div className="flex items-center gap-2 flex-1">
+                <div className="p-1 bg-purple-100 rounded text-purple-600">
+                  <Archive className="w-4 h-4" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-medium">Pay with Wallet</span>
+                  <span className="text-xs text-gray-500">
+                    Balance: ₹{walletBalance?.toLocaleString() || 0}
+                  </span>
+                </div>
+              </div>
+              {walletBalance < summary.total && (
+                <span className="text-xs text-red-500 font-medium bg-red-50 px-2 py-1 rounded">
+                  Insufficient Balance
+                </span>
+              )}
+            </div>
           </div>
 
           <div className="flex flex-col gap-3">
-            {paymentMethod === "COD" ? (
+            {paymentMethod === "COD" || paymentMethod === "wallet" ? (
               <button
                 onClick={handlePlaceOrder}
                 disabled={isProcessing}
                 className="w-full bg-gray-900 text-white py-3.5 rounded-lg font-bold hover:bg-gray-800 transition-all shadow-lg shadow-gray-900/10 flex items-center justify-center gap-2 disabled:opacity-70"
               >
-                {isProcessing ? "Processing..." : "Place Order (COD)"}
+                {isProcessing
+                  ? "Processing..."
+                  : `Place Order ${
+                      paymentMethod === "COD"
+                        ? "(COD)"
+                        : paymentMethod === "wallet"
+                        ? "(Wallet)"
+                        : ""
+                    }`}
               </button>
             ) : (
               <div className="w-full relative z-0">

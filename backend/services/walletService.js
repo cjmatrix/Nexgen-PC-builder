@@ -31,6 +31,40 @@ const addFunds = async (
   return wallet;
 };
 
+
+const deductFunds = async (
+  userId,
+  amount,
+  type,
+  orderId,
+  description,
+  session
+) => {
+  const user = await User.findByIdAndUpdate(
+    userId,
+    { $inc: { walletBalance: -amount } },
+    { new: true, session }
+  );
+
+  const wallet = await WalletTransaction.create(
+    [
+      {
+        user: userId,
+        amount,
+        type,
+        orderId,
+        description,
+      },
+    ],
+    { session }
+  );
+
+  return wallet;
+};
+
+
+
+
 const getWalletDetails = async (userId, page = 1, limit = 10) => {
   const user = await User.findById(userId).select("walletBalance");
 
@@ -55,4 +89,4 @@ const getWalletDetails = async (userId, page = 1, limit = 10) => {
   };
 };
 
-export { addFunds, getWalletDetails };
+export { addFunds, getWalletDetails ,deductFunds};

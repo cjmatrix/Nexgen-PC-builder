@@ -22,7 +22,7 @@ const navItems = [
   { name: "Product Management", icon: Package, link: "/admin/products" },
   { name: "Order Management", icon: ShoppingCart, link: "/admin/orders" },
   { name: "User Management", icon: Users, link: "/admin" },
-  { name: "Sales & Reporting", icon: BarChart2, link: "" },
+  { name: "Sales & Reporting", icon: BarChart2, link: "/admin/sales-report" },
   { name: "Coupon Management", icon: Ticket, link: "/admin/coupons" },
 ];
 

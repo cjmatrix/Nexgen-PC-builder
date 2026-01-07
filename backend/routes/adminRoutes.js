@@ -4,6 +4,8 @@ import {
   getUsers,
   blockUser,
   updateUser,
+  getSalesReport,
+  getSalesInsights,
 } from "../controllers/adminController.js";
 
 import {
@@ -38,6 +40,9 @@ router.use(protect);
 router.use(admin);
 
 router.get("/users", getUsers);
+router.get("/sales-report", getSalesReport);
+
+router.post("/sales-insights", protect, admin, getSalesInsights);
 router.patch("/users/:id/block", blockUser);
 
 router.put("/users/:id/update", updateUser);
