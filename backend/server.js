@@ -14,6 +14,7 @@ import aiRoutes from "./routes/aiRoutes.js";
 import cartRoutes from "./routes/cartRoutes.js";
 import couponRoutes from "./routes/couponRoutes.js";
 import referralRoutes from "./routes/referralRoutes.js";
+import blacklistRoutes from "./routes/blacklistRoutes.js";
 
 import categoryRoutes from "./routes/categoryRoutes.js";
 
@@ -53,6 +54,7 @@ app.use("/api/v1/orders", orderRoutes);
 app.use("/api/v1/ai", aiRoutes);
 app.use("/api/v1/coupons", couponRoutes);
 app.use("/api/v1/referral", referralRoutes);
+app.use("/api/v1/blacklist", blacklistRoutes);
 app.use("/api/v1/category", categoryRoutes);
 
 app.use("/api/v1/wishlist", wishlistRoutes);

@@ -16,6 +16,7 @@ import Wishlist from "./pages/customer/Wishlist";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import CustomerDashboard from "./pages/customer/CustomerDashboard";
 import SalesReport from "./pages/admin/admin pages/SalesReport";
+import BlacklistProducts from "./pages/admin/admin pages/BlacklistProducts";
 
 import UserManagement from "./pages/admin/admin pages/UserManagement";
 import CreateComponent from "./pages/admin/admin pages/componentForm";
@@ -142,6 +143,10 @@ const router = createBrowserRouter([
           {
             path: "/admin/products/edit/:id",
             element: <AddProductForm />,
+          },
+          {
+            path: "/admin/blacklist",
+            element: <BlacklistProducts />,
           },
         ],
       },

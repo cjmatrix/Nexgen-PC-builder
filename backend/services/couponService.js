@@ -9,17 +9,20 @@ const createCoupon = async (data) => {
     expiryDate,
     minOrderValue,
     allowedUsers,
+    maxDiscountAmount,
     usageLimit,
   } = data;
-
 
   const existingCoupon = await Coupon.findOne({ code: code.toUpperCase() });
   if (existingCoupon) {
     throw new AppError("Coupon code already exists", 400);
   }
-  console.log(discountType,discountValue,minOrderValue)
-  if(discountType==="fixed" && discountValue>= minOrderValue){
-    throw new AppError('Fixed discount value cannot exceed or equal minimum order value',400)
+  console.log(discountType, discountValue, minOrderValue);
+  if (discountType === "fixed" && discountValue >= minOrderValue) {
+    throw new AppError(
+      "Fixed discount value cannot exceed or equal minimum order value",
+      400
+    );
   }
 
   const coupon = await Coupon.create({
@@ -28,6 +31,7 @@ const createCoupon = async (data) => {
     discountValue,
     expiryDate,
     minOrderValue: minOrderValue || 0,
+    maxDiscountAmount: discountType === "percentage" ? maxDiscountAmount : null,
     usageLimit: usageLimit || 1000,
     allowedUsers,
     isActive: true,
@@ -73,11 +77,6 @@ const getCouponById = async (id) => {
 };
 
 const updateCoupon = async (id, updateData) => {
-
-  
-
-  
-
   const coupon = await Coupon.findById(id);
 
   // let newDiscount=updateData.discountValue || coupon.discountValue
@@ -91,7 +90,6 @@ const updateCoupon = async (id, updateData) => {
   // if (!coupon) {
   //   throw new AppError("Coupon not found", 404);
   // }
-
 
   if (updateData.code && updateData.code.toUpperCase() !== coupon.code) {
     const existing = await Coupon.findOne({
@@ -117,7 +115,6 @@ const deleteCoupon = async (id) => {
     throw new AppError("Coupon not found", 404);
   }
 
-  
   coupon.isActive = !coupon.isActive;
   await coupon.save();
 
@@ -155,6 +152,11 @@ const validateCoupon = async (code, cartTotal, userId) => {
   let discountAmount = 0;
   if (coupon.discountType === "percentage") {
     discountAmount = Math.round((cartTotal * coupon.discountValue) / 100);
+
+    // Check for maximum discount amount (if applicable)
+    if (coupon.maxDiscountAmount && discountAmount > coupon.maxDiscountAmount) {
+      discountAmount = coupon.maxDiscountAmount;
+    }
   } else {
     discountAmount = coupon.discountValue;
   }
@@ -174,14 +176,12 @@ const getAvailableCoupons = async (userId) => {
 
   const coupons = await Coupon.find({
     isActive: true,
-    expiryDate: { $gt: currentDate }, 
-    $expr: { $lt: ["$usageCount", "$usageLimit"] }, 
-    usedBy: { $ne: userId }, 
+    expiryDate: { $gt: currentDate },
+    $expr: { $lt: ["$usageCount", "$usageLimit"] },
+    usedBy: { $ne: userId },
   });
 
-  
   const validCoupons = coupons.filter((coupon) => {
-   
     if (!coupon.allowedUsers || coupon.allowedUsers.length === 0) return true;
 
     return coupon.allowedUsers.includes(userId);

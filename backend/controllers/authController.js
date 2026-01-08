@@ -115,8 +115,6 @@ const changePassword = async (req, res) => {
   res.status(200).json(result);
 };
 
-
-
 export {
   register,
   login,

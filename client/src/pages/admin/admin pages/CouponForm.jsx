@@ -37,6 +37,7 @@ const CouponForm = () => {
       discountType: "percentage",
       discountValue: 0,
       minOrderValue: 0,
+      maxDiscountAmount: null,
       expiryDate: "",
       usageLimit: 1000,
     },
@@ -61,6 +62,7 @@ const CouponForm = () => {
         discountType: data.discountType,
         discountValue: data.discountValue,
         minOrderValue: data.minOrderValue,
+        maxDiscountAmount: data.maxDiscountAmount,
         expiryDate: new Date(data.expiryDate).toISOString().split("T")[0],
         usageLimit: data.usageLimit,
       });
@@ -113,18 +115,17 @@ const CouponForm = () => {
 
   const onSubmit = (formData) => {
     if (isEditMode) {
-
       const changedData = Object.fromEntries(
         Object.keys(dirtyFields).map((key) => [key, formData[key]])
       );
-      console.log(changedData.length)
-      if(Object.keys(changedData).length===0){
+      console.log(changedData.length);
+      if (Object.keys(changedData).length === 0) {
         return setModal({
-        isOpen: true,
-        title: "Warning",
-        message:"Nothing changed yet",
-        type: "warning",
-      });
+          isOpen: true,
+          title: "Warning",
+          message: "Nothing changed yet",
+          type: "warning",
+        });
       }
 
       updateMutation.mutate(changedData);
@@ -277,6 +278,26 @@ const CouponForm = () => {
                 Optional: Apply this coupon only for orders above this amount.
               </p>
             </div>
+
+            {/* Max Discount Amount (Only for Percentage) */}
+            {discountType === "percentage" && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Maximum Discount Amount (₹)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  className="w-full p-3 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g. 2000"
+                  {...register("maxDiscountAmount")}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Optional: Cap the maximum discount value for percentage
+                  coupons.
+                </p>
+              </div>
+            )}
 
             <button
               type="submit"

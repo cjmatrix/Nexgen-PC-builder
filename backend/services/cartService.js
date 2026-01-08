@@ -73,6 +73,11 @@ const checkStockAvailability = async (cartItems, newItem = null) => {
 
   cartItems.forEach((item) => {
     const p = item.product;
+    
+    if (p && !p.isActive) {
+      throw new AppError(`Product ${p.name} is no longer available`, 400);
+    }
+
     if (p && p.default_config) {
       const allComps = [
         p.default_config.cpu,
@@ -111,7 +116,11 @@ const checkStockAvailability = async (cartItems, newItem = null) => {
 
   for (const [compId, totalNeeded] of Object.entries(requiredStock)) {
     const component = await Component.findById(compId);
-    if (component && component.stock < totalNeeded) {
+    if ((component && component.stock < totalNeeded) || !component.isActive) {
+      if (!component.isActive) {
+        throw new AppError(`Out Of Stock !!`, 400);
+      }
+
       throw new AppError(
         `Stock Limit Exceeded: You need ${totalNeeded} of ${component.name}, but we only have ${component.stock} left.`,
         400
@@ -143,6 +152,10 @@ export const addToCart = async (userId, productId, quantity = 1) => {
 
   if (!product) {
     throw new AppError("Product not found", 404);
+  }
+
+  if (!product.isActive) {
+    throw new AppError("This product is currently unavailable", 400);
   }
 
   const cart = await Cart.findOne({ user: userId }).populate({
@@ -286,7 +299,7 @@ export const applyCouponToCart = async (userId, couponCode) => {
   const populatedCart = populateCart(cart);
 
   populatedCart.coupon = coupon;
-  
+
   const summary = calculateSummary(populatedCart.items, cart.discount);
 
   return { cart: populatedCart, summary };

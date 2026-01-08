@@ -118,14 +118,14 @@ const getPublicProducts = async ({ page, limit, search, category, sort }) => {
   const products = await Product.find(query)
     .populate("category", "name") 
     .populate([
-      { path: "default_config.cpu", select: "name" },
-      { path: "default_config.gpu", select: "name" },
-      { path: "default_config.motherboard", select: "name" },
-      { path: "default_config.ram", select: "name" },
-      { path: "default_config.storage", select: "name" },
-      { path: "default_config.case", select: "name" },
-      { path: "default_config.psu", select: "name" },
-      { path: "default_config.cooler", select: "name" },
+      { path: "default_config.cpu", select: "name isActive" },
+      { path: "default_config.gpu", select: "name isActive" },
+      { path: "default_config.motherboard", select: "name isActive" },
+      { path: "default_config.ram", select: "name isActive" },
+      { path: "default_config.storage", select: "name isActive" },
+      { path: "default_config.case", select: "name isActive"  },
+      { path: "default_config.psu", select: "name isActive" },
+      { path: "default_config.cooler", select: "name isActive" },
     ])
     .sort(sortLogic)
     .limit(limit)

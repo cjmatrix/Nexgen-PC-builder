@@ -7,6 +7,7 @@ import mongoose from "mongoose";
 import AppError from "../utils/AppError.js";
 import Wallet from "../models/WalletTransaction.js";
 import * as walletService from "../services/walletService.js";
+import Blacklist from "../models/Blacklist.js";
 
 import { PRICING } from "../constants/pricing.js";
 
@@ -178,20 +179,20 @@ export const createOrder = async (userId, user, orderData) => {
       paymentResult: {},
     });
 
-   if (paymentMethod === "wallet") {
+    if (paymentMethod === "wallet") {
       if (user.walletBalance < order.totalPrice) {
         throw new AppError("Insufficient wallet balance", 400);
       }
-      
+
       await walletService.deductFunds(
         userId,
         order.totalPrice,
         "DEBIT",
         order._id,
-        "Order Payment", 
-        session          
+        "Order Payment",
+        session
       );
-     
+
       order.isPaid = true;
       order.paidAt = Date.now();
     }
@@ -331,7 +332,9 @@ export const cancelOrder = async (orderId, itemId, reason, userId) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
-    const order = await Order.findById(orderId).session(session);
+    const order = await Order.findById(orderId)
+      .populate("coupon")
+      .session(session);
 
     if (!order) {
       throw new AppError("Order not found", 404);
@@ -374,9 +377,34 @@ export const cancelOrder = async (orderId, itemId, reason, userId) => {
     if (itemId) {
       const item = order.orderItems.find((i) => i._id.toString() === itemId);
 
+      if (!item) {
+        throw new AppError("Item not found in order", 404);
+      }
+
+      if (order.coupon && order.coupon.minOrderValue) {
+        const itemEffectivePrice =
+          item.price * (1 - (item.discount || 0) / 100);
+        const itemTotal = itemEffectivePrice * item.qty;
+        
+        // console.log(order.totalPrice,order.shippingPrice,order.taxPrice)
+        const currentBillableTotal =
+          order.itemsPrice + order.shippingPrice + order.taxPrice;
+        const remainingTotal = currentBillableTotal- itemTotal;
+         
+        if (remainingTotal < (order.coupon.minOrderValue)*100) {
+          throw new AppError(
+            `Cannot cancel this item. The remaining order value (₹${(
+              remainingTotal / 100
+            ).toLocaleString()}) would be less than the coupon's minimum requirement (₹${
+              order.coupon.minOrderValue
+            }). Please cancel the entire order instead.`,
+            400
+          );
+        }
+      }
+
       let amount = calculateRefundAmount(order, itemId);
-    
-      
+
       const otherActiveItems = order.orderItems.filter(
         (i) => i.status !== "Cancelled" && i._id.toString() !== itemId
       );
@@ -384,7 +412,7 @@ export const cancelOrder = async (orderId, itemId, reason, userId) => {
       if (otherActiveItems.length === 0) {
         amount += order.shippingPrice || 0;
       }
-      
+
       if (order.isPaid) {
         await walletService.addFunds(
           userId,
@@ -396,10 +424,7 @@ export const cancelOrder = async (orderId, itemId, reason, userId) => {
         );
       }
 
-      if (!item) {
-        throw new AppError("Item not found in order", 404);
-      }
-
+     
       if (item.status === "Cancelled") {
         throw new AppError("Item already cancelled", 400);
       }
@@ -525,7 +550,12 @@ export const requestReturn = async (orderId, itemId, reason) => {
   }
 };
 
-export const approveReturn = async (orderId, itemId, userId) => {
+export const approveReturn = async (
+  orderId,
+  itemId,
+  userId,
+  addToBlacklist
+) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
@@ -577,7 +607,22 @@ export const approveReturn = async (orderId, itemId, userId) => {
         throw new AppError("Item is not in Return Requested state", 400);
       }
 
-      await restoreStock(item);
+      if (addToBlacklist) {
+        await Blacklist.create(
+          [
+            {
+              productName: item.name,
+              productId: item.product,
+              orderId: order.orderId,
+              reason: item.returnReason || "Damaged/Defective",
+              components: item.components,
+            },
+          ],
+          { session }
+        );
+      } else {
+        await restoreStock(item);
+      }
       item.status = "Return Approved";
 
       const allReturned = order.orderItems.every(
@@ -602,7 +647,22 @@ export const approveReturn = async (orderId, itemId, userId) => {
         if (item.status === "Return Requested") {
           refundSum += calculateRefundAmount(order, item._id);
 
-          await restoreStock(item);
+          if (addToBlacklist) {
+            await Blacklist.create(
+              [
+                {
+                  productName: item.name,
+                  productId: item.product,
+                  orderId: order.orderId,
+                  reason: item.returnReason || "Damaged/Defective",
+                  components: item.components,
+                },
+              ],
+              { session }
+            );
+          } else {
+            await restoreStock(item);
+          }
           item.status = "Return Approved";
         }
       }

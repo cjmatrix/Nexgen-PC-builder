@@ -104,6 +104,7 @@ const UserOrderDetails = ({ isOpen, onClose, order }) => {
   };
 
   const handleSubmitAction = () => {
+    setIsActionModalOpen(false);
     if (!reason.trim()) {
       setInfoModal({
         isOpen: true,
@@ -113,15 +114,17 @@ const UserOrderDetails = ({ isOpen, onClose, order }) => {
       });
       return;
     }
-
+    
     const payload = {
       reason,
       itemId: selectedItem ? selectedItem._id : undefined,
     };
 
     if (actionType === "cancel") {
+     
       cancelMutation.mutate(payload);
     } else if (actionType === "return") {
+      
       returnMutation.mutate(payload);
     }
   };

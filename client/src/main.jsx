@@ -14,7 +14,7 @@ import { DndProvider } from "react-dnd";
 const queryClient = new QueryClient();
 
 ReactDOM.createRoot(document.getElementById("root")).render(
-  <StrictMode>
+  <>
     <Provider store={store}>
       <QueryClientProvider client={queryClient}>
         <ErrorBoundary>
@@ -26,6 +26,6 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <ReactQueryDevtools initialIsOpen={false} />
       </QueryClientProvider>
     </Provider>
-  </StrictMode>
+  </>
 );
 //hello

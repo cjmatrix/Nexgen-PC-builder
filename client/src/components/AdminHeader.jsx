@@ -1,11 +1,12 @@
 import React from "react";
 import { LogOut, Menu } from "lucide-react";
-
+import { useNavigate } from "react-router-dom";
 import { logout } from "../store/slices/authSlice";
 import { useDispatch } from "react-redux";
 
 
 const AdminHeader = ({ onLogout, onMenuClick }) => {
+  const navigate=useNavigate();
 
   const dispatch=useDispatch();
    const handleLogout = () => {

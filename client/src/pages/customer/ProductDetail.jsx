@@ -58,7 +58,7 @@ const ProductDetail = () => {
   const isOutOfStock =
     product?.default_config &&
     Object.values(product.default_config).some(
-      (component) => component?.stock < 1
+      (component) => component?.stock < 1 || !component?.isActive
     );
 
   console.log(product);

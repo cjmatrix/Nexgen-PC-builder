@@ -56,13 +56,13 @@ const ProductList = () => {
     }
   };
 
-  const {data:categories}=useQuery({
-    queryKey:["category"],
-    queryFn:async ()=>{
-      const response= await api.get("/category")
-      return response?.data.categories
-    }
-  })
+  const { data: categories } = useQuery({
+    queryKey: ["category"],
+    queryFn: async () => {
+      const response = await api.get("/category");
+      return response?.data.categories;
+    },
+  });
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
@@ -105,10 +105,9 @@ const ProductList = () => {
                 }
               >
                 <option value="">All Categories</option>
-                {categories?.map((category)=>{
-                  return  <option value={category.name}>{category.name}</option>
+                {categories?.map((category) => {
+                  return <option value={category.name}>{category.name}</option>;
                 })}
-               
               </select>
             </div>
 
@@ -137,84 +136,99 @@ const ProductList = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-            {items.map((product) => (
-              <div
-                key={product._id}
-                className="group bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden flex flex-col"
-              >
-                <div className="relative aspect-[4/3] bg-gray-100 overflow-hidden">
-                  {product.applied_offer > 0 && (
-                    <div className="absolute top-3 left-3 bg-red-600 text-white text-xs font-bold px-2.5 py-1 rounded-md shadow-sm z-10">
-                      {product.applied_offer}% OFF
-                    </div>
-                  )}
-                  <img
-                    src={
-                      product.images?.[0] ||
-                      "https://via.placeholder.com/400x300?text=No+Image"
-                    }
-                    alt={product.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <button
-                    onClick={(e) => handleWishlistToggle(e, product._id)}
-                    className="absolute top-3 right-3 p-2 bg-white/90 backdrop-blur rounded-full text-gray-500 hover:text-red-500 transition-colors shadow-sm z-20"
-                  >
-                    <HeartIcon
-                      className={`h-5 w-5 ${
-                        isInWishlist(product._id)
-                          ? "fill-red-500 text-red-500"
-                          : "text-gray-600"
-                      }`}
+            {items.map((product) => {
+              const isOutOfStock =
+                product.default_config &&
+                Object.values(product.default_config).some(
+                  (component) => component?.stock < 1 || !component?.isActive
+                );
+
+              return (
+                <div
+                  key={product._id}
+                  className="group bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden flex flex-col"
+                >
+                  <div className="relative aspect-[4/3] bg-gray-100 overflow-hidden">
+                    {isOutOfStock && (
+                      <div className="absolute inset-0 bg-black/60 z-30 flex items-center justify-center">
+                        <span className="bg-red-600 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+                          Out of Stock
+                        </span>
+                      </div>
+                    )}
+                    {product.applied_offer > 0 && !isOutOfStock && (
+                      <div className="absolute top-3 left-3 bg-red-600 text-white text-xs font-bold px-2.5 py-1 rounded-md shadow-sm z-10">
+                        {product.applied_offer}% OFF
+                      </div>
+                    )}
+                    <img
+                      src={
+                        product.images?.[0] ||
+                        "https://via.placeholder.com/400x300?text=No+Image"
+                      }
+                      alt={product.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
-                  </button>
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
-                </div>
-
-                <div className="p-5 flex flex-col flex-grow">
-                  <div className="mb-4">
-                    <h3 className="text-lg font-bold text-gray-900 mb-1 line-clamp-1">
-                      {product.name}
-                    </h3>
-                    <p className="text-sm text-gray-500 line-clamp-2 h-10">
-                      {product.description}
-                    </p>
-                  </div>
-
-                  <div className="mt-auto pt-4 border-t border-gray-100 flex items-center justify-between">
-                    <div>
-                      <p className="text-xs text-gray-500 mb-0.5">
-                        Starting at
-                      </p>
-                      {product.applied_offer > 0 ? (
-                        <div className="flex flex-col">
-                          <span className="text-xs text-gray-400 line-through">
-                            ₹{(product.base_price / 100).toLocaleString()}
-                          </span>
-                          <p className="text-lg font-bold text-red-600">
-                            ₹
-                            {(
-                              product.final_price / 100 ||
-                              product.base_price / 100
-                            ).toLocaleString()}
-                          </p>
-                        </div>
-                      ) : (
-                        <p className="text-lg font-bold text-gray-900">
-                          ₹{(product.base_price / 100).toLocaleString()}
-                        </p>
-                      )}
-                    </div>
                     <button
-                      onClick={() => navigate(`/products/${product._id}`)}
-                      className="bg-black text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors flex items-center gap-2"
+                      onClick={(e) => handleWishlistToggle(e, product._id)}
+                      className="absolute top-3 right-3 p-2 bg-white/90 backdrop-blur rounded-full text-gray-500 hover:text-red-500 transition-colors shadow-sm z-20"
                     >
-                      View
+                      <HeartIcon
+                        className={`h-5 w-5 ${
+                          isInWishlist(product._id)
+                            ? "fill-red-500 text-red-500"
+                            : "text-gray-600"
+                        }`}
+                      />
                     </button>
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+                  </div>
+
+                  <div className="p-5 flex flex-col flex-grow">
+                    <div className="mb-4">
+                      <h3 className="text-lg font-bold text-gray-900 mb-1 line-clamp-1">
+                        {product.name}
+                      </h3>
+                      <p className="text-sm text-gray-500 line-clamp-2 h-10">
+                        {product.description}
+                      </p>
+                    </div>
+
+                    <div className="mt-auto pt-4 border-t border-gray-100 flex items-center justify-between">
+                      <div>
+                        <p className="text-xs text-gray-500 mb-0.5">
+                          Starting at
+                        </p>
+                        {product.applied_offer > 0 ? (
+                          <div className="flex flex-col">
+                            <span className="text-xs text-gray-400 line-through">
+                              ₹{(product.base_price / 100).toLocaleString()}
+                            </span>
+                            <p className="text-lg font-bold text-red-600">
+                              ₹
+                              {(
+                                product.final_price / 100 ||
+                                product.base_price / 100
+                              ).toLocaleString()}
+                            </p>
+                          </div>
+                        ) : (
+                          <p className="text-lg font-bold text-gray-900">
+                            ₹{(product.base_price / 100).toLocaleString()}
+                          </p>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => navigate(`/products/${product._id}`)}
+                        className="bg-black text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors flex items-center gap-2"
+                      >
+                        View
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 

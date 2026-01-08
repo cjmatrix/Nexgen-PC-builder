@@ -51,7 +51,6 @@ export const cancelOrder = async (req, res) => {
     itemId,
     reason,
     req.user._id
-
   );
   res.json(updatedOrder);
 };
@@ -67,8 +66,13 @@ export const requestReturn = async (req, res) => {
 };
 
 export const approveReturn = async (req, res) => {
-  const { itemId } = req.body;
-  const updatedOrder = await orderService.approveReturn(req.params.id, itemId,req.user._id);
+  const { itemId, addToBlacklist } = req.body;
+  const updatedOrder = await orderService.approveReturn(
+    req.params.id,
+    itemId,
+    req.user._id,
+    addToBlacklist
+  );
   res.json(updatedOrder);
 };
 

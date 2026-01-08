@@ -16,7 +16,14 @@ const OrderDetailsModal = ({ isOpen, onClose, order: initialOrder }) => {
     type: "info",
     onConfirm: null,
   });
-  
+
+  const [returnConfig, setReturnConfig] = useState({
+    isOpen: false,
+    itemId: null,
+    reason: "",
+    blacklisted: false,
+  });
+
   const closeModal = () => {
     setModal((prev) => ({ ...prev, isOpen: false }));
   };
@@ -91,9 +98,10 @@ const OrderDetailsModal = ({ isOpen, onClose, order: initialOrder }) => {
   });
 
   const approveReturnMutation = useMutation({
-    mutationFn: async ({ itemId }) => {
+    mutationFn: async ({ itemId, addToBlacklist }) => {
       const response = await api.put(`/orders/${order._id}/return/approve`, {
         itemId,
+        addToBlacklist,
       });
       return response.data;
     },
@@ -157,14 +165,25 @@ const OrderDetailsModal = ({ isOpen, onClose, order: initialOrder }) => {
     });
   };
 
-  const confirmApproveReturn = (itemId) => {
-    setModal({
+  const confirmApproveReturn = (item) => {
+    setReturnConfig({
       isOpen: true,
-      title: "Confirm Return Approval",
-      message: "Are you sure you want to approve this return request?",
-      type: "confirmation",
-      confirmText: "Approve Return",
-      onConfirm: () => approveReturnMutation.mutate({ itemId }),
+      itemId: item._id,
+      reason: item.returnReason,
+      blacklisted: false,
+    });
+  };
+
+  const handleReturnApprove = () => {
+    approveReturnMutation.mutate({
+      itemId: returnConfig.itemId,
+      addToBlacklist: returnConfig.blacklisted,
+    });
+    setReturnConfig({
+      isOpen: false,
+      itemId: null,
+      reason: "",
+      blacklisted: false,
     });
   };
 
@@ -220,6 +239,76 @@ const OrderDetailsModal = ({ isOpen, onClose, order: initialOrder }) => {
         message={modal.message}
         type={modal.type}
       />
+
+      {/* Return Approval Modal */}
+      {returnConfig.isOpen && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 animate-in zoom-in-95">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">
+              Approve Return Request
+            </h3>
+
+            <div className="bg-gray-50 p-3 rounded-lg border border-gray-100 mb-4">
+              <p className="text-xs text-gray-500 font-semibold uppercase mb-1">
+                Return Reason
+              </p>
+              <p className="text-gray-800">
+                {returnConfig.reason || "No reason provided"}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3 mb-6 p-3 border border-red-100 bg-red-50 rounded-lg">
+              <input
+                type="checkbox"
+                id="blacklist"
+                checked={returnConfig.blacklisted}
+                onChange={(e) =>
+                  setReturnConfig((prev) => ({
+                    ...prev,
+                    blacklisted: e.target.checked,
+                  }))
+                }
+                className="w-5 h-5 rounded border-gray-300 text-red-600 focus:ring-red-500"
+              />
+              <label
+                htmlFor="blacklist"
+                className="text-sm font-medium text-gray-900 cursor-pointer select-none"
+              >
+                Add to Blacklist (Damaged/Defective)
+                <span className="block text-xs text-gray-500 font-normal mt-0.5">
+                  Item will NOT return to inventory.
+                </span>
+              </label>
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() =>
+                  setReturnConfig({
+                    isOpen: false,
+                    itemId: null,
+                    reason: "",
+                    blacklisted: false,
+                  })
+                }
+                className="px-4 py-2 text-gray-700 font-medium hover:bg-gray-100 rounded-lg"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleReturnApprove}
+                className="px-4 py-2 bg-green-600 text-white font-medium hover:bg-green-700 rounded-lg shadow-sm"
+              >
+                Confirm Approval
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div
         ref={modalRef}
         className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-200"
@@ -370,6 +459,18 @@ const OrderDetailsModal = ({ isOpen, onClose, order: initialOrder }) => {
                           <span>₹{(item.price / 100).toLocaleString()}</span>
                         )}
                       </p>
+
+                      {/* Display Return Reason if available */}
+                      {item.returnReason && (
+                        <div className="mb-4 bg-orange-50 border border-orange-100 p-3 rounded-lg">
+                          <p className="text-xs text-orange-600 font-bold uppercase mb-1">
+                            Return Reason:
+                          </p>
+                          <p className="text-sm text-gray-800">
+                            {item.returnReason}
+                          </p>
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex items-center justify-between pt-4 border-t border-gray-50 mt-auto">
@@ -397,7 +498,7 @@ const OrderDetailsModal = ({ isOpen, onClose, order: initialOrder }) => {
                       {item.status === "Return Requested" && (
                         <div className="flex gap-2">
                           <button
-                            onClick={() => confirmApproveReturn(item._id)}
+                            onClick={() => confirmApproveReturn(item)}
                             className="text-sm font-medium text-green-600 hover:text-green-700 hover:bg-green-50 px-3 py-1.5 rounded-lg border border-green-200 transition-colors"
                           >
                             Approve Return

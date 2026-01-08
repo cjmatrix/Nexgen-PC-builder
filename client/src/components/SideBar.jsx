@@ -6,8 +6,10 @@ import {
   ShoppingCart,
   Users,
   BarChart2,
+
   Ticket,
   LogOut,
+  Ban,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -24,6 +26,7 @@ const navItems = [
   { name: "User Management", icon: Users, link: "/admin" },
   { name: "Sales & Reporting", icon: BarChart2, link: "/admin/sales-report" },
   { name: "Coupon Management", icon: Ticket, link: "/admin/coupons" },
+  { name: "Blacklisted Items", icon: Ban, link: "/admin/blacklist" },
 ];
 
 const Sidebar = ({ isOpen, onClose }) => {

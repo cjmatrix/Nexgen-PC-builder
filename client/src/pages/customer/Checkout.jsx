@@ -36,20 +36,21 @@ const Checkout = () => {
   const [paypalClientId, setPaypalClientId] = useState("");
   const [walletBalance, setWalletBalance] = useState(0);
   const isSubmittingRef = useRef(false);
+  const paypalValidationFailed = useRef(false);
 
   useEffect(() => {
     const fetchWallet = async () => {
       try {
         const res = await api.get("/wallet");
-        console.log(res.data)
-        setWalletBalance((res?.data?.data.balance/100));
+        console.log(res.data);
+        setWalletBalance(res?.data?.data.balance / 100);
       } catch (error) {
         console.error("Failed to fetch wallet balance", error);
       }
     };
     fetchWallet();
   }, []);
- 
+
   const [modalConfig, setModalConfig] = useState({
     isOpen: false,
     type: "info",
@@ -123,8 +124,21 @@ const Checkout = () => {
     },
   });
 
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
     if (isSubmittingRef.current) return;
+
+    try {
+      const response = await api.get("/cart/validate");
+    } catch (error) {
+      setModalConfig({
+        isOpen: true,
+        type: "error",
+        title: "Checkout Failed",
+        message: error.response?.data?.message || "Something went wrong",
+      });
+      return;
+    }
+
     if (!selectedAddress) {
       return showModal({
         type: "confirmation",
@@ -244,7 +258,22 @@ const Checkout = () => {
     }
   };
 
-  const createPaypalOrder = (data, actions) => {
+  const createPaypalOrder = async (data, actions) => {
+    paypalValidationFailed.current = false; 
+    try {
+      const response = await api.get("/cart/validate");
+    } catch (error) {
+      console.log("Validation failed");
+      paypalValidationFailed.current = true; 
+      setModalConfig({
+        isOpen: true,
+        type: "error",
+        title: "Checkout Failed",
+        message: error.response?.data?.message || "Something went wrong",
+      });
+      throw error;
+    }
+
     return actions.order.create({
       purchase_units: [
         {
@@ -565,12 +594,16 @@ const Checkout = () => {
                       onApprove={onApprove}
                       onError={(err) => {
                         console.error("PayPal Error:", err);
-                        showModal({
-                          type: "error",
-                          title: "PayPal Payment Failed",
-                          message:
-                            "There was an issue processing your PayPal payment.",
-                        });
+                       
+                        if (!paypalValidationFailed.current) {
+                          showModal({
+                            type: "error",
+                            title: "PayPal Payment Failed",
+                            message:
+                              "There was an issue processing your PayPal payment.",
+                          });
+                        }
+                        paypalValidationFailed.current = false; // Reset
                       }}
                       style={{ layout: "horizontal" }}
                     />
