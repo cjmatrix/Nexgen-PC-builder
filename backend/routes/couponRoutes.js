@@ -7,7 +7,7 @@ import {
   getCouponById,
   updateCoupon,
 } from "../controllers/couponController.js";
-import { protect, admin } from "../middleware/authMiddleware.js";
+import { protect, protectAdmin } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -15,12 +15,12 @@ router.get("/available", protect, getAvailableCoupons);
 
 router
   .route("/")
-  .get(protect, admin, getAllCoupons)
-  .post(protect, admin, createCoupon);
+  .get(protectAdmin, getAllCoupons)
+  .post( protectAdmin, createCoupon);
 router
   .route("/:id")
-  .get(protect, admin, getCouponById)
-  .patch(protect, admin, updateCoupon)
-  .delete(protect, admin, deleteCoupon);
+  .get(protectAdmin, getCouponById)
+  .patch( protectAdmin, updateCoupon)
+  .delete( protectAdmin, deleteCoupon);
 
 export default router;

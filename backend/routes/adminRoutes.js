@@ -25,7 +25,7 @@ import {
   deleteProduct,
 } from "../controllers/productController.js";
 
-import { protect, admin } from "../middleware/authMiddleware.js";
+import { protectAdmin } from "../middleware/authMiddleware.js";
 import {
   createCategory,
   getCategories,
@@ -36,13 +36,12 @@ import {
 
 router.get("/componentspublic", getComponents);
 
-router.use(protect);
-router.use(admin);
+router.use(protectAdmin);
 
 router.get("/users", getUsers);
 router.get("/sales-report", getSalesReport);
 
-router.post("/sales-insights", protect, admin, getSalesInsights);
+router.post("/sales-insights", getSalesInsights);
 router.patch("/users/:id/block", blockUser);
 
 router.put("/users/:id/update", updateUser);

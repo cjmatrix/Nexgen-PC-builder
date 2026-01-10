@@ -115,6 +115,93 @@ const changePassword = async (req, res) => {
   res.status(200).json(result);
 };
 
+// --- Admin Auth Functions ---
+
+const setAdminCookies = (res, accessToken, refreshToken) => {
+  res.cookie("adminAccessToken", accessToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: 15 * 60 * 1000,
+  });
+  res.cookie("adminRefreshToken", refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+};
+
+const adminLogin = async (req, res) => {
+  const { email, password } = req.body;
+  const { user, accessToken, refreshToken } = await authService.loginUser(
+    email,
+    password
+  );
+
+  if (user.role !== "admin") {
+    res.status(401);
+    throw new Error("Not authorized as an admin");
+  }
+
+  setAdminCookies(res, accessToken, refreshToken);
+
+  res.status(200).json({
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+  });
+};
+
+const adminLogout = async (req, res) => {
+  // Ideally, invalidate refresh token in DB if you track them
+  const { adminRefreshToken } = req.cookies;
+  await authService.logoutUser(adminRefreshToken);
+
+  res.cookie("adminAccessToken", "", { httpOnly: true, expires: new Date(0) });
+  res.cookie("adminRefreshToken", "", { httpOnly: true, expires: new Date(0) });
+
+  res.status(200).json({ message: "Admin logged out successfully" });
+};
+
+const refreshAdminToken = async (req, res) => {
+  try {
+    const { adminRefreshToken } = req.cookies;
+    if (!adminRefreshToken) {
+      return res
+        .status(401)
+        .json({ message: "Not authorized, no refresh token" });
+    }
+    const { newAccessToken, newRefreshToken } =
+      await authService.refreshAccessToken(adminRefreshToken);
+
+    setAdminCookies(res, newAccessToken, newRefreshToken);
+
+    res.status(200).json({ message: "Admin token refreshed" });
+  } catch (error) {
+    res.cookie("adminAccessToken", "", {
+      httpOnly: true,
+      expires: new Date(0),
+    });
+    res.cookie("adminRefreshToken", "", {
+      httpOnly: true,
+      expires: new Date(0),
+    });
+    throw error; // Let global error handler catch it
+  }
+};
+
+const getAdminProfile = async (req, res) => {
+  const user = {
+    _id: req.user._id,
+    name: req.user.name,
+    email: req.user.email,
+    role: req.user.role,
+  };
+  res.status(200).json(user);
+};
+
 export {
   register,
   login,
@@ -126,4 +213,8 @@ export {
   forgotPassword,
   resetPassword,
   changePassword,
+  adminLogin,
+  adminLogout,
+  refreshAdminToken,
+  getAdminProfile,
 };

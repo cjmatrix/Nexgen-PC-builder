@@ -14,8 +14,12 @@ import {
   forgotPassword,
   resetPassword,
   changePassword,
+  adminLogin,
+  adminLogout,
+  refreshAdminToken,
+  getAdminProfile,
 } from "../controllers/authController.js";
-import { protect } from "../middleware/authMiddleware.js";
+import { protect, protectAdmin } from "../middleware/authMiddleware.js";
 
 router.post("/register", register);
 router.post("/login", login);
@@ -27,6 +31,12 @@ router.post("/forgot-password", forgotPassword);
 router.put("/reset-password/:resetToken", resetPassword);
 router.put("/change-password", protect, changePassword);
 router.get("/profile", protect, getProfile);
+ 
+// Admin Routes
+router.post("/admin/login", adminLogin);
+router.post("/admin/logout", adminLogout);
+router.post("/admin/refresh", refreshAdminToken);
+router.get("/admin/profile", protectAdmin, getAdminProfile);
 
 router.get(
   "/google",

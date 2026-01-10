@@ -1,5 +1,20 @@
 import mongoose from "mongoose";
 
+const componentSnapshotSchema = new mongoose.Schema(
+  {
+    componentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Component",
+      required: true,
+    },
+    name: { type: String, required: true },
+    price: { type: Number, required: true },
+    image: { type: String, required: true },
+    specs: { type: mongoose.Schema.Types.Mixed },
+  },
+  { _id: false }
+);
+
 const cartSchema = new mongoose.Schema(
   {
     user: {
@@ -14,7 +29,28 @@ const cartSchema = new mongoose.Schema(
         product: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "Product",
-          required: true,
+        },
+
+
+
+         isCustomBuild: {
+          type: Boolean,
+          default: false,
+        },
+        
+        customBuild: {
+          name: { type: String }, 
+          totalPrice: { type: Number }, 
+          components: {
+            cpu: { type: componentSnapshotSchema },
+            gpu: { type: componentSnapshotSchema },
+            motherboard: { type: componentSnapshotSchema },
+            ram: { type: componentSnapshotSchema },
+            storage: { type: componentSnapshotSchema },
+            case: { type: componentSnapshotSchema },
+            psu: { type: componentSnapshotSchema },
+            cooler: { type: componentSnapshotSchema },
+          },
         },
 
         quantity: {
@@ -39,5 +75,17 @@ const cartSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+cartSchema.path("items").validate(function (items) {
+  if (!items) return false;
+  return items.every((item) => {
+
+    if (item.isCustomBuild) {
+      return item.customBuild && item.customBuild.totalPrice > 0;
+    }
+
+    return !!item.product;
+  });
+}, "Cart item must have either a valid product reference or complete custom build data.");
 
 export default mongoose.model("Cart", cartSchema);

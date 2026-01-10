@@ -2,7 +2,11 @@ import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import { login, reset, logout } from "../../store/slices/authSlice";
+import {
+  adminLogin,
+  resetAdmin,
+  adminLogout,
+} from "../../store/slices/adminSlice";
 import { EyeOff, Eye } from "lucide-react";
 import CustomModal from "../../components/CustomModal";
 
@@ -21,9 +25,11 @@ const AdminLogin = () => {
     },
   });
 
-  const { user, isLoading, isError, isSuccess, message } = useSelector(
-    (state) => state.auth
+  const { adminUser, isLoading, isError, isSuccess, message } = useSelector(
+    (state) => state.admin
   );
+
+  console.log(adminUser)
   const [showPassword, setShowPassword] = useState(false);
   const [modalConfig, setModalConfig] = useState({
     isOpen: false,
@@ -44,27 +50,27 @@ const AdminLogin = () => {
         title: "Login Failed",
         message: message,
       });
-      dispatch(reset());
+      dispatch(resetAdmin());
     }
-
-    if (isSuccess || user) {
-      if (user?.role === "admin") {
-        navigate("/admin");
-      } else if (user) {
+    
+    if (isSuccess || adminUser) {
+      if (adminUser?.role === "admin") {
+        navigate("/admin/components");
+      } else if (adminUser) {
         setModalConfig({
           isOpen: true,
           type: "error",
           title: "Access Denied",
           message: "You do not have admin privileges.",
         });
-        dispatch(logout());
-        dispatch(reset());
+        dispatch(adminLogout());
+        dispatch(resetAdmin());
       }
     }
-  }, [user, isError, isSuccess, message, navigate, dispatch]);
+  }, [adminUser, isError, isSuccess, message, navigate, dispatch]);
 
   const onSubmit = (data) => {
-    dispatch(login(data));
+    dispatch(adminLogin(data));
   };
 
   if (isLoading) {

@@ -17,7 +17,6 @@ const UserManagement = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const { user } = useSelector((state) => state.auth);
   const { users, pagination, search } = useSelector((state) => state.users);
 
   const [searchInput, setSearchInput] = useState("");
@@ -36,12 +35,6 @@ const UserManagement = () => {
   const closeModal = () => {
     setModal((prev) => ({ ...prev, isOpen: false }));
   };
-
-  useEffect(() => {
-    if (!user || user.role !== "admin") {
-      navigate("/login");
-    }
-  }, [user, navigate]);
 
   useEffect(() => {
     dispatch(getUsers({ page, limit: 10, search, status, sort }));

@@ -27,13 +27,38 @@ const protect = async (req, res, next) => {
   }
 };
 
-const admin = (req, res, next) => {
-  if (req.user && req.user.role === "admin") {
-    console.log(req.user.name);
-    next();
+// const admin = (req, res, next) => {
+//   if (req.user && req.user.role === "admin") {
+//     console.log(req.user.name);
+//     next();
+//   } else {
+//     res.status(403).json({ message: "Not authorized as an admin" });
+//   }
+// };
+
+const protectAdmin = async (req, res, next) => {
+  let token;
+
+  token = req.cookies.adminAccessToken;
+
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+
+      req.user = await User.findById(decoded.id);
+
+      if (!req.user || req.user.role !== "admin") {
+        return res.status(401).json({ message: "Not authorized as admin" });
+      }
+
+      next();
+    } catch (error) {
+      console.error(error);
+      res.status(401).json({ message: "Not authorized, token failed" });
+    }
   } else {
-    res.status(403).json({ message: "Not authorized as an admin" });
+    res.status(401).json({ message: "Not authorized, no admin token" });
   }
 };
 
-export { protect, admin };
+export { protect, protectAdmin };

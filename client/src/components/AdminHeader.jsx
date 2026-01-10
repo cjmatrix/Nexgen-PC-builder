@@ -1,22 +1,21 @@
 import React from "react";
 import { LogOut, Menu } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { logout } from "../store/slices/authSlice";
+import { adminLogout } from "../store/slices/adminSlice";
 import { useDispatch } from "react-redux";
 
-
 const AdminHeader = ({ onLogout, onMenuClick }) => {
-  const navigate=useNavigate();
+  const navigate = useNavigate();
 
-  const dispatch=useDispatch();
-   const handleLogout = () => {
-      dispatch(logout());
-      navigate("/login");
-    };
-  
+  const dispatch = useDispatch();
+
+  const handleLogout = () => {
+    dispatch(adminLogout());
+    navigate("/admin/login");
+  };
+
   return (
     <header className="w-full bg-[#0f172a] text-white h-16 flex items-center justify-between px-6 shadow-md">
-     
       <div className="flex items-center gap-4">
         <button
           onClick={onMenuClick}
@@ -27,7 +26,6 @@ const AdminHeader = ({ onLogout, onMenuClick }) => {
         <h1 className="text-xl font-bold tracking-wide">NexGen Admin Panel</h1>
       </div>
 
-     
       <div>
         <button
           onClick={handleLogout}
@@ -38,7 +36,6 @@ const AdminHeader = ({ onLogout, onMenuClick }) => {
         </button>
       </div>
     </header>
-    
   );
 };
 

@@ -2,16 +2,16 @@ import { useSelector } from "react-redux";
 import { Outlet, Navigate } from "react-router-dom";
 
 const AdminRoutes = () => {
-  const { user, isLoading } = useSelector((state) => state.auth);
+  const { adminUser, isLoading } = useSelector((state) => state.admin);
 
   if (isLoading) {
     return <div>Loading...</div>;
   }
 
-  if (user && user.role === "admin") {
+  if (adminUser && adminUser.role === "admin") {
     return <Outlet />;
   } else {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/admin/login" replace />;
   }
 };
 

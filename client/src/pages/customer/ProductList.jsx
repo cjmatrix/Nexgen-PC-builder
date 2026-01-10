@@ -65,9 +65,9 @@ const ProductList = () => {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
+    <div className="min-h-screen max-w-7xl mx-auto bg-gray-50 font-sans text-gray-900">
       <div className="bg-white border-b border-gray-200 pt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="px-4 sm:px-6 lg:px-8 py-12">
           <h1 className="text-4xl font-extrabold text-gray-900 mb-2">
             Explore All PCs
           </h1>
@@ -78,7 +78,7 @@ const ProductList = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className=" px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
           <div className="relative w-full md:w-96">
             <Search

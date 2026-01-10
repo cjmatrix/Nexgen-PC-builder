@@ -125,7 +125,7 @@ const ProfileSetting = () => {
   } = useForm({
     defaultValues: {
       fullName: "",
-      email: "",
+      email: "", 
     },
   });
 

@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { fetchUserProfile } from "./store/slices/authSlice";
+import { fetchAdminProfile } from "./store/slices/adminSlice";
 import {
   createBrowserRouter,
   RouterProvider,
@@ -233,6 +234,7 @@ function App() {
   console.log("heyy");
   useEffect(() => {
     dispatch(fetchUserProfile());
+    dispatch(fetchAdminProfile());
   }, [dispatch]);
 
   return (
