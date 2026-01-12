@@ -74,53 +74,77 @@ export const createOrder = async (userId, user, orderData) => {
     };
 
     for (const item of cart.items) {
-      const product = item.product;
-      if (!product || !product.default_config) continue;
+      if (item.isCustomBuild) {
+        const cb = item.customBuild;
 
-      const createSnapshot = (comp) => {
-        if (!comp) return null;
-        return {
-          componentId: comp._id,
-          name: comp.name,
-          price: comp.price,
-          image: comp.images?.[0] || "https://placehold.co/100",
-          specs: comp.specs || {},
+        const compList = Object.values(cb.components || {});
+        compList.forEach((comp) => {
+          if (comp && comp.componentId)
+            addToStockMap(comp.componentId, item.quantity);
+        });
+
+        orderItems.push({
+          name: cb.name, // "Custom PC Build"
+          qty: item.quantity,
+          image: cb.aiImages || "/custom-pc.png",
+          price: cb.totalPrice,
+          discount: 0,
+          isCustomBuild: true,
+          isAiBuild: item.isAiBuild || false,
+          product: null,
+          components: cb.components,
+          aiImages: cb.aiImages,
+        });
+      } else {
+        const product = item.product;
+        if (!product || !product.default_config) continue;
+
+        const createSnapshot = (comp) => {
+          if (!comp) return null;
+          return {
+            componentId: comp._id,
+            name: comp.name,
+            price: comp.price,
+            image: comp.images?.[0] || "https://placehold.co/100",
+            specs: comp.specs || {},
+          };
         };
-      };
 
-      const config = product.default_config;
-      const compList = [
-        config.cpu,
-        config.gpu,
-        config.motherboard,
-        config.ram,
-        config.storage,
-        config.case,
-        config.psu,
-        config.cooler,
-      ];
-      compList.forEach((c) => {
-        if (c && c._id) addToStockMap(c._id, item.quantity);
-      });
+        const config = product.default_config;
+        const compList = [
+          config.cpu,
+          config.gpu,
+          config.motherboard,
+          config.ram,
+          config.storage,
+          config.case,
+          config.psu,
+          config.cooler,
+        ];
+        compList.forEach((c) => {
+          if (c && c._id) addToStockMap(c._id, item.quantity);
+        });
 
-      orderItems.push({
-        name: product.name,
-        qty: item.quantity,
-        image: product.images?.[0] || "https://placehold.co/100",
-        price: product.base_price,
-        discount: product.applied_offer || 0,
-        product: product._id,
-        components: {
-          cpu: createSnapshot(config.cpu),
-          gpu: createSnapshot(config.gpu),
-          motherboard: createSnapshot(config.motherboard),
-          ram: createSnapshot(config.ram),
-          storage: createSnapshot(config.storage),
-          case: createSnapshot(config.case),
-          psu: createSnapshot(config.psu),
-          cooler: createSnapshot(config.cooler),
-        },
-      });
+        orderItems.push({
+          name: product.name,
+          qty: item.quantity,
+          image: product.images?.[0] || "https://placehold.co/100",
+          price: product.base_price,
+          discount: product.applied_offer || 0,
+          product: product._id,
+          isCustomBuild: false,
+          components: {
+            cpu: createSnapshot(config.cpu),
+            gpu: createSnapshot(config.gpu),
+            motherboard: createSnapshot(config.motherboard),
+            ram: createSnapshot(config.ram),
+            storage: createSnapshot(config.storage),
+            case: createSnapshot(config.case),
+            psu: createSnapshot(config.psu),
+            cooler: createSnapshot(config.cooler),
+          },
+        });
+      }
     }
 
     for (const [compId, totalNeeded] of Object.entries(stockToDecrement)) {
@@ -385,13 +409,13 @@ export const cancelOrder = async (orderId, itemId, reason, userId) => {
         const itemEffectivePrice =
           item.price * (1 - (item.discount || 0) / 100);
         const itemTotal = itemEffectivePrice * item.qty;
-        
+
         // console.log(order.totalPrice,order.shippingPrice,order.taxPrice)
         const currentBillableTotal =
           order.itemsPrice + order.shippingPrice + order.taxPrice;
-        const remainingTotal = currentBillableTotal- itemTotal;
-         
-        if (remainingTotal < (order.coupon.minOrderValue)*100) {
+        const remainingTotal = currentBillableTotal - itemTotal;
+
+        if (remainingTotal < order.coupon.minOrderValue * 100) {
           throw new AppError(
             `Cannot cancel this item. The remaining order value (₹${(
               remainingTotal / 100
@@ -424,7 +448,6 @@ export const cancelOrder = async (orderId, itemId, reason, userId) => {
         );
       }
 
-     
       if (item.status === "Cancelled") {
         throw new AppError("Item already cancelled", 400);
       }

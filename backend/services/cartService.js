@@ -4,18 +4,24 @@ import Component from "../models/Component.js";
 import AppError from "../utils/AppError.js";
 import { validateCoupon } from "./couponService.js";
 
-const MAX_QTY_PER_PRODUCT = 5;
+const MAX_QTY_PER_PRODUCT = 30;
 
 const calculateSummary = (items, cartDiscount = 0) => {
-  const subtotal = items.reduce(
-    (sum, item) =>
-      sum + (item.product?.base_price || 0) * Number(item.quantity),
-    0
-  );
+  const subtotal = items.reduce((sum, item) => {
+    let price = 0;
+    if (item.isCustomBuild) {
+      price = item.customBuild.totalPrice || 0;
+    } else {
+      price = item.product?.base_price || 0;
+    }
+    return sum + price * Number(item.quantity);
+  }, 0);
 
   const shipping = 5000;
 
   const itemDiscount = items.reduce((sum, item) => {
+    if (item.isCustomBuild) return sum;
+
     const baseprice = item.product?.base_price || 0;
     const finalprice = item.product?.final_price || 0;
 
@@ -42,13 +48,16 @@ const calculateSummary = (items, cartDiscount = 0) => {
 // };
 const populateCart = (cart) => {
   const formattedItems = cart.items.map((item) => {
-    if (!item.product) return item;
-    const product = { ...item.product.toObject() };
+    if (item.isCustomBuild) return item.toObject();
 
+    if (!item.product) return item;
+
+    const product = { ...item.product.toObject() };
     return {
       _id: item._id,
       quantity: item.quantity,
       product,
+      isCustomBuild: false,
     };
   });
 
@@ -71,48 +80,26 @@ const checkStockAvailability = async (cartItems, newItem = null) => {
     requiredStock[id] = (requiredStock[id] || 0) + Number(qty);
   };
 
-  cartItems.forEach((item) => {
-    const p = item.product;
-    
-    if (p && !p.isActive) {
-      throw new AppError(`Product ${p.name} is no longer available`, 400);
-    }
+  const processComponents = (components, qty) => {
+    if (!components) return;
 
-    if (p && p.default_config) {
-      const allComps = [
-        p.default_config.cpu,
-        p.default_config.gpu,
-        p.default_config.motherboard,
-        p.default_config.ram,
-        p.default_config.storage,
-        p.default_config.case,
-        p.default_config.psu,
-        p.default_config.cooler,
-      ];
-      allComps.forEach((c) => {
-        if (c && c._id) addToMap(c._id, item.quantity);
-      });
+    Object.values(components).forEach((comp) => {
+      if (comp && comp.componentId) addToMap(comp.componentId, qty);
+      else if (comp && comp._id) addToMap(comp._id, qty);
+    });
+  };
+
+  cartItems.forEach((item) => {
+    if (item.isCustomBuild) {
+      processComponents(item.customBuild.components, item.quantity);
+    } else {
+      const p = item.product;
+      if (p && !p.isActive)
+        throw new AppError(`Product ${p.name} unavailable`, 400);
+      if (p && p.default_config)
+        processComponents(p.default_config, item.quantity);
     }
   });
-
-  if (newItem) {
-    const { product, quantity } = newItem;
-    if (product.default_config) {
-      const newComps = [
-        product.default_config.cpu,
-        product.default_config.gpu,
-        product.default_config.motherboard,
-        product.default_config.ram,
-        product.default_config.storage,
-        product.default_config.case,
-        product.default_config.psu,
-        product.default_config.cooler,
-      ];
-      newComps.forEach((c) => {
-        if (c && c._id) addToMap(c._id, quantity);
-      });
-    }
-  }
 
   for (const [compId, totalNeeded] of Object.entries(requiredStock)) {
     const component = await Component.findById(compId);
@@ -145,52 +132,75 @@ export const getCart = async (userId) => {
   return { cart, summary };
 };
 
-export const addToCart = async (userId, productId, quantity = 1) => {
-  const product = await Product.findById(productId).populate({
-    path: "default_config.cpu default_config.gpu default_config.motherboard default_config.ram default_config.storage default_config.case default_config.psu default_config.cooler",
-  });
-
-  if (!product) {
-    throw new AppError("Product not found", 404);
-  }
-
-  if (!product.isActive) {
-    throw new AppError("This product is currently unavailable", 400);
-  }
-
+export const addToCart = async (
+  userId,
+  productId,
+  quantity = 1,
+  customBuild = null
+) => {
   const cart = await Cart.findOne({ user: userId }).populate({
     path: "items.product",
     populate: {
       path: "default_config.cpu default_config.gpu default_config.motherboard default_config.ram default_config.storage default_config.case default_config.psu default_config.cooler",
     },
   });
-
-  if (!cart) {
-    cart = await Cart.create({ user: userId, items: [] });
+  let currentCart = cart;
+  console.log("heyy");
+  if (!currentCart) {
+    currentCart = await Cart.create({ user: userId, items: [] });
   }
+  // SCENARIO A: Adding a Custom Build
+  if (customBuild) {
+    currentCart.items.push({
+      isCustomBuild: true,
+      isAiBuild: customBuild.isAiBuild || false,
+      customBuild: customBuild,
+      quantity: quantity,
+    });
+  }
+  // SCENARIO B: Adding a Standard Product
+  else {
+    const product = await Product.findById(productId).populate({
+      path: "default_config.cpu default_config.gpu default_config.motherboard default_config.ram default_config.storage default_config.case default_config.psu default_config.cooler",
+    });
 
-  const itemIndex = cart.items.findIndex(
-    (item) => item.product._id.toString() === productId
-  );
-
-  if (itemIndex > -1) {
-    if (cart.items[itemIndex].quantity + 1 > MAX_QTY_PER_PRODUCT) {
-      throw new AppError(
-        `Limit reached: Maximum ${MAX_QTY_PER_PRODUCT} items allowed per product.`,
-        400
-      );
+    if (!product) {
+      throw new AppError("Product not found", 404);
     }
 
-    cart.items[itemIndex].quantity += quantity;
-  } else {
-    cart.items.push({ product: product, quantity });
+    if (!product.isActive) {
+      throw new AppError("This product is currently unavailable", 400);
+    }
+
+    const itemIndex = currentCart.items.findIndex(
+      (item) =>
+        !item.isCustomBuild &&
+        item.product &&
+        item.product._id.toString() === productId
+    );
+
+    if (itemIndex > -1) {
+      if (
+        currentCart.items[itemIndex].quantity + quantity >
+        MAX_QTY_PER_PRODUCT
+      ) {
+        throw new AppError(
+          `Limit reached: Maximum ${MAX_QTY_PER_PRODUCT} items allowed per product.`,
+          400
+        );
+      }
+      currentCart.items[itemIndex].quantity += quantity;
+    } else {
+      currentCart.items.push({ product: product, quantity });
+    }
   }
 
-  await checkStockAvailability(cart.items);
+  await checkStockAvailability(currentCart.items);
 
-  await cart.save();
+  await currentCart.save();
 
-  const populatedCart = populateCart(cart);
+  const populatedCart = populateCart(currentCart);
+  console.log(populatedCart);
   const summary = calculateSummary(populatedCart.items);
   return { cart: populatedCart, summary };
 };
@@ -206,9 +216,14 @@ export const removeFromCart = async (userId, productId) => {
   if (!cart) {
     throw new AppError("Cart not found", 404);
   }
-  cart.items = cart.items.filter(
-    (item) => item.product._id.toString() !== productId
-  );
+  cart.items = cart.items.filter((item) => {
+    const itemIdMatch = item._id.toString() === productId;
+    const isCustom = item.isCustomBuild;
+    const productMatch =
+      !isCustom && item.product && item.product._id.toString() === productId;
+
+    return !itemIdMatch && !productMatch;
+  });
 
   await cart.save();
 
@@ -242,10 +257,17 @@ export const updateQuantity = async (userId, productId, quantity) => {
 
   let itemFound = false;
   const simulatedItems = cart.items.map((item) => {
-    if (item.product._id.toString() === productId) {
+    if (!item.isCustomBuild) {
+      if (item.product && item.product._id.toString() === productId) {
+        itemFound = true;
+        item.quantity = quantity;
+      }
+    } else if (item.customBuild && item._id.toString() === productId) {
+      console.log("heyyyyyyyyyyyyyyyyyyyyyyyyy");
       itemFound = true;
-      return { ...item.toObject(), quantity: quantity, product: item.product };
+      item.quantity = quantity;
     }
+
     return item;
   });
 
@@ -253,22 +275,40 @@ export const updateQuantity = async (userId, productId, quantity) => {
     throw new AppError("Item not found in cart", 404);
   }
 
-  await checkStockAvailability(simulatedItems);
+  await checkStockAvailability(cart.items);
 
-  const itemIndex = cart.items.findIndex(
-    (item) => item.product._id.toString() === productId
-  );
+  await cart.save();
 
-  if (itemIndex > -1) {
-    cart.items[itemIndex].quantity = quantity;
-    await cart.save();
+  const populatedCart = populateCart(cart);
+  const summary = calculateSummary(populatedCart.items);
+  return { cart: populatedCart, summary };
 
-    const populatedCart = populateCart(cart);
-    const summary = calculateSummary(populatedCart.items);
-    return { cart: populatedCart, summary };
-  } else {
-    throw new AppError("Item not found in cart", 404);
-  }
+  // const itemIndex = cart.items.findIndex(
+  //   (item) =>
+  //   {
+  //     if(!item.customBuild){
+  //       return item.product && item.product._id.toString() === productId
+
+  //     }
+  //     else
+  //     {
+  //       return item
+  //     }
+
+  //   }
+
+  // );
+
+  // if (itemIndex > -1) {
+  //   cart.items[itemIndex].quantity = quantity;
+  //   await cart.save();
+
+  //   const populatedCart = populateCart(cart);
+  //   const summary = calculateSummary(populatedCart.items);
+  //   return { cart: populatedCart, summary };
+  // } else {
+  //   throw new AppError("Item not found in cart", 404);
+  // }
 };
 
 export const applyCouponToCart = async (userId, couponCode) => {
@@ -306,7 +346,6 @@ export const applyCouponToCart = async (userId, couponCode) => {
 };
 
 export const removeCouponFromCart = async (userId) => {
-  console.log("removeing");
   const cart = await Cart.findOne({ user: userId }).populate({
     path: "items.product",
     populate: {

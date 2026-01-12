@@ -32,7 +32,7 @@ const Cart = () => {
   const closeModal = () => {
     setModalConfig((prev) => ({ ...prev, isOpen: false }));
   };
-
+  console.log(items);
   const { data: availableCoupons, isLoading: couponsLoading } = useQuery({
     queryKey: ["adminCoupons"],
     queryFn: async () => {
@@ -40,7 +40,7 @@ const Cart = () => {
       return res.data.coupons;
     },
     enabled: isCouponModalOpen,
-    staleTime: 1000 * 60 * 5, // Cache for 5 mins
+    staleTime: 1000 * 60 * 5,
   });
 
   useEffect(() => {
@@ -90,6 +90,7 @@ const Cart = () => {
       ).unwrap();
       setErrors((prev) => ({ ...prev, [productId]: null }));
     } catch (error) {
+      console.log(error);
       setErrors((prev) => ({ ...prev, [productId]: error }));
     }
   };
@@ -122,7 +123,7 @@ const Cart = () => {
       </div>
     );
   }
-  console.log("heyy");
+
   return (
     <>
       <div className="min-h-screen bg-gray-50 pt-24 pb-12 px-4 sm:px-6 lg:px-8 font-sans">
@@ -146,113 +147,145 @@ const Cart = () => {
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2 space-y-6">
-                {items.map((item) => (
-                  <div
-                    key={item._id}
-                    className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col sm:flex-row gap-6"
-                  >
-                    {/* Image */}
-                    <div className="w-full sm:w-40 h-40 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                      <img
-                        src={
-                          item.product?.images?.[0] ||
-                          "https://placehold.co/400"
-                        }
-                        alt={item.product?.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
+                {items.map((item) => {
+                  const isCustom = item.isCustomBuild;
+                  const name = isCustom
+                    ? item.customBuild.name
+                    : item.product?.name;
+                  const image =
+                    isCustom && !item.isAiBuild
+                      ? "/custom-pc.png"
+                      : isCustom && item.isAiBuild
+                      ? item.customBuild.aiImages || "/custom-pc.png"
+                      : item.product?.images?.[0] || "https://placehold.co/400";
 
-                    <div className="flex-1 flex flex-col justify-between">
-                      <div>
-                        <div className="flex justify-between items-start mb-2">
-                          <h3 className="text-xl font-bold text-gray-900">
-                            {item.product?.name}
-                          </h3>
-                        </div>
+                  let description = item.product?.description;
+                  if (isCustom && item.customBuild?.components) {
+                    const comps = item.customBuild.components;
+                    const cpu = comps.cpu?.name || "";
+                    const gpu = comps.gpu?.name || "";
+                    description = [cpu, gpu].filter(Boolean).join(" • ");
+                  }
 
-                        <p className="text-sm text-gray-500 line-clamp-2 mb-4">
-                          {item.product?.description}
-                        </p>
+                  const basePrice = isCustom
+                    ? item.customBuild.totalPrice
+                    : item.product?.base_price;
+                  const finalPrice = isCustom
+                    ? item.customBuild.totalPrice
+                    : item.product?.final_price;
+                  const appliedOffer = isCustom
+                    ? 0
+                    : item.product?.applied_offer;
 
-                        <button
-                          onClick={() => handleRemove(item.product?._id)}
-                          className="inline-flex items-center text-sm text-gray-400 hover:text-red-500 transition-colors bg-gray-50 hover:bg-red-50 px-3 py-1.5 rounded-lg"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Remove
-                        </button>
+                  const removeId = isCustom ? item._id : item.product?._id;
+
+                  return (
+                    <div
+                      key={item._id}
+                      className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col sm:flex-row gap-6"
+                    >
+                      {/* Image */}
+                      <div className="w-full sm:w-40 h-40 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                        <img
+                          src={image}
+                          alt={name}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
 
-                      <div className="flex justify-between items-end mt-4 sm:mt-0">
+                      <div className="flex-1 flex flex-col justify-between">
                         <div>
-                          {item.product?.applied_offer > 0 ? (
-                            <div className="flex flex-col items-start bg-gray-50 p-2 rounded-lg">
-                              <span className="text-xs text-gray-400 line-through">
-                                ₹
-                                {(
-                                  item.product?.base_price / 100
-                                ).toLocaleString()}
-                              </span>
-                              <span className="text-lg font-bold text-gray-900">
-                                ₹{" "}
-                                {(
-                                  item.product?.final_price / 100
-                                ).toLocaleString()}
-                              </span>
-                              <span className="text-[10px] text-green-600 font-bold bg-green-100 px-1.5 py-0.5 rounded-full mt-0.5">
-                                {item.product?.applied_offer}% OFF
-                              </span>
-                            </div>
-                          ) : (
-                            <div className="text-lg font-bold text-gray-900">
-                              ₹{" "}
-                              {(
-                                item.product?.base_price / 100
-                              ).toLocaleString()}
-                            </div>
-                          )}
+                          <div className="flex justify-between items-start mb-2">
+                            <h3 className="text-xl font-bold text-gray-900">
+                              {name}
+                            </h3>
+                          </div>
+
+                          <p className="text-sm text-gray-500 line-clamp-2 mb-4">
+                            {description}
+                          </p>
+
+                          <button
+                            onClick={() =>
+                              handleRemove(
+                                isCustom ? item._id : item.product?._id
+                              )
+                            }
+                            className="inline-flex items-center text-sm text-gray-400 hover:text-red-500 transition-colors bg-gray-50 hover:bg-red-50 px-3 py-1.5 rounded-lg"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Remove
+                          </button>
                         </div>
 
-                        <div className="flex flex-col items-end gap-1">
-                          <div className="flex items-center gap-3 bg-gray-50 rounded-lg p-1">
-                            <button
-                              onClick={() =>
-                                handleUpdateQuantity(
-                                  item.product?._id,
-                                  item.quantity - 1
-                                )
-                              }
-                              className="p-2 text-gray-600 hover:text-gray-900 hover:bg-white rounded-md transition-all shadow-sm disabled:opacity-50"
-                              disabled={item.quantity <= 1}
-                            >
-                              <Minus className="h-4 w-4" />
-                            </button>
-                            <span className="text-sm font-semibold w-8 text-center">
-                              {item.quantity}
-                            </span>
-                            <button
-                              onClick={() =>
-                                handleUpdateQuantity(
-                                  item.product?._id,
-                                  item.quantity + 1
-                                )
-                              }
-                              className="p-2 text-gray-600 hover:text-gray-900 hover:bg-white rounded-md transition-all shadow-sm"
-                            >
-                              <Plus className="h-4 w-4" />
-                            </button>
+                        <div className="flex justify-between items-end mt-4 sm:mt-0">
+                          <div>
+                            {appliedOffer > 0 ? (
+                              <div className="flex flex-col items-start bg-gray-50 p-2 rounded-lg">
+                                <span className="text-xs text-gray-400 line-through">
+                                  ₹{(basePrice / 100).toLocaleString()}
+                                </span>
+                                <span className="text-lg font-bold text-gray-900">
+                                  ₹ {(finalPrice / 100).toLocaleString()}
+                                </span>
+                                <span className="text-[10px] text-green-600 font-bold bg-green-100 px-1.5 py-0.5 rounded-full mt-0.5">
+                                  {appliedOffer}% OFF
+                                </span>
+                              </div>
+                            ) : (
+                              <div className="text-lg font-bold text-gray-900">
+                                ₹ {(basePrice / 100).toLocaleString()}
+                              </div>
+                            )}
                           </div>
-                          {errors[item.product?._id] && (
-                            <p className="text-red-500 text-xs font-medium">
-                              {errors[item.product?._id]}
-                            </p>
-                          )}
+
+                          <div className="flex flex-col items-end gap-1">
+                            <div className="flex items-center gap-3 bg-gray-50 rounded-lg p-1">
+                              <button
+                                onClick={() =>
+                                  handleUpdateQuantity(
+                                    isCustom ? item._id : item.product?._id,
+                                    item.quantity - 1
+                                  )
+                                }
+                                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-white rounded-md transition-all shadow-sm disabled:opacity-50"
+                                disabled={item.quantity <= 1}
+                              >
+                                <Minus className="h-4 w-4" />
+                              </button>
+                              <span className="text-sm font-semibold w-8 text-center">
+                                {item.quantity}
+                              </span>
+                              <button
+                                onClick={() =>
+                                  handleUpdateQuantity(
+                                    isCustom ? item._id : item.product?._id,
+                                    item.quantity + 1
+                                  )
+                                }
+                                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-white rounded-md transition-all shadow-sm"
+                              >
+                                <Plus className="h-4 w-4" />
+                              </button>
+                            </div>
+
+                            {errors[
+                              isCustom ? item._id : item.product?._id
+                            ] && (
+                              <p className="text-red-500 text-xs font-medium">
+                                {
+                                  errors[
+                                    isCustom ? item._id : item.product?._id
+                                  ]
+                                }
+                              </p>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Order Summary */}
@@ -275,7 +308,7 @@ const Cart = () => {
                         -₹{summary.discount.toLocaleString()}
                       </span>
                     </div>
-                     <div className="flex justify-between text-sm">
+                    <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Coupon</span>
                       <span className="font-medium text-green-600">
                         -₹{summary.couponDiscount.toLocaleString()}

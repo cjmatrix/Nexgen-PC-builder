@@ -31,16 +31,23 @@ const cartSchema = new mongoose.Schema(
           ref: "Product",
         },
 
-
-
-         isCustomBuild: {
+        isCustomBuild: {
           type: Boolean,
           default: false,
         },
-        
+        isAiBuild: {
+          type: Boolean,
+          default: false,
+        },
+
         customBuild: {
-          name: { type: String }, 
-          totalPrice: { type: Number }, 
+          name: { type: String },
+          totalPrice: { type: Number },
+          isAiBuild: {
+          type: Boolean,
+          default: false,
+          
+          },
           components: {
             cpu: { type: componentSnapshotSchema },
             gpu: { type: componentSnapshotSchema },
@@ -51,6 +58,7 @@ const cartSchema = new mongoose.Schema(
             psu: { type: componentSnapshotSchema },
             cooler: { type: componentSnapshotSchema },
           },
+          aiImages:{type:String}
         },
 
         quantity: {
@@ -79,7 +87,6 @@ const cartSchema = new mongoose.Schema(
 cartSchema.path("items").validate(function (items) {
   if (!items) return false;
   return items.every((item) => {
-
     if (item.isCustomBuild) {
       return item.customBuild && item.customBuild.totalPrice > 0;
     }

@@ -6,9 +6,11 @@ export const getCart = async (req, res) => {
 };
 
 export const addToCart = async (req, res) => {
-  const { productId, quantity } = req.body;
+ 
+  const { productId, quantity ,customBuild} = req.body;
+  
 
-  const result = await cartService.addToCart(req.user._id, productId, quantity);
+  const result = await cartService.addToCart(req.user._id, productId, quantity,customBuild);
   res.status(200).json({ success: true, ...result });
 };
 

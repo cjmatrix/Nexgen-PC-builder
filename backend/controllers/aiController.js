@@ -31,7 +31,7 @@ const aiController = async (req, res) => {
     id: c._id,
     name: c.name,
     category: c.category,
-    price: c.price,
+    price: c.price/100,
     specs: c.specs,
   }));
 
@@ -42,7 +42,7 @@ const aiController = async (req, res) => {
   }));
 
   const selectionPrompt = `
-      You are a PC building expert. A user wants: "${prompt}".
+      You are a PC building expert and component price in rupees. A user wants: "${prompt}".
       Available components are provided below in JSON format.
       
       Select the best compatible components (cpu, gpu, motherboard, ram, storage, case, psu, cooler) from the list.
@@ -92,99 +92,107 @@ const aiController = async (req, res) => {
   const componentIds = Object.values(buildData.components);
   const selectedComponents = components.filter((c) =>
     componentIds.includes(c._id.toString())
-  );
+  );  
 
   if (selectedComponents.length !== 8) {
     throw new AppError("AI selected incomplete components", 500);
   }
+
 
   selectedComponents.forEach((c) => (totalPrice += c.price));
 
   const imageUrls = [];
   console.log(selectedComponents.find((c) => c.category === "case")?.name);
 
-  try {
-    const basePrompt = `A photorealistic, high-quality image of a custom ${prompt} PC. 
-      Style: ${buildData.name}. 
-      Case: ${
-        selectedComponents.find((c) => c.category === "case")?.name ||
-        "Gaming Case"
-      }.
-      Cooler: ${
-        selectedComponents.find((c) => c.category === "cooler")?.name ||
-        "High Performance Cooler"
-      }.
-      Cpu:${selectedComponents.find((c) => c.category === "cpu")?.name}.
+  // try {
+  //   const basePrompt = `A photorealistic, high-quality image of a custom ${prompt} PC. 
+  //     Style: ${buildData.name}. 
+  //     Case: ${
+  //       selectedComponents.find((c) => c.category === "case")?.name ||
+  //       "Gaming Case"
+  //     }.
+  //     Cooler: ${
+  //       selectedComponents.find((c) => c.category === "cooler")?.name ||
+  //       "High Performance Cooler"
+  //     }.
+  //     Cpu:${selectedComponents.find((c) => c.category === "cpu")?.name}.
       
-      Ram:${selectedComponents.find((c) => c.category === "ram")?.name}.
-      Psu:${selectedComponents.find((c) => c.category === "psu")?.name}.
-      Motherboard:${
-        selectedComponents.find((c) => c.category === "motherboard")?.name
-      }.
+  //     Ram:${selectedComponents.find((c) => c.category === "ram")?.name}.
+  //     Psu:${selectedComponents.find((c) => c.category === "psu")?.name}.
+  //     Motherboard:${
+  //       selectedComponents.find((c) => c.category === "motherboard")?.name
+  //     }.
       
-      Lighting: RGB, dramatic, cinematic, 8k, detailed, realistic`;
+  //     Lighting: RGB, dramatic, cinematic, 8k, detailed, realistic`;
 
-    const angles = [
-      "Cinematic 3/4 View",
-      "Front View",
-      "Close-up Internal Components View",
-    ];
+  //   const angles = [
+  //     "Cinematic 3/4 View",
+  //     "Front View",
+  //     "Close-up Internal Components View",
+  //   ];
 
-    const imagePromises = angles.map(async (angle) => {
-      const finalPrompt = `${basePrompt}. ${angle}`;
-      const encodedPrompt = encodeURIComponent(finalPrompt);
-      const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?seed=${Math.floor(
-        Math.random() * 1000
-      )}&model=flux`;
+  //   const imagePromises = angles.map(async (angle) => {
+  //     const finalPrompt = `${basePrompt}. ${angle}`;
+  //     const encodedPrompt = encodeURIComponent(finalPrompt);
+  //     const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?seed=${Math.floor(
+  //       Math.random() * 1000
+  //     )}&model=flux`;
 
-      const response = await fetch(pollinationsUrl);
-      if (!response.ok) {
-        throw new Error(
-          `Pollinations API failed with status: ${response.status}`
-        );
-      }
+  //     const response = await fetch(pollinationsUrl);
+  //     if (!response.ok) {
+  //       throw new Error(
+  //         `Pollinations API failed with status: ${response.status}`
+  //       );
+  //     }
 
-      const arrayBuffer = await response.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-      return uploadToCloudinary(buffer);
-    });
+  //     const arrayBuffer = await response.arrayBuffer();
+  //     const buffer = Buffer.from(arrayBuffer);
+  //     return uploadToCloudinary(buffer);
+  //   });
 
-    const urls = await Promise.all(imagePromises);
-    imageUrls.push(...urls);
-  } catch (err) {
-    console.warn("Image generation failed, using fallback.", err.message);
+  //   const urls = await Promise.all(imagePromises);
+  //   imageUrls.push(...urls);
+  // } catch (err) {
+  //   console.warn("Image generation failed, using fallback.", err.message);
+
+  //   const caseComp = selectedComponents.find((c) => c.category === "case");
+  //   if (caseComp && caseComp.image) {
+  //     imageUrls.push(caseComp.image);
+  //   }
+  // }
+
 
     const caseComp = selectedComponents.find((c) => c.category === "case");
     if (caseComp && caseComp.image) {
       imageUrls.push(caseComp.image);
     }
-  }
 
   if (imageUrls.length === 0) {
     imageUrls.push("https://res.cloudinary.com/demo/image/upload/v1/sample");
   }
 
-  const newProduct = new Product({
+  const newProduct = {
     name: buildData.name,
     description: buildData.description,
     category: buildData.category,
     base_price: totalPrice,
     images: imageUrls,
-    default_config: buildData.components,
+    default_config: selectedComponents,
     isActive: true,
     is_ai_generated: true,
-  });
+    slug:
+      buildData.name.toLowerCase().split(" ").join("-") +
+      "-" +
+      Date.now() +
+      Math.floor(Math.random() * 1000),
+  };
 
-  const savedProduct = await newProduct.save();
+ 
 
-  const populatedProduct = await Product.findById(savedProduct._id).populate({
-    path: "default_config.cpu default_config.gpu default_config.motherboard default_config.ram default_config.storage default_config.case default_config.psu default_config.cooler",
-    select: "name price image specs",
-  });
 
   res.status(201).json({
     success: true,
-    product: populatedProduct,
+    product:newProduct,
   });
 };
 

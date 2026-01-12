@@ -55,9 +55,11 @@ const orderSchema = new mongoose.Schema(
 
         product: {
           type: mongoose.Schema.Types.ObjectId,
-          required: true,
+          required: false, // Changed from true to false for Custom Builds
           ref: "Product",
         },
+        isCustomBuild: { type: Boolean, default: false },
+        isAiBuild: { type: Boolean, default: false },
 
         components: {
           cpu: { type: componentSnapshotSchema, required: true },
@@ -69,6 +71,7 @@ const orderSchema = new mongoose.Schema(
           psu: { type: componentSnapshotSchema, required: true },
           cooler: { type: componentSnapshotSchema, required: true },
         },
+        aiImages: { type: String },
       },
     ],
 

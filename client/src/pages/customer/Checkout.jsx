@@ -259,12 +259,12 @@ const Checkout = () => {
   };
 
   const createPaypalOrder = async (data, actions) => {
-    paypalValidationFailed.current = false; 
+    paypalValidationFailed.current = false;
     try {
       const response = await api.get("/cart/validate");
     } catch (error) {
       console.log("Validation failed");
-      paypalValidationFailed.current = true; 
+      paypalValidationFailed.current = true;
       setModalConfig({
         isOpen: true,
         type: "error",
@@ -375,64 +375,80 @@ const Checkout = () => {
       <div className="lg:col-span-2 space-y-6">
         <h2 className="text-xl font-bold text-gray-900">Review Items</h2>
         <div className="space-y-4">
-          {items.map((item) => (
-            <div
-              key={item._id}
-              className="flex gap-4 p-4 bg-white border border-gray-100 rounded-xl"
-            >
-              <div className="h-20 w-20 shrink-0 bg-gray-100 rounded-md overflow-hidden">
-                <img
-                  src={item.product?.images?.[0] || "https://placehold.co/100"}
-                  alt={item.product.name}
-                  className="h-full w-full object-cover"
-                />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-bold text-gray-900">{item.product.name}</h3>
-                <p className="text-sm text-gray-500 line-clamp-1">
-                  {item.product.description}
-                </p>
-                <div className="flex justify-between items-center mt-2">
-                  <span className="text-sm font-medium text-gray-500">
-                    Qty: {item.quantity}
-                  </span>
-                  <div className="text-right">
-                    {item.product?.applied_offer > 0 ? (
-                      <div className="flex flex-col items-end">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-gray-400 line-through">
-                            ₹
-                            {(
-                              (item.product?.base_price * item.quantity) /
-                              100
-                            ).toLocaleString()}
-                          </span>
-                          <span className="font-bold text-gray-900">
-                            ₹
-                            {(
-                              (item.product?.final_price * item.quantity) /
-                              100
-                            ).toLocaleString()}
+          {items.map((item) => {
+            const isCustom = item.isCustomBuild;
+            const name = isCustom ? item.customBuild.name : item.product?.name;
+            const image = isCustom
+              ? "/custom-pc.png"
+              : item.product?.images?.[0] || "https://placehold.co/100";
+            const description = isCustom
+              ? "Custom Configuration"
+              : item.product?.description;
+
+            const basePrice = isCustom
+              ? item.customBuild.totalPrice
+              : item.product?.base_price;
+            const finalPrice = isCustom
+              ? item.customBuild.totalPrice
+              : item.product?.final_price;
+            const appliedOffer = isCustom ? 0 : item.product?.applied_offer;
+
+            return (
+              <div
+                key={item._id}
+                className="flex gap-4 p-4 bg-white border border-gray-100 rounded-xl"
+              >
+                <div className="h-20 w-20 shrink-0 bg-gray-100 rounded-md overflow-hidden">
+                  <img
+                    src={image}
+                    alt={name}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-bold text-gray-900">{name}</h3>
+                  <p className="text-sm text-gray-500 line-clamp-1">
+                    {description}
+                  </p>
+                  <div className="flex justify-between items-center mt-2">
+                    <span className="text-sm font-medium text-gray-500">
+                      Qty: {item.quantity}
+                    </span>
+                    <div className="text-right">
+                      {appliedOffer > 0 ? (
+                        <div className="flex flex-col items-end">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-400 line-through">
+                              ₹
+                              {(
+                                (basePrice * item.quantity) /
+                                100
+                              ).toLocaleString()}
+                            </span>
+                            <span className="font-bold text-gray-900">
+                              ₹
+                              {(
+                                (finalPrice * item.quantity) /
+                                100
+                              ).toLocaleString()}
+                            </span>
+                          </div>
+                          <span className="text-[10px] text-green-600 font-bold bg-green-100 px-1.5 py-0.5 rounded-full mt-1">
+                            {appliedOffer}% OFF
                           </span>
                         </div>
-                        <span className="text-[10px] text-green-600 font-bold bg-green-100 px-1.5 py-0.5 rounded-full mt-1">
-                          {item.product?.applied_offer}% OFF
+                      ) : (
+                        <span className="font-bold text-gray-900">
+                          ₹
+                          {((basePrice * item.quantity) / 100).toLocaleString()}
                         </span>
-                      </div>
-                    ) : (
-                      <span className="font-bold text-gray-900">
-                        ₹
-                        {(
-                          (item.product?.base_price * item.quantity) /
-                          100
-                        ).toLocaleString()}
-                      </span>
-                    )}
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
@@ -594,7 +610,7 @@ const Checkout = () => {
                       onApprove={onApprove}
                       onError={(err) => {
                         console.error("PayPal Error:", err);
-                       
+
                         if (!paypalValidationFailed.current) {
                           showModal({
                             type: "error",

@@ -26,7 +26,7 @@ import CategoryManagement from "./pages/admin/admin pages/CategoryManagement";
 import CategoryForm from "./pages/admin/admin pages/CategoryForm";
 import CouponManagement from "./pages/admin/admin pages/CouponManagement";
 import CouponForm from "./pages/admin/admin pages/CouponForm";
-import PCBuilder from "./pages/customer/PCBuilder";
+import PCBuilder from "./pages/customer/PCBuilder/PCBuilder";
 import ProductManagement from "./pages/admin/admin pages/ProductManagement";
 import OrderManagement from "./pages/admin/admin pages/OrderManagement";
 import AddProductForm from "./pages/admin/admin pages/ProductForm";
