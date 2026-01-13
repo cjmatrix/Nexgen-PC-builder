@@ -11,17 +11,29 @@ export const generatePCBuild = createAsyncThunk(
       return response.data;
     } catch (error) {
       let errorMessage = error.message;
-      if (error.response && error.response.data) {
-        
-        if (error.response.data.error && error.response.data.error.message) {
-          errorMessage = error.response.data.error.message;
-        } else if (error.response.data.message) {
-          errorMessage = error.response.data.message;
-        } else if (typeof error.response.data === "string") {
-          errorMessage = error.response.data;
+if (error.response?.data) {
+    
+    if (typeof error.response.data.message === 'object') {
+       console.log (error.response.data)
+        errorMessage = error.response.data.error?.message || error.response.data.message || JSON.stringify(error.response.data);
+    } 
+    // 2. If it's a string, TRY to parse it as JSON
+    else if (typeof error.response.data.message === "string") {
+        try {
+         
+          
+            const parsed = JSON.parse(error.response.data.message);
+           
+            errorMessage = parsed.error.message;
+            return rejectWithValue(errorMessage);
+        } catch (e) {
+           
+            errorMessage = error.response.data;
         }
-      }
-      return rejectWithValue(errorMessage);
+    }
+}
+console.log(errorMessage)
+return rejectWithValue(errorMessage);
     }
   }
 );

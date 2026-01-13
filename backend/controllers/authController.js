@@ -155,7 +155,7 @@ const adminLogin = async (req, res) => {
 };
 
 const adminLogout = async (req, res) => {
-  // Ideally, invalidate refresh token in DB if you track them
+
   const { adminRefreshToken } = req.cookies;
   await authService.logoutUser(adminRefreshToken);
 
@@ -188,7 +188,7 @@ const refreshAdminToken = async (req, res) => {
       httpOnly: true,
       expires: new Date(0),
     });
-    throw error; // Let global error handler catch it
+    throw error; 
   }
 };
 

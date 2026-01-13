@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import sendEmail from "../utils/sendEmail.js";
 import crypto from "crypto";
 import AppError from "../utils/AppError.js";
+import { addEmailJob } from "../queues/emailQueue.js";
 
 const generateTokens = async (userId) => {
   const accessToken = jwt.sign(
@@ -110,17 +111,19 @@ const registerUser = async (userData) => {
   }
 
   try {
-    await sendEmail({
+    
+    await addEmailJob({
       email: user.email,
       subject: "NexGen PC Builder - Verify Your Email",
       message: `Your verification code is: ${otp}. It expires in 10 minutes.`,
-    });
+    })
+
   } catch (error) {
     console.error("Email send failed:", error);
     throw new AppError("Email could not be sent", 500);
   }
 
-  return { message: "OTP sent to email" };
+  return { message: "Registration successful! We are sending your confirmation email shortly." };
 };
 
 const verifyOTP = async (email, otp) => {
