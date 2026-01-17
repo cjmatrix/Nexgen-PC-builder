@@ -235,7 +235,10 @@ const refreshAccessToken = async (incomingRefreshToken) => {
     process.env.REFRESH_TOKEN_SECRET
   );
   const user = await User.findOne({ _id: decoded.id }).select("+refreshTokens");
-
+    if (user.status !== 'active') {
+      throw new AppError("Your account is suspended", 403);
+    }
+  
   if (!user || !user.refreshTokens.includes(incomingRefreshToken)) {
     if (user) {
       user.refreshTokens = [];

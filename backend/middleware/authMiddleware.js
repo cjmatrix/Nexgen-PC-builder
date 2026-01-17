@@ -12,7 +12,7 @@ const protect = async (req, res, next) => {
 
       req.user = await User.findById(decoded.id);
 
-      if (!req.user || !req.user.status === "active") {
+      if (!req.user || req.user.status !== "active") {
         return res
           .status(401)
           .json({ message: "Not authorized, user not found" });

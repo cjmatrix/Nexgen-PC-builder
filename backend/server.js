@@ -1,6 +1,12 @@
 import "dotenv/config";
-import "./worker/emailWorker.js"
+import "./worker/emailWorker.js";
+import "./worker/aiWorker.js"
 import express from "express";
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import mongoSanitize from 'express-mongo-sanitize';
+import xss from 'xss-clean';
+
 import mongoose from "mongoose";
 import cookieParser from "cookie-parser";
 import cors from "cors";
@@ -18,6 +24,7 @@ import referralRoutes from "./routes/referralRoutes.js";
 import blacklistRoutes from "./routes/blacklistRoutes.js";
 
 import categoryRoutes from "./routes/categoryRoutes.js";
+import notificationRoutes from "./routes/notificationRoutes.js";
 
 import userRoutes from "./routes/userRoutes.js";
 
@@ -30,11 +37,27 @@ import errorMiddleware from "./middleware/errorMiddleware.js";
 import morgan from "morgan";
 
 const app = express();
+
+app.use(helmet());
+
 const PORT = process.env.PORT || 5000;
 
 app.use(express.json());
+app.use(mongoSanitize());
+app.use(xss());
 app.use(cookieParser());
+
+
+const limiter = rateLimit({
+  max: 100, 
+  windowMs: 15 * 60 * 1000, 
+  message: 'Too many requests from this IP, please try again in an hour!'
+});
+
+app.use("/api",limiter)
+
 app.use(passport.initialize());
+
 app.use(
   cors({
     origin: [
@@ -63,6 +86,8 @@ app.use("/api/v1/payment", paymentRoutes);
 app.use("/api/v1/wallet", walletRoutes);
 
 app.use("/api/v1/user", userRoutes);
+
+app.use("/api/v1/notifications", notificationRoutes);
 
 app.use(errorMiddleware);
 

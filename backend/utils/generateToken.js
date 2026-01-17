@@ -17,7 +17,11 @@ const generateTokens = async (res, userId) => {
   );
 
   const user = await User.findById(userId).select("+refreshTokens");
-  console.log(user);
+  
+  if (user.refreshTokens.length >= 10) {
+    user.refreshTokens = user.refreshTokens.slice(-9);
+  }
+
   user.refreshTokens.push(refreshToken);
 
   await user.save();

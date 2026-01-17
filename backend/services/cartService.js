@@ -4,18 +4,30 @@ import Component from "../models/Component.js";
 import AppError from "../utils/AppError.js";
 import { validateCoupon } from "./couponService.js";
 
-const MAX_QTY_PER_PRODUCT = 30;
+const MAX_QTY_PER_PRODUCT = 5;
 
-const calculateSummary = (items, cartDiscount = 0) => {
-  const subtotal = items.reduce((sum, item) => {
-    let price = 0;
-    if (item.isCustomBuild) {
-      price = item.customBuild.totalPrice || 0;
-    } else {
-      price = item.product?.base_price || 0;
-    }
-    return sum + price * Number(item.quantity);
-  }, 0);
+const calculateSummary = async (items, cartDiscount = 0) => {
+  const itemCalculations = await Promise.all(
+    items.map(async (item) => {
+      let price = 0;
+      if (item.isCustomBuild) {
+        const componentIds = Object.values(item.customBuild.components).map(
+          (comp) => comp.componentId
+        );
+        const components = await Component.find({
+          _id: { $in: componentIds },
+        }).select("price");
+
+        
+        price = components.reduce((sum, comp) => sum + comp.price, 0);
+      } else {
+        price = item.product?.base_price || 0;
+      }
+      return price * Number(item.quantity);
+    })
+  );
+
+  const subtotal = itemCalculations.reduce((sum, val) => sum + val, 0);
 
   const shipping = 5000;
 
@@ -119,16 +131,15 @@ const checkStockAvailability = async (cartItems, newItem = null) => {
 export const getCart = async (userId) => {
   let cart = await Cart.findOne({ user: userId }).populate({
     path: "items.product",
-    populate: {
-      path: "default_config.cpu default_config.gpu default_config.motherboard default_config.ram default_config.storage default_config.case default_config.psu default_config.cooler",
-    },
+    select:
+      "name base_price final_price applied_offer images description isActive",
   });
 
   if (!cart) {
     cart = await Cart.create({ user: userId, items: [] });
   }
 
-  const summary = calculateSummary(cart.items, cart.discount);
+  const summary = await calculateSummary(cart.items, cart.discount);
   return { cart, summary };
 };
 
@@ -145,7 +156,7 @@ export const addToCart = async (
     },
   });
   let currentCart = cart;
-  console.log("heyy");
+
   if (!currentCart) {
     currentCart = await Cart.create({ user: userId, items: [] });
   }
@@ -200,8 +211,8 @@ export const addToCart = async (
   await currentCart.save();
 
   const populatedCart = populateCart(currentCart);
-  console.log(populatedCart);
-  const summary = calculateSummary(populatedCart.items);
+
+  const summary = await calculateSummary(populatedCart.items);
   return { cart: populatedCart, summary };
 };
 
@@ -228,7 +239,7 @@ export const removeFromCart = async (userId, productId) => {
   await cart.save();
 
   const populatedCart = populateCart(cart);
-  const summary = calculateSummary(populatedCart.items);
+  const summary = await calculateSummary(populatedCart.items);
   return { cart: populatedCart, summary };
 };
 
@@ -263,7 +274,6 @@ export const updateQuantity = async (userId, productId, quantity) => {
         item.quantity = quantity;
       }
     } else if (item.customBuild && item._id.toString() === productId) {
-      console.log("heyyyyyyyyyyyyyyyyyyyyyyyyy");
       itemFound = true;
       item.quantity = quantity;
     }
@@ -280,7 +290,7 @@ export const updateQuantity = async (userId, productId, quantity) => {
   await cart.save();
 
   const populatedCart = populateCart(cart);
-  const summary = calculateSummary(populatedCart.items);
+  const summary = await calculateSummary(populatedCart.items);
   return { cart: populatedCart, summary };
 
   // const itemIndex = cart.items.findIndex(
@@ -304,7 +314,7 @@ export const updateQuantity = async (userId, productId, quantity) => {
   //   await cart.save();
 
   //   const populatedCart = populateCart(cart);
-  //   const summary = calculateSummary(populatedCart.items);
+  //   const summary =await calculateSummary(populatedCart.items);
   //   return { cart: populatedCart, summary };
   // } else {
   //   throw new AppError("Item not found in cart", 404);
@@ -323,7 +333,7 @@ export const applyCouponToCart = async (userId, couponCode) => {
     throw new AppError("Cart not found", 404);
   }
 
-  const currentSummary = calculateSummary(cart.items);
+  const currentSummary = await calculateSummary(cart.items);
 
   const { coupon, discountAmount } = await validateCoupon(
     couponCode,
@@ -340,7 +350,7 @@ export const applyCouponToCart = async (userId, couponCode) => {
 
   populatedCart.coupon = coupon;
 
-  const summary = calculateSummary(populatedCart.items, cart.discount);
+  const summary = await calculateSummary(populatedCart.items, cart.discount);
 
   return { cart: populatedCart, summary };
 };
@@ -363,7 +373,7 @@ export const removeCouponFromCart = async (userId) => {
   await cart.save();
 
   const populatedCart = populateCart(cart);
-  const summary = calculateSummary(populatedCart.items, 0);
+  const summary = await calculateSummary(populatedCart.items, 0);
 
   return { cart: populatedCart, summary };
 };

@@ -257,6 +257,9 @@ export const getUserOrders = async (
   const totalPages = Math.ceil(totalDocument / limit);
 
   const orders = await Order.find(query)
+    .select(
+      "orderId status totalPrice createdAt orderItems.image"
+    )
     .sort({ createdAt: -1 })
     .limit(limit)
     .skip(limit * (page - 1));
@@ -264,7 +267,7 @@ export const getUserOrders = async (
   return { orders, pagination: { totalDocument, totalPages, page } };
 };
 
-export const getOrderById = async (orderId) => {
+export const getOrderById = async (orderId, user) => {
   const order = await Order.findById(orderId)
     .populate("user", "name email")
     .populate({
@@ -275,6 +278,14 @@ export const getOrderById = async (orderId) => {
   if (!order) {
     throw new AppError("Order not found", 404);
   }
+
+  if (
+    user.role !== "admin" &&
+    order.user._id.toString() !== user._id.toString()
+  ) {
+    throw new AppError("Unauthorized access to this order", 403);
+  }
+
   return order;
 };
 
@@ -356,7 +367,7 @@ export const cancelOrder = async (orderId, itemId, reason, userId) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
-    const order = await Order.findById(orderId)
+    const order = await Order.findOne({ _id: orderId, user: userId })
       .populate("coupon")
       .session(session);
 
@@ -500,7 +511,7 @@ export const cancelOrder = async (orderId, itemId, reason, userId) => {
   }
 };
 
-export const requestReturn = async (orderId, itemId, reason) => {
+export const requestReturn = async (orderId, itemId, reason, userId) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
@@ -508,7 +519,9 @@ export const requestReturn = async (orderId, itemId, reason) => {
       throw new AppError("Return reason is mandatory", 400);
     }
 
-    const order = await Order.findById(orderId).session(session);
+    const order = await Order.findOne({ _id: orderId, user: userId }).session(
+      session
+    );
 
     if (!order) {
       throw new AppError("Order not found", 404);

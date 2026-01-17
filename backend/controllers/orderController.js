@@ -20,7 +20,7 @@ export const getMyOrders = async (req, res) => {
 };
 
 export const getOrderById = async (req, res) => {
-  const order = await orderService.getOrderById(req.params.id);
+  const order = await orderService.getOrderById(req.params.id, req.user);
   res.json(order);
 };
 
@@ -60,7 +60,8 @@ export const requestReturn = async (req, res) => {
   const updatedOrder = await orderService.requestReturn(
     req.params.id,
     itemId,
-    reason
+    reason,
+    req.user._id
   );
   res.json(updatedOrder);
 };

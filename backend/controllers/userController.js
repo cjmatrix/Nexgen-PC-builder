@@ -10,7 +10,9 @@ import {
 import AppError from "../utils/AppError.js";
 
 const getProfile = async (req, res) => {
-  const profile = await User.findById(req.user._id);
+  const profile = await User.findById(req.user._id).select(
+    "name email passwordChangedAt"
+  );
 
   res.status(200).json({ success: true, profile });
 };

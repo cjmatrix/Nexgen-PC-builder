@@ -11,11 +11,9 @@ const createProduct = async (productData) => {
   productData.discount =
     productData.discount !== undefined ? productData.discount : 0;
 
- 
   const category = await Category.findById(productData.category);
- 
-  if (!category) throw new AppError("Unmatched category", 400);
 
+  if (!category) throw new AppError("Unmatched category", 400);
 
   productData.category = category._id;
 
@@ -69,19 +67,15 @@ const getAdminProducts = async (page, limit, search, category, status) => {
 const getPublicProducts = async ({ page, limit, search, category, sort }) => {
   let sortLogic = { createdAt: -1 };
 
-
   const activeCategories = await Category.find({ isActive: true });
   const activeCategoryIds = activeCategories.map((cat) => cat._id);
-
 
   const query = {
     isActive: true,
     category: { $in: activeCategoryIds },
   };
 
- 
   if (category) {
-   
     const requestedCategory = activeCategories.find(
       (cat) => cat.name === category
     );
@@ -89,7 +83,6 @@ const getPublicProducts = async ({ page, limit, search, category, sort }) => {
     if (requestedCategory) {
       query.category = requestedCategory._id;
     } else {
-     
       return {
         products: [],
         total: 0,
@@ -113,26 +106,25 @@ const getPublicProducts = async ({ page, limit, search, category, sort }) => {
     }
   }
 
-
   const total = await Product.countDocuments(query);
   const products = await Product.find(query)
-    .populate("category", "name") 
+    .select(
+      "name slug final_price base_price images category isActive discount description applied_offer default_config"
+    )
+    .populate("category", "name")
     .populate([
-      { path: "default_config.cpu", select: "name isActive" },
-      { path: "default_config.gpu", select: "name isActive" },
-      { path: "default_config.motherboard", select: "name isActive" },
-      { path: "default_config.ram", select: "name isActive" },
-      { path: "default_config.storage", select: "name isActive" },
-      { path: "default_config.case", select: "name isActive"  },
-      { path: "default_config.psu", select: "name isActive" },
-      { path: "default_config.cooler", select: "name isActive" },
+      { path: "default_config.cpu", select: "stock isActive" },
+      { path: "default_config.gpu", select: "stock isActive" },
+      { path: "default_config.motherboard", select: "stock isActive" },
+      { path: "default_config.ram", select: "stock isActive" },
+      { path: "default_config.storage", select: "stock isActive" },
+      { path: "default_config.case", select: "stock isActive" },
+      { path: "default_config.psu", select: "stock isActive" },
+      { path: "default_config.cooler", select: "stock isActive" },
     ])
     .sort(sortLogic)
     .limit(limit)
     .skip((page - 1) * limit);
-
-   
-    
 
   return {
     products,
@@ -177,17 +169,14 @@ const updateProduct = async (id, updateData) => {
   let category;
 
   if (updateData.category) {
-
-      category = await Category.findById(updateData.category);
-      console.log(category)
+    category = await Category.findById(updateData.category);
+    console.log(category);
     if (!category)
       throw new AppError(`Category ${updateData.category} not found`, 404);
   } else {
-   
     category = await Category.findById(product.category);
     if (!category) throw new AppError("Original Category not found", 404);
   }
-
 
   if (updateData.category) {
     updateData.category = category._id;
