@@ -1,11 +1,11 @@
 import "dotenv/config";
 import "./worker/emailWorker.js";
-import "./worker/aiWorker.js"
+import "./worker/aiWorker.js";
 import express from "express";
-import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
-import mongoSanitize from 'express-mongo-sanitize';
-import xss from 'xss-clean';
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
+import mongoSanitize from "express-mongo-sanitize";
+import { xss } from "express-xss-sanitizer";
 
 import mongoose from "mongoose";
 import cookieParser from "cookie-parser";
@@ -43,18 +43,29 @@ app.use(helmet());
 const PORT = process.env.PORT || 5000;
 
 app.use(express.json());
-app.use(mongoSanitize());
+app.use((req, res, next) => {
+  if (req.body) req.body = mongoSanitize.sanitize(req.body);
+  if (req.params) req.params = mongoSanitize.sanitize(req.params);
+  if (req.query) {
+    const sanitizedQuery = mongoSanitize.sanitize(req.query);
+   
+    for (const key in req.query) {
+      delete req.query[key];
+    }
+    Object.assign(req.query, sanitizedQuery);
+  }
+  next();
+});
 app.use(xss());
 app.use(cookieParser());
 
+// const limiter = rateLimit({
+//   max: 100,
+//   windowMs: 15 * 60 * 1000,
+//   message: "Too many requests from this IP, please try again in an hour!",
+// });
 
-const limiter = rateLimit({
-  max: 100, 
-  windowMs: 15 * 60 * 1000, 
-  message: 'Too many requests from this IP, please try again in an hour!'
-});
-
-app.use("/api",limiter)
+// app.use("/api", limiter);
 
 app.use(passport.initialize());
 

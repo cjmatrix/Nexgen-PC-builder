@@ -1,5 +1,7 @@
 import * as authService from "../services/authService.js";
 import AppError from "../utils/AppError.js";
+import { HTTP_STATUS } from "../constants/httpStatus.js";
+import { MESSAGES } from "../constants/responseMessages.js";
 
 const setCookies = (res, accessToken, refreshToken) => {
   res.cookie("accessToken", accessToken, {
@@ -18,14 +20,14 @@ const setCookies = (res, accessToken, refreshToken) => {
 
 const register = async (req, res) => {
   const result = await authService.registerUser(req.body);
-  res.status(200).json(result);
+  res.status(HTTP_STATUS.OK).json(result);
 };
 
 const verifyOTP = async (req, res) => {
   const { email, otp } = req.body;
   const { user } = await authService.verifyOTP(email, otp);
 
-  res.status(200).json({
+  res.status(HTTP_STATUS.OK).json({
     _id: user._id,
     name: user.name,
     email: user.email,
@@ -36,7 +38,7 @@ const verifyOTP = async (req, res) => {
 const resendOTP = async (req, res) => {
   const { email } = req.body;
   const result = await authService.resendOTP(email);
-  res.status(200).json(result);
+  res.status(HTTP_STATUS.OK).json(result);
 };
 
 const login = async (req, res) => {
@@ -48,7 +50,7 @@ const login = async (req, res) => {
 
   setCookies(res, accessToken, refreshToken);
 
-  res.status(200).json({
+  res.status(HTTP_STATUS.OK).json({
     _id: user._id,
     name: user.name,
     email: user.email,
@@ -59,24 +61,22 @@ const login = async (req, res) => {
 const logout = async (req, res) => {
   const { refreshToken } = req.cookies;
   await authService.logoutUser(refreshToken);
-
+  
   res.cookie("accessToken", "", { httpOnly: true, expires: new Date(0) });
   res.cookie("refreshToken", "", { httpOnly: true, expires: new Date(0) });
-
-  res.status(200).json({ message: "Logged out successfully" });
+  console.log("user logout success")
+  res.status(HTTP_STATUS.OK).json({ message: MESSAGES.AUTH.LOGOUT_SUCCESS });
 };
 
 const refreshToken = async (req, res) => {
   try {
-   
-
     const { refreshToken } = req.cookies;
     const { newAccessToken, newRefreshToken } =
       await authService.refreshAccessToken(refreshToken);
 
     setCookies(res, newAccessToken, newRefreshToken);
 
-    res.status(200).json({ message: "Refreshed" });
+    res.status(HTTP_STATUS.OK).json({ message: MESSAGES.AUTH.REFRESH_SUCCESS });
   } catch (error) {
     res.cookie("accessToken", "", { httpOnly: true, expires: new Date(0) });
     res.cookie("refreshToken", "", { httpOnly: true, expires: new Date(0) });
@@ -91,20 +91,20 @@ const getProfile = async (req, res) => {
     email: req.user.email,
     role: req.user.role,
   };
-  res.status(200).json(user);
+  res.status(HTTP_STATUS.OK).json(user);
 };
 
 const forgotPassword = async (req, res) => {
   const { email } = req.body;
   const result = await authService.forgotPassword(email);
-  res.status(200).json(result);
+  res.status(HTTP_STATUS.OK).json(result);
 };
 
 const resetPassword = async (req, res) => {
   const { resetToken } = req.params;
   const { password } = req.body;
   const result = await authService.resetPassword(resetToken, password);
-  res.status(200).json(result);
+  res.status(HTTP_STATUS.OK).json(result);
 };
 
 const changePassword = async (req, res) => {
@@ -114,7 +114,7 @@ const changePassword = async (req, res) => {
     currentPassword,
     newPassword
   );
-  res.status(200).json(result);
+  res.status(HTTP_STATUS.OK).json(result);
 };
 
 // --- Admin Auth Functions ---
@@ -142,13 +142,13 @@ const adminLogin = async (req, res) => {
   );
 
   if (user.role !== "admin") {
-    res.status(401);
-    throw new Error("Not authorized as an admin");
+    res.status(HTTP_STATUS.UNAUTHORIZED);
+    throw new Error(MESSAGES.AUTH.ADMIN_UNAUTHORIZED);
   }
 
   setAdminCookies(res, accessToken, refreshToken);
 
-  res.status(200).json({
+  res.status(HTTP_STATUS.OK).json({
     _id: user._id,
     name: user.name,
     email: user.email,
@@ -157,14 +157,15 @@ const adminLogin = async (req, res) => {
 };
 
 const adminLogout = async (req, res) => {
-
   const { adminRefreshToken } = req.cookies;
   await authService.logoutUser(adminRefreshToken);
 
   res.cookie("adminAccessToken", "", { httpOnly: true, expires: new Date(0) });
   res.cookie("adminRefreshToken", "", { httpOnly: true, expires: new Date(0) });
 
-  res.status(200).json({ message: "Admin logged out successfully" });
+  res
+    .status(HTTP_STATUS.OK)
+    .json({ message: MESSAGES.AUTH.ADMIN_LOGOUT_SUCCESS });
 };
 
 const refreshAdminToken = async (req, res) => {
@@ -172,15 +173,17 @@ const refreshAdminToken = async (req, res) => {
     const { adminRefreshToken } = req.cookies;
     if (!adminRefreshToken) {
       return res
-        .status(401)
-        .json({ message: "Not authorized, no refresh token" });
+        .status(HTTP_STATUS.UNAUTHORIZED)
+        .json({ message: MESSAGES.AUTH.NO_REFRESH_TOKEN });
     }
     const { newAccessToken, newRefreshToken } =
       await authService.refreshAccessToken(adminRefreshToken);
 
     setAdminCookies(res, newAccessToken, newRefreshToken);
 
-    res.status(200).json({ message: "Admin token refreshed" });
+    res
+      .status(HTTP_STATUS.OK)
+      .json({ message: MESSAGES.AUTH.ADMIN_REFRESH_SUCCESS });
   } catch (error) {
     res.cookie("adminAccessToken", "", {
       httpOnly: true,
@@ -190,7 +193,7 @@ const refreshAdminToken = async (req, res) => {
       httpOnly: true,
       expires: new Date(0),
     });
-    throw error; 
+    throw error;
   }
 };
 
@@ -201,7 +204,7 @@ const getAdminProfile = async (req, res) => {
     email: req.user.email,
     role: req.user.role,
   };
-  res.status(200).json(user);
+  res.status(HTTP_STATUS.OK).json(user);
 };
 
 export {

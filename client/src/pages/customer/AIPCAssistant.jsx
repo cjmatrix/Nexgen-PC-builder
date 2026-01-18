@@ -15,32 +15,34 @@ import { MdOutlineSdStorage } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import api from "../../api/axios";
 import Swal from "sweetalert2";
-
-let resetTimer = null;
+import { toast } from "react-toastify";
+import { setShowPromptBar } from "../../store/slices/aiSlice";
+import { showCustomToast } from "../../utils/toastUtils";
+import AIBuildLoader from "../../components/AIBuildLoader";
 
 const AIPCAssistant = () => {
   const [prompt, setPrompt] = useState("");
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { loading, aiBuild, error } = useSelector((state) => state.ai);
+  const { loading, aiBuild, error, success, showPromptBar } = useSelector(
+    (state) => state.ai
+  );
+
 
   useEffect(() => {
-    if (resetTimer) {
-      clearTimeout(resetTimer);
-      resetTimer = null;
-    }
-    return () => {
-      resetTimer = setTimeout(() => {
-        dispatch(resetAIState());
-        resetTimer = null;
-      }, 5 * 60 * 1000);
-    };
+    // return () => dispatch(resetAIState());
   }, [dispatch]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (prompt.trim()) {
-      dispatch(generatePCBuild(prompt));
+      try {
+        const data = await dispatch(generatePCBuild(prompt)).unwrap();
+        dispatch(setShowPromptBar(false));
+        showCustomToast(data?.message);
+      } catch (err) {
+        console.log(err);
+      }
     }
   };
 
@@ -141,45 +143,48 @@ const AIPCAssistant = () => {
         </div>
 
         {/* Input Section */}
-        <div className="bg-white rounded-2xl shadow-xl p-8 transition-all hover:shadow-2xl">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">
-            Describe your ideal PC
-          </h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <textarea
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              placeholder="For example: 'I need a high-end gaming PC for 4K streaming and video editing. My budget is around ₹1,50,000.'"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none resize-none h-32 text-gray-700 placeholder-gray-400"
-              disabled={loading}
-            />
-            <button
-              type="submit"
-              disabled={loading || !prompt.trim()}
-              className={`w-full py-4 px-6 rounded-xl text-white font-bold text-lg transition-all transform hover:scale-[1.02] active:scale-[0.98] ${
-                loading
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-[#0f172a] hover:bg-[#1e293b] shadow-lg hover:shadow-xl"
-              }`}
-            >
-              {loading ? (
-                <div className="flex items-center justify-center space-x-2">
-                  <div className="w-5 h-5 border-t-2 border-b-2 border-white rounded-full animate-spin"></div>
-                  <span>Generating Recommendation...</span>
-                </div>
-              ) : (
-                "Generate Recommendation"
-              )}
-            </button>
-          </form>
-          {error && (
-            <div className="mt-4 p-4 bg-red-50 text-red-600 rounded-lg border border-red-100 flex items-center">
-              <span className="font-medium">Error:</span>&nbsp;{error}
-            </div>
-          )}
-        </div>
+        {showPromptBar && (
+          <div className="bg-white rounded-2xl shadow-xl p-8 transition-all hover:shadow-2xl">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">
+              Describe your ideal PC
+            </h2>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <textarea
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder="For example: 'I need a high-end gaming PC for 4K streaming and video editing. My budget is around ₹1,50,000.'"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none resize-none h-32 text-gray-700 placeholder-gray-400"
+                disabled={loading}
+              />
+              <button
+                type="submit"
+                disabled={loading || !prompt.trim()}
+                className={`w-full py-4 px-6 rounded-xl text-white font-bold text-lg transition-all transform hover:scale-[1.02] active:scale-[0.98] ${
+                  loading
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-[#0f172a] hover:bg-[#1e293b] shadow-lg hover:shadow-xl"
+                }`}
+              >
+                {loading ? (
+                  <div className="flex items-center justify-center space-x-2">
+                    <div className="w-5 h-5 border-t-2 border-b-2 border-white rounded-full animate-spin"></div>
+                    <span>Generating Recommendation...</span>
+                  </div>
+                ) : (
+                  "Generate Recommendation"
+                )}
+              </button>
+            </form>
+            {error && (
+              <div className="mt-4 p-4 bg-red-50 text-red-600 rounded-lg border border-red-100 flex items-center">
+                <span className="font-medium">Error:</span>&nbsp;{error}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Result Section */}
+        {!aiBuild && success && <AIBuildLoader />}
         {aiBuild && (
           <div className="space-y-8 animate-fade-in-up">
             <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">

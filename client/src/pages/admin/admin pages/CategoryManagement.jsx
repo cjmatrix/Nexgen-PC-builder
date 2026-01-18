@@ -17,33 +17,28 @@ const CategoryManagement = () => {
     type: "info",
     onConfirm: null,
   });
-  
 
-  const [status,setStatus]=useState("");
-  const [page,setPage]=useState(1)
+  const [status, setStatus] = useState("");
+  const [page, setPage] = useState(1);
   const closeModal = () => {
     setModal((prev) => ({ ...prev, isOpen: false }));
   };
 
   const [searchInput, setSearchInput] = useState("");
 
-  console.log(status)
-  const {
-    data,
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ["adminCategory", searchInput,page,status],
+  console.log(status);
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["adminCategory", searchInput, page, status],
     queryFn: async () => {
       const response = await api.get("/admin/category", {
         params: {
           search: searchInput,
           page,
-          limit:3,
-          status
+          limit: 3,
+          status,
         },
       });
-      console.log(response.data)
+      console.log(response.data);
       return response.data;
     },
   });
@@ -51,10 +46,11 @@ const CategoryManagement = () => {
   useEffect(() => {
     let id = setTimeout(() => {
       setSearchInput(searchTerm);
+      setPage(1);
     }, 500);
 
     return () => clearTimeout(id);
-  });
+  }, [searchTerm]);
 
   const deleteMutation = useMutation({
     mutationFn: async (id) => {
@@ -121,17 +117,17 @@ const CategoryManagement = () => {
             className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-blue-100 focus:bg-white transition-all outline-none"
           />
         </div>
-         <div className="relative">
-                    <select
-                      onChange={(e) => setStatus(e.target.value)}
-                      className="appearance-none bg-white border border-gray-200 text-gray-700 py-2.5 pl-4 pr-10 rounded-lg text-sm focus:outline-none focus:border-blue-500 cursor-pointer"
-                    >
-                      <option value="">Status All</option>
-                      <option value="Active">Active</option>
-                      <option value="Inactive">Inactive</option>
-                    </select>
-                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                  </div>
+        <div className="relative">
+          <select
+            onChange={(e) => setStatus(e.target.value)}
+            className="appearance-none bg-white border border-gray-200 text-gray-700 py-2.5 pl-4 pr-10 rounded-lg text-sm focus:outline-none focus:border-blue-500 cursor-pointer"
+          >
+            <option value="">Status All</option>
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+        </div>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
@@ -214,7 +210,11 @@ const CategoryManagement = () => {
           </table>
         </div>
       </div>
-      <Pagination pagination={data?.pagination} page={page} setPage={setPage}></Pagination>
+      <Pagination
+        pagination={data?.pagination}
+        page={page}
+        setPage={setPage}
+      ></Pagination>
     </div>
   );
 };

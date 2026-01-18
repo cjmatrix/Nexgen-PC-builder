@@ -50,6 +50,7 @@ const CouponManagement = () => {
   useEffect(() => {
     const id = setTimeout(() => {
       setSearchInput(searchTerm);
+      setPage(1);
     }, 500);
 
     return () => clearTimeout(id);

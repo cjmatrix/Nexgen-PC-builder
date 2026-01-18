@@ -38,6 +38,8 @@ const Checkout = () => {
   const isSubmittingRef = useRef(false);
   const paypalValidationFailed = useRef(false);
 
+  const [exchangeRate, setExchangeRate] = useState(0.011);
+
   useEffect(() => {
     const fetchWallet = async () => {
       try {
@@ -49,6 +51,19 @@ const Checkout = () => {
       }
     };
     fetchWallet();
+  }, []);
+
+  useEffect(() => {
+  const fetchConfig = async () => {
+    try {
+     
+      const { data } = await api.get("/payment/config");
+      if (data.rate) setExchangeRate(data.rate);
+    } catch (error) {
+      console.error("Failed to load currency config");
+    }
+  };
+  fetchConfig();
   }, []);
 
   const [modalConfig, setModalConfig] = useState({
@@ -274,11 +289,17 @@ const Checkout = () => {
       throw error;
     }
 
+    const totalInRupees = summary.total;
+     const currentRate = exchangeRate || 0.011; 
+    const totalInUsd = (totalInRupees * currentRate).toFixed(2);
+
     return actions.order.create({
-      purchase_units: [
+       purchase_units: [
         {
+          description: "PC Order",
           amount: {
-            value: summary.total.toFixed(2),
+            value: totalInUsd, // NOW SENDING USD VALUE
+            currency_code: "USD"
           },
         },
       ],

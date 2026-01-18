@@ -125,7 +125,7 @@ const ProfileSetting = () => {
   } = useForm({
     defaultValues: {
       fullName: "",
-      email: "", 
+      email: "",
     },
   });
 
@@ -166,6 +166,7 @@ const ProfileSetting = () => {
     onSuccess: (data) => {
       if (data.emailChanged) {
         setPendingEmail(data.pendingMail || data.user.email);
+        setIsOTPModalOpen(true);
         console.log(data.user.email);
       } else {
         queryClient.invalidateQueries(["userProfile"]);
@@ -242,7 +243,6 @@ const ProfileSetting = () => {
       ...data,
       name: data.fullName,
     };
-    setIsOTPModalOpen(true);
     updateProfileMutation.mutate(payload);
   };
 

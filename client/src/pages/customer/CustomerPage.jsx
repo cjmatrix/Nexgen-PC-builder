@@ -1,15 +1,16 @@
 import React from "react";
 import Navbar from "../../components/Navbar";
 import { Outlet } from "react-router-dom";
+import NotificationListener from "../../components/NotificationListener";
 
 function CustomerPage() {
   return (
     <div>
       <Navbar></Navbar>
-      <div className=" mt-16"> 
-         <Outlet></Outlet>
+      <NotificationListener />
+      <div className=" mt-16">
+        <Outlet></Outlet>
       </div>
-     
     </div>
   );
 }

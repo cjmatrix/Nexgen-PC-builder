@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { login, reset } from "../../store/slices/authSlice";
 import { Cpu, Eye, EyeOff, Mail, Lock, Github, ArrowLeft } from "lucide-react";
 import CustomModal from "../../components/CustomModal";
+import { toast } from "react-toastify";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -58,8 +59,9 @@ const Login = () => {
     }
   }, [user, isError, isSuccess, message, navigate, dispatch]);
 
-  const onSubmit = (data) => {
-    dispatch(login(data));
+  const onSubmit = async(data) => {
+  const res= await dispatch(login(data)).unwrap();
+
   };
 
   if (isLoading) {

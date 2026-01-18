@@ -343,11 +343,12 @@ const PCBuilder = () => {
         }
       });
     } catch (error) {
+     
       console.error("Add to cart failed", error);
       Swal.fire({
         icon: "error",
         title: "Oops...",
-        text: error.response?.data?.message || "Failed to add to cart",
+        text: error|| "Failed to add to cart",
       });
     }
   };

@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useForm } from "react-hook-form";
 import {
@@ -292,6 +291,13 @@ const AddProductForm = () => {
     },
   });
 
+   useEffect(() => {
+    if (data.categories && data.categories.length > 0 && !isEditMode) {
+      setValue("category", data.categories[0]._id);
+    }
+  }, [data.categories, isEditMode]);
+
+  
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
@@ -309,11 +315,7 @@ const AddProductForm = () => {
     );
   }
 
-  useEffect(() => {
-    if (data.categories && data.categories.length > 0 && !isEditMode) {
-      setValue("category", data.categories[0]._id);
-    }
-  }, [data.categories, isEditMode]);
+ 
 
   return (
     <div className="min-h-screen bg-gray-50 pt-10 pb-12 px-4 sm:px-6 lg:px-8 font-sans">

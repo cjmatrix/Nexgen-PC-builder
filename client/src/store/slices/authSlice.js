@@ -79,7 +79,9 @@ export const resendOTP = createAsyncThunk(
 
 export const logout = createAsyncThunk("auth/logout", async (_, thunkAPI) => {
   try {
+  
     await api.post("/auth/logout");
+     
   } catch (error) {
     const message =
       (error.response && error.response.data && error.response.data.message) ||

@@ -14,21 +14,32 @@ import {
 } from "lucide-react";
 import api from "../../../api/axios";
 import OrderDetailsModal from "./OrderDetailsModal";
+import { useEffect } from "react";
 
 const OrderManagement = () => {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      setSearchInput(search);
+      setPage(1);
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [search]);
+
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["adminOrders", page, search, statusFilter],
+    queryKey: ["adminOrders", page, searchInput, statusFilter],
     queryFn: async () => {
       const params = {
         page,
         limit: 10,
-        search: search || undefined,
+        search: searchInput || undefined,
         status: statusFilter !== "All" ? statusFilter : undefined,
       };
       const response = await api.get("/orders", { params });

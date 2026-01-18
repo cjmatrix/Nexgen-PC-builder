@@ -58,6 +58,7 @@ const AdminLogin = () => {
         navigate("/admin/components");
       } else if (adminUser) {
         setModalConfig({
+          
           isOpen: true,
           type: "error",
           title: "Access Denied",

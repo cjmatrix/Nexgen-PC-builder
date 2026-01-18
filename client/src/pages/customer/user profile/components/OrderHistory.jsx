@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Search,
   FileText,
@@ -12,19 +12,33 @@ import UserOrderDetails from "./UserOrderDetails";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import Pagination from "../../../../components/Pagination";
+import { useEffect } from "react";
 
 const OrderHistory = () => {
+  const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [detailsLoadingId, setDetailsLoadingId] = useState(null); // Track which order is loading
 
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      setSearchInput(search);
+      setPage(1);
+    }, 1000);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [search]);
+
+  // Fetch the list of orders
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["myOrders", search, page],
+    queryKey: ["myOrders", searchInput, page],
     queryFn: async () => {
       const response = await api.get("/orders/myorders", {
         params: {
-          search: search || "",
+          search: searchInput || "",
           page: page,
           limit: 10,
         },
@@ -33,9 +47,25 @@ const OrderHistory = () => {
     },
   });
 
-  const handleViewDetails = (order) => {
-    setSelectedOrder(order);
-    setIsDetailsOpen(true);
+  const handleViewDetails = async (orderId) => {
+    if (detailsLoadingId) return;
+    setDetailsLoadingId(orderId);
+    try {
+      const data = await queryClient.fetchQuery({
+        queryKey: ["order", orderId],
+        queryFn: async () => {
+          const response = await api.get(`/orders/${orderId}`);
+          return response.data;
+        },
+        staleTime: 1000 * 60 * 5,
+      });
+      setSelectedOrder(data);
+      setIsDetailsOpen(true);
+    } catch (error) {
+      console.error("Failed to fetch order details", error);
+    } finally {
+      setDetailsLoadingId(null);
+    }
   };
 
   const generateInvoice = (order) => {
@@ -81,7 +111,6 @@ const OrderHistory = () => {
       tableRows.push(itemData);
     });
 
-    // Add Shipping if applicable
     const shipping = (order.shippingPrice || 0) / 100;
     if (shipping > 0) {
       tableRows.push([
@@ -92,7 +121,6 @@ const OrderHistory = () => {
       ]);
     }
 
-    // Add Coupon Discount if applicable
     const coupon = order.couponDiscount || 0;
     if (coupon > 0) {
       tableRows.push([
@@ -158,7 +186,10 @@ const OrderHistory = () => {
                 type="text"
                 placeholder="Search by Order ID..."
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
                 className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
               />
             </div>
@@ -179,60 +210,98 @@ const OrderHistory = () => {
               <p>No orders found.</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-gray-50 text-gray-500 font-medium">
-                  <tr>
-                    <th className="px-6 py-4">Order ID</th>
-                    <th className="px-6 py-4">Date</th>
-                    <th className="px-6 py-4">Status</th>
-                    <th className="px-6 py-4 text-right">Total</th>
-                    <th className="px-6 py-4 text-center">Invoice</th>
-                    <th className="px-6 py-4"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {data.orders.map((order) => (
-                    <tr
-                      key={order._id}
-                      className="hover:bg-gray-50 transition-colors group"
-                    >
-                      <td className="px-6 py-4 font-medium text-gray-900">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {data.orders.map((order) => (
+                <div
+                  key={order._id}
+                  className="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-md transition-shadow flex flex-col justify-between h-auto"
+                >
+                  {/* Card Header */}
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <p className="text-xs text-gray-500 uppercase font-semibold">
+                        Order ID
+                      </p>
+                      <p className="text-sm font-bold text-gray-900 break-all">
                         {order.orderId}
-                      </td>
-                      <td className="px-6 py-4 text-gray-600">
+                      </p>
+                    </div>
+                    <StatusBadge status={order.status} />
+                  </div>
+
+                  {/* Order Images Stack */}
+                  <div className="flex items-center mb-4 pl-2">
+                    {order.orderItems.slice(0, 4).map((item, index) => {
+                      const image = item.isCustomBuild
+                        ? "/custom-pc.png"
+                        : item.image || "https://placehold.co/100";
+                      return (
+                        <div
+                          key={item._id || index}
+                          className="relative w-16 h-16 rounded-full border-2 border-white -ml-3 hover:scale-110 transition-transform cursor-pointer bg-white"
+                          title={item.name}
+                          style={{ zIndex: 10 - index }}
+                        >
+                          <img
+                            src={image}
+                            alt={item.name}
+                            className="w-full h-full object-cover rounded-full"
+                          />
+                        </div>
+                      );
+                    })}
+                    {order.orderItems.length > 4 && (
+                      <div
+                        className="relative w-10 h-10 rounded-full border-2 border-white -ml-3 bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-600 z-0"
+                        title={`${order.orderItems.length - 4} more items`}
+                      >
+                        +{order.orderItems.length - 4}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Card Body */}
+                  <div className="space-y-3 mb-6">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Date</span>
+                      <span className="text-gray-900 font-medium">
                         {new Date(order.createdAt).toLocaleDateString()}
-                      </td>
-                      <td className="px-6 py-4">
-                        <StatusBadge status={order.status} />
-                      </td>
-                      <td className="px-6 py-4 text-right font-medium text-gray-900">
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Total Amount</span>
+                      <span className="text-gray-900 font-bold">
                         ₹{(order.totalPrice / 100).toLocaleString()}
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            generateInvoice(order);
-                          }}
-                          className="p-2 hover:bg-gray-200 rounded-full text-gray-500 hover:text-gray-900 transition-colors"
-                          title="Download Invoice"
-                        >
-                          <FileText className="w-4 h-4" />
-                        </button>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <button
-                          onClick={() => handleViewDetails(order)}
-                          className="text-blue-600 hover:text-blue-800 font-medium flex items-center justify-end gap-1"
-                        >
-                          View <ChevronRight className="w-4 h-4" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Card Actions */}
+                  <div className="flex items-center justify-between pt-4 border-t border-gray-100 mt-auto">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        generateInvoice(order);
+                      }}
+                      className="flex items-center gap-2 text-xs font-medium text-gray-600 hover:text-gray-900 transition-colors px-2 py-1.5 rounded hover:bg-gray-100"
+                      title="Download Invoice"
+                    >
+                      <FileText className="w-4 h-4" />
+                      Invoice
+                    </button>
+                    <button
+                      onClick={() => handleViewDetails(order._id)}
+                      disabled={detailsLoadingId === order._id}
+                      className="flex items-center gap-1 text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors disabled:opacity-50"
+                    >
+                      {detailsLoadingId === order._id
+                        ? "Loading..."
+                        : "View Details"}
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
 

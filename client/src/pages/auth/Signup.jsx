@@ -19,6 +19,8 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import CustomModal from "../../components/CustomModal";
+import { toast } from "react-toastify";
+import CustomToast from "../../components/CustomToast";
 
 const Signup = () => {
   const [step, setStep] = useState(1);
@@ -38,6 +40,7 @@ const Signup = () => {
     title: "",
     message: "",
   });
+
 
   const closeModal = () => {
     setModalConfig((prev) => ({ ...prev, isOpen: false }));
@@ -75,6 +78,8 @@ const Signup = () => {
 
   const [timer, setTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
+
+  
 
   useEffect(() => {
     let interval;
@@ -117,6 +122,26 @@ const Signup = () => {
         setTimer(60);
         setCanResend(false);
         dispatch(reset());
+        toast(<CustomToast message={"email sent"} />, {
+          position: "top-right",
+          autoClose: false,
+          hideProgressBar: true,
+          closeOnClick: false,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          style: {
+            background: "transparent",
+            boxShadow: "none",
+            padding: 0,
+            minHeight: "unset",
+          },
+          bodyStyle: {
+            padding: 0,
+            margin: 0,
+          },
+          closeButton: false,
+        });
       })
       .catch((error) => {
         setModalConfig({

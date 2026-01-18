@@ -7,33 +7,30 @@ export const generatePCBuild = createAsyncThunk(
     try {
       const response = await axios.post("/ai/generate-pc", { prompt });
       console.log(response.data);
-      localStorage.setItem("aiBuild", JSON.stringify(response.data.product));
+      // localStorage.setItem("aiBuild", JSON.stringify(response.data.product));
       return response.data;
     } catch (error) {
       let errorMessage = error.message;
-if (error.response?.data) {
-    
-    if (typeof error.response.data.message === 'object') {
-       console.log (error.response.data)
-        errorMessage = error.response.data.error?.message || error.response.data.message || JSON.stringify(error.response.data);
-    } 
-    // 2. If it's a string, TRY to parse it as JSON
-    else if (typeof error.response.data.message === "string") {
-        try {
-         
-          
+      if (error.response?.data) {
+        if (typeof error.response.data.message === "object") {
+          console.log(error.response.data);
+          errorMessage =
+            error.response.data.error?.message ||
+            error.response.data.message ||
+            JSON.stringify(error.response.data);
+        } else if (typeof error.response.data.message === "string") {
+          try {
             const parsed = JSON.parse(error.response.data.message);
-           
+
             errorMessage = parsed.error.message;
             return rejectWithValue(errorMessage);
-        } catch (e) {
-           
+          } catch (e) {
             errorMessage = error.response.data;
+          }
         }
-    }
-}
-console.log(errorMessage)
-return rejectWithValue(errorMessage);
+      }
+      console.log(errorMessage);
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -45,6 +42,8 @@ const aiSlice = createSlice({
     aiBuild: JSON.parse(localStorage.getItem("aiBuild")) || null,
     error: null,
     success: false,
+    message: "",
+    showPromptBar: true,
   },
   reducers: {
     resetAIState: (state) => {
@@ -52,7 +51,15 @@ const aiSlice = createSlice({
       state.error = null;
       state.success = false;
       state.aiBuild = null;
-      localStorage.removeItem('aiBuild');
+      state.showPromptBar = true;
+      localStorage.removeItem("aiBuild");
+    },
+    setAiPc: (state, action) => {
+      localStorage.setItem("aiBuild", JSON.stringify(action.payload));
+      state.aiBuild = action.payload;
+    },
+    setShowPromptBar: (state, action) => {
+      state.showPromptBar = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -65,7 +72,7 @@ const aiSlice = createSlice({
       .addCase(generatePCBuild.fulfilled, (state, action) => {
         state.loading = false;
         state.success = true;
-        state.aiBuild = action.payload.product;
+        state.message = action.payload.message;
       })
       .addCase(generatePCBuild.rejected, (state, action) => {
         state.loading = false;
@@ -75,5 +82,5 @@ const aiSlice = createSlice({
   },
 });
 
-export const { resetAIState } = aiSlice.actions;
+export const { resetAIState, setAiPc, setShowPromptBar } = aiSlice.actions;
 export default aiSlice.reducer;

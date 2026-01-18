@@ -7,6 +7,7 @@ import builderReducer from "./slices/builderSlice";
 import productReducer from "./slices/productSlice";
 import aiReducer from "./slices/aiSlice";
 import cartReducer from "./slices/cartSlice";
+import notificationReducer from './slices/notificationSlice';
 
 export const store = configureStore({
   reducer: {
@@ -18,5 +19,7 @@ export const store = configureStore({
     ai: aiReducer,
     cart: cartReducer,
     products: productReducer,
+    notifications: notificationReducer,
+    
   },
 });

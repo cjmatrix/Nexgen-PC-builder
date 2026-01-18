@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { X, AlertTriangle, CheckCircle, Info } from "lucide-react";
 
-
 const CustomModal = ({
   isOpen,
   onClose,
@@ -11,10 +10,10 @@ const CustomModal = ({
   type = "info",
   confirmText = "Confirm",
   cancelText = "Cancel",
+  showCancel = false,
 }) => {
   const modalRef = useRef(null);
 
- 
   useEffect(() => {
     const handleEscape = (e) => {
       if (e.key === "Escape" && isOpen) {
@@ -27,7 +26,6 @@ const CustomModal = ({
 
   if (!isOpen) return null;
 
-  
   let icon = <Info className="w-12 h-12 text-blue-500" />;
   let buttonColor = "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500";
   let iconBg = "bg-blue-100";
@@ -51,7 +49,6 @@ const CustomModal = ({
     default:
       break;
   }
-
 
   const handleBackdropClick = (e) => {
     if (modalRef.current && !modalRef.current.contains(e.target)) {
@@ -81,7 +78,7 @@ const CustomModal = ({
           <p className="text-gray-500 mb-8 leading-relaxed">{message}</p>
 
           <div className="flex gap-3 justify-center">
-            {type === "confirmation" && (
+            {(type === "confirmation" || showCancel) && (
               <button
                 onClick={onClose}
                 className="px-6 py-2.5 bg-white text-gray-700 font-semibold border border-gray-300 rounded-xl hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-2 transition-all duration-200"
@@ -93,7 +90,7 @@ const CustomModal = ({
             <button
               onClick={() => {
                 if (onConfirm) onConfirm();
-                onClose(); 
+                onClose();
               }}
               className={`px-8 py-2.5 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${buttonColor}`}
             >
