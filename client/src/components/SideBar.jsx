@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   LayoutDashboard,
   Layers,
@@ -6,15 +6,14 @@ import {
   ShoppingCart,
   Users,
   BarChart2,
-
   Ticket,
   LogOut,
   Ban,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 
 const navItems = [
-  { name: "Dashboard Home", icon: LayoutDashboard, link: "" },
+  { name: "Dashboard Home", icon: LayoutDashboard, link: "/admin" },
   { name: "Component Management", icon: Layers, link: "/admin/components" },
   {
     name: "Category Management",
@@ -23,15 +22,13 @@ const navItems = [
   },
   { name: "Product Management", icon: Package, link: "/admin/products" },
   { name: "Order Management", icon: ShoppingCart, link: "/admin/orders" },
-  { name: "User Management", icon: Users, link: "/admin" },
+  { name: "User Management", icon: Users, link: "/admin/users" },
   { name: "Sales & Reporting", icon: BarChart2, link: "/admin/sales-report" },
   { name: "Coupon Management", icon: Ticket, link: "/admin/coupons" },
   { name: "Blacklisted Items", icon: Ban, link: "/admin/blacklist" },
 ];
 
 const Sidebar = ({ isOpen, onClose }) => {
-  const [activeItem, setActiveItem] = useState("Dashboard Home");
-
   return (
     <>
       {isOpen && (
@@ -74,38 +71,40 @@ const Sidebar = ({ isOpen, onClose }) => {
         <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
           <ul>
             {navItems.map((item) => {
-              const isActive = activeItem === item.name;
               const Icon = item.icon;
 
               return (
                 <li key={item.name}>
-                  <Link to={item?.link}>
-                    <button
-                      onClick={() => {
-                        setActiveItem(item.name);
-
-                        if (window.innerWidth < 768) onClose?.();
-                      }}
-                      className={`w-full flex items-center px-4 py-3 text-sm font-medium transition-colors rounded-lg group
+                  <NavLink
+                    to={item.link}
+                    end={item.link === "/admin"}
+                    onClick={() => {
+                      if (window.innerWidth < 768) onClose?.();
+                    }}
+                    className={({ isActive }) => `
+                      w-full flex items-center px-4 py-3 text-sm font-medium transition-colors rounded-lg group
                       ${
                         isActive
                           ? "bg-gray-100 text-gray-900"
                           : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                       }
                     `}
-                    >
-                      <Icon
-                        className={`w-5 h-5 mr-3 transition-colors
-                        ${
-                          isActive
-                            ? "text-gray-900"
-                            : "text-gray-400 group-hover:text-gray-600"
-                        }
-                      `}
-                      />
-                      {item.name}
-                    </button>
-                  </Link>
+                  >
+                    {({ isActive }) => (
+                      <>
+                        <Icon
+                          className={`w-5 h-5 mr-3 transition-colors
+                          ${
+                            isActive
+                              ? "text-gray-900"
+                              : "text-gray-400 group-hover:text-gray-600"
+                          }
+                        `}
+                        />
+                        {item.name}
+                      </>
+                    )}
+                  </NavLink>
                 </li>
               );
             })}

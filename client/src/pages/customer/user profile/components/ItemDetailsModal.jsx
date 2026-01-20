@@ -6,10 +6,13 @@ import {
   CreditCard,
   Package,
   CheckCircle,
+  Wrench,
+  Sparkles,
 } from "lucide-react";
 
-const ItemDetailsModal = ({ isOpen, onClose, item, order }) => {
-  if (!isOpen || !item || !order) return null;
+const ItemDetailsModal = ({ isOpen, onClose, items, order }) => {
+  const { components, item } = items;
+  if (!isOpen || Object.values(components).length === 0 || !order) return null;
 
   const formatPrice = (price) =>
     new Intl.NumberFormat("en-IN", {
@@ -23,16 +26,16 @@ const ItemDetailsModal = ({ isOpen, onClose, item, order }) => {
     return component.name;
   };
 
-  const componentsList = item.components
+  const componentsList = components
     ? [
-        { label: "Processor", data: item.components.cpu },
-        { label: "Graphics Card", data: item.components.gpu },
-        { label: "Motherboard", data: item.components.motherboard },
-        { label: "RAM", data: item.components.ram },
-        { label: "Storage", data: item.components.storage },
-        { label: "Cooler", data: item.components.cooler },
-        { label: "Power Supply", data: item.components.psu },
-        { label: "Case", data: item.components.case },
+        { label: "Processor", data: components.cpu },
+        { label: "Graphics Card", data: components.gpu },
+        { label: "Motherboard", data: components.motherboard },
+        { label: "RAM", data: components.ram },
+        { label: "Storage", data: components.storage },
+        { label: "Cooler", data: components.cooler },
+        { label: "Power Supply", data: components.psu },
+        { label: "Case", data: components.case },
       ]
     : [];
 
@@ -54,8 +57,18 @@ const ItemDetailsModal = ({ isOpen, onClose, item, order }) => {
               />
             </div>
             <div>
-              <h3 className="font-bold text-lg text-gray-900 leading-tight">
+              <h3 className="font-bold text-lg text-gray-900 leading-tight flex items-center gap-2 flex-wrap">
                 {item.name}
+                {item.isCustomBuild && !item.isAiBuild && (
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-100 text-purple-700 border border-purple-200">
+                    <Wrench className="w-3 h-3" /> Custom
+                  </span>
+                )}
+                {item.isAiBuild && (
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-indigo-100 text-indigo-700 border border-indigo-200">
+                    <Sparkles className="w-3 h-3" /> AI Build
+                  </span>
+                )}
               </h3>
               <p className="text-sm text-gray-500">
                 Item ID: <span className="font-mono text-xs">{item._id}</span>
@@ -91,8 +104,8 @@ const ItemDetailsModal = ({ isOpen, onClose, item, order }) => {
                         order.status === "Delivered"
                           ? "bg-green-200 text-green-800"
                           : order.status === "Cancelled"
-                          ? "bg-red-200 text-red-800"
-                          : "bg-yellow-200 text-yellow-800"
+                            ? "bg-red-200 text-red-800"
+                            : "bg-yellow-200 text-yellow-800"
                       }`}
                     >
                       {order.status}
@@ -204,12 +217,11 @@ const ItemDetailsModal = ({ isOpen, onClose, item, order }) => {
                     <span className="font-bold text-gray-900">Item Total</span>
                     <span className="font-bold text-lg text-gray-900">
                       {formatPrice(
-                        
-                          (item.price *
-                            item.qty *
-                            (1 - (item.discount || 0) / 100)) /
-                          100
-                        )}
+                        (item.price *
+                          item.qty *
+                          (1 - (item.discount || 0) / 100)) /
+                          100,
+                      )}
                     </span>
                   </div>
                 </div>

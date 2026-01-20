@@ -16,6 +16,7 @@ import ResetPassword from "./pages/auth/ResetPassword";
 import Wishlist from "./pages/customer/Wishlist";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import CustomerDashboard from "./pages/customer/CustomerDashboard";
+import AdminDashboardHome from "./pages/admin/admin pages/AdminDashboardHome";
 import SalesReport from "./pages/admin/admin pages/SalesReport";
 import BlacklistProducts from "./pages/admin/admin pages/BlacklistProducts";
 
@@ -83,6 +84,10 @@ const router = createBrowserRouter([
         children: [
           {
             index: true,
+            element: <AdminDashboardHome />,
+          },
+          {
+            path: "/admin/users",
             element: <UserManagement />,
           },
           {
@@ -189,10 +194,6 @@ const router = createBrowserRouter([
             element: <Cart />,
           },
           {
-            path: "/user/wishlist",
-            element: <Wishlist />,
-          },
-          {
             path: "/checkout",
             element: <Checkout />,
           },
@@ -221,6 +222,10 @@ const router = createBrowserRouter([
                 path: "/user/wallet",
                 element: <Wallet />,
               },
+              {
+                path: "/user/wishlist",
+                element: <Wishlist />,
+              },
             ],
           },
         ],
@@ -236,8 +241,11 @@ function App() {
   const dispatch = useDispatch();
   console.log("heyy");
   useEffect(() => {
-    dispatch(fetchUserProfile());
-    dispatch(fetchAdminProfile());
+    if (window.location.pathname.includes("/admin")) {
+      dispatch(fetchAdminProfile());
+    } else {
+      dispatch(fetchUserProfile());
+    }
   }, [dispatch]);
 
   return (

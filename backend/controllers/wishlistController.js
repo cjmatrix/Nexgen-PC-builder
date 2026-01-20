@@ -1,23 +1,12 @@
-import Wishlist from "../models/Wishlist.js";
-import Product from "../models/Product.js";
-import AppError from "../utils/AppError.js";
-import { addToCart } from "../services/cartService.js";
+import * as wishlistService from "../services/wishlistService.js";
+import { HTTP_STATUS } from "../constants/httpStatus.js";
+import { MESSAGES } from "../constants/responseMessages.js";
 
 // Get user's wishlist
 export const getWishlist = async (req, res) => {
-  const userId = req.user._id;
+  const wishlist = await wishlistService.getWishlist(req.user._id);
 
-  let wishlist = await Wishlist.findOne({ user: userId }).populate({
-    path: "items.product",
-    select:
-      "name base_price images description final_price applied_offer stock default_config",
-  });
-
-  if (!wishlist) {
-    wishlist = await Wishlist.create({ user: userId, items: [] });
-  }
-
-  res.status(200).json({
+  res.status(HTTP_STATUS.OK).json({
     success: true,
     data: wishlist,
   });
@@ -25,96 +14,38 @@ export const getWishlist = async (req, res) => {
 
 // Add item to wishlist
 export const addToWishlist = async (req, res) => {
-  const userId = req.user._id;
   const { productId } = req.body;
+  const wishlist = await wishlistService.addToWishlist(req.user._id, productId);
 
-  const product = await Product.findById(productId);
-  if (!product) {
-    throw new AppError("Product not found", 404);
-  }
-
-  let wishlist = await Wishlist.findOne({ user: userId });
-
-  if (!wishlist) {
-    wishlist = await Wishlist.create({ user: userId, items: [] });
-  }
-
-  
-  const exists = wishlist.items.find(
-    (item) => item.product.toString() === productId
-  );
-
-  if (exists) {
-    throw new AppError("Product already in wishlist", 400);
-  }
-
-  wishlist.items.push({ product: productId });
-  await wishlist.save();
-
- 
-  await wishlist.populate({
-    path: "items.product",
-    select:
-      "name base_price images description final_price applied_offer stock default_config",
-  });
-
-  res.status(200).json({
+  res.status(HTTP_STATUS.OK).json({
     success: true,
-    message: "Added to wishlist",
+    message: MESSAGES.WISHLIST.ADDED,
     data: wishlist,
   });
 };
 
 // Remove item from wishlist
 export const removeFromWishlist = async (req, res) => {
-  const userId = req.user._id;
   const { productId } = req.params;
-
-  let wishlist = await Wishlist.findOne({ user: userId });
-
-  if (!wishlist) {
-    throw new AppError("Wishlist not found", 404);
-  }
-
-  wishlist.items = wishlist.items.filter(
-    (item) => item.product.toString() !== productId
+  const wishlist = await wishlistService.removeFromWishlist(
+    req.user._id,
+    productId,
   );
 
-  await wishlist.save();
-
-  await wishlist.populate({
-    path: "items.product",
-    select:
-      "name base_price images description final_price applied_offer stock default_config",
-  });
-
-  res.status(200).json({
+  res.status(HTTP_STATUS.OK).json({
     success: true,
-    message: "Removed from wishlist",
+    message: MESSAGES.WISHLIST.REMOVED,
     data: wishlist,
   });
 };
 
 // Move to Cart
 export const moveToCart = async (req, res) => {
-  const userId = req.user._id;
   const { productId } = req.body;
+  await wishlistService.moveToCart(req.user._id, productId);
 
-  console.log("pata")
-
-  await addToCart(userId, productId, 1);
-
- 
-  const wishlist = await Wishlist.findOne({ user: userId });
-  if (wishlist) {
-    wishlist.items = wishlist.items.filter(
-      (item) => item.product.toString() !== productId
-    );
-    await wishlist.save();
-  }
-
-  res.status(200).json({
+  res.status(HTTP_STATUS.OK).json({
     success: true,
-    message: "Moved to cart successfully",
+    message: MESSAGES.WISHLIST.MOVED_TO_CART,
   });
 };

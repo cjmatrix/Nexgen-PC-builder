@@ -31,6 +31,7 @@ const BlacklistProducts = () => {
     keepPreviousData: true,
   });
 
+    console.log(data)
   return (
     <div className="p-6 md:p-8 space-y-8 bg-white min-h-screen">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">

@@ -1,9 +1,10 @@
 import * as componentService from "../services/componentService.js";
 import Component from "../models/Component.js";
+import { HTTP_STATUS } from "../constants/httpStatus.js";
 
 const createComponent = async (req, res) => {
   const component = await componentService.createComponent(req.body);
-  res.status(201).json({ success: true, data: component });
+  res.status(HTTP_STATUS.CREATED).json({ success: true, data: component });
 };
 
 const getAdminComponents = async (req, res) => {
@@ -17,29 +18,29 @@ const getAdminComponents = async (req, res) => {
     search,
     category,
     status,
-    sort
+    sort,
   );
 
-  res.status(200).json({ success: true, ...result });
+  res.status(HTTP_STATUS.OK).json({ success: true, ...result });
 };
 
 const deleteComponent = async (req, res) => {
   const result = await componentService.deleteComponent(req.params.id);
 
-  res.status(200).json({ success: true, data: result });
+  res.status(HTTP_STATUS.OK).json({ success: true, data: result });
 };
 
 const getComponentById = async (req, res) => {
   const component = await componentService.getComponentById(req.params.id);
-  res.status(200).json({ success: true, data: component });
+  res.status(HTTP_STATUS.OK).json({ success: true, data: component });
 };
 
 const updateComponent = async (req, res) => {
   const component = await componentService.updateComponent(
     req.params.id,
-    req.body
+    req.body,
   );
-  res.status(200).json({ success: true, data: component });
+  res.status(HTTP_STATUS.OK).json({ success: true, data: component });
 };
 
 const getComponents = async (req, res) => {
@@ -88,10 +89,10 @@ const getComponents = async (req, res) => {
     filters,
     page,
     limit,
-    sort
+    sort,
   );
 
-  res.status(200).json({ success: true, ...result });
+  res.status(HTTP_STATUS.OK).json({ success: true, ...result });
 };
 
 export {

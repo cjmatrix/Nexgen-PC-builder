@@ -1,13 +1,17 @@
 import React, { useRef, useState } from "react";
-import { X, Package, User, MapPin, Monitor } from "lucide-react";
-import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+import { X, Package, User, MapPin, Monitor, Eye } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../../../api/axios";
 import CustomModal from "../../../components/CustomModal";
+import AdminItemDetailsModal from "./AdminItemDetailsModal";
 
-const OrderDetailsModal = ({ isOpen, onClose, order: initialOrder }) => {
+const OrderDetailsModal = ({ isOpen, onClose, order }) => {
   const queryClient = useQueryClient();
   const modalRef = useRef(null);
   const [currentStatus, setCurrentStatus] = useState("");
+
+  const [viewDetailItem, setViewDetailItem] = useState({});
+  const [isItemDetailsOpen, setIsItemDetailsOpen] = useState(false);
 
   const [modal, setModal] = useState({
     isOpen: false,
@@ -28,19 +32,32 @@ const OrderDetailsModal = ({ isOpen, onClose, order: initialOrder }) => {
     setModal((prev) => ({ ...prev, isOpen: false }));
   };
 
-  const { data: order } = useQuery({
-    queryKey: ["order", initialOrder?._id],
-    queryFn: async () => {
-      const response = await api.get(`/orders/${initialOrder._id}`);
-      return response.data;
-    },
-    initialData: initialOrder,
-    enabled: !!initialOrder?._id && isOpen,
-  });
-
   const handleBackdropClick = (e) => {
     if (modalRef.current && !modalRef.current.contains(e.target)) {
       onClose();
+    }
+  };
+
+  const handleViewDetailItem = async (item) => {
+    try {
+      if (item.isCustomBuild || item.isAiBuild) {
+        setViewDetailItem({ components: item.components, item, order: order });
+        setIsItemDetailsOpen(true);
+      } else {
+        const response = await api.get(
+          `/orders/${order._id}/items/${item._id}`,
+        );
+        setViewDetailItem({ components: response.data, item });
+        setIsItemDetailsOpen(true);
+      }
+    } catch (error) {
+      console.log(error);
+      setModal({
+        isOpen: true,
+        title: "Error",
+        message: "Failed to fetch item details",
+        type: "error",
+      });
     }
   };
 
@@ -49,9 +66,9 @@ const OrderDetailsModal = ({ isOpen, onClose, order: initialOrder }) => {
       const response = await api.put(`/orders/${id}/status`, { status });
       return response.data;
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries(["adminOrders"]);
-      queryClient.invalidateQueries(["order", order._id]);
+      queryClient.invalidateQueries(["order", variables.id]);
     },
     onError: (err) => {
       setModal({
@@ -85,7 +102,6 @@ const OrderDetailsModal = ({ isOpen, onClose, order: initialOrder }) => {
     onSuccess: () => {
       queryClient.invalidateQueries(["adminOrders"]);
       queryClient.invalidateQueries(["order", order._id]);
-      console.log("successs");
     },
     onError: (err) => {
       setModal({
@@ -198,7 +214,9 @@ const OrderDetailsModal = ({ isOpen, onClose, order: initialOrder }) => {
     });
   };
 
-  if (!isOpen || !order) return null;
+  if (!isOpen) return null;
+
+  if (!order) return null;
 
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
@@ -458,6 +476,12 @@ const OrderDetailsModal = ({ isOpen, onClose, order: initialOrder }) => {
                         ) : (
                           <span>₹{(item.price / 100).toLocaleString()}</span>
                         )}
+                        <button
+                          onClick={() => handleViewDetailItem(item)}
+                          className="ml-2 text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline"
+                        >
+                          View Specs
+                        </button>
                       </p>
 
                       {/* Display Return Reason if available */}
@@ -572,6 +596,12 @@ const OrderDetailsModal = ({ isOpen, onClose, order: initialOrder }) => {
           </div>
         </div>
       </div>
+
+      <AdminItemDetailsModal
+        isOpen={isItemDetailsOpen}
+        onClose={() => setIsItemDetailsOpen(false)}
+        items={viewDetailItem}
+      />
     </div>
   );
 };

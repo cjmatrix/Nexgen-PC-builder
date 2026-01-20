@@ -1,9 +1,10 @@
 import paymentService from "../services/paymentService.js";
 import { getInrToUsdRate } from "../services/currencyService.js";
+import { HTTP_STATUS } from "../constants/httpStatus.js";
 export const getPaypalClientId = async (req, res, next) => {
   try {
     const config = paymentService.getPaypalConfig();
-    res.send(config);
+    res.status(HTTP_STATUS.OK).send(config);
   } catch (error) {
     next(error);
   }
@@ -14,9 +15,9 @@ export const verifyPayment = async (req, res, next) => {
   try {
     const result = await paymentService.processPaymentVerification(
       r_orderID,
-      db_orderID
+      db_orderID,
     );
-    return res.json(result);
+    return res.status(HTTP_STATUS.OK).json(result);
   } catch (error) {
     next(error);
   }
@@ -24,8 +25,8 @@ export const verifyPayment = async (req, res, next) => {
 
 export const getCurrencyConfig = async (req, res) => {
   const rate = await getInrToUsdRate();
-  res.json({ 
+  res.status(HTTP_STATUS.OK).json({
     rate,
-    currency: "USD" 
+    currency: "USD",
   });
 };

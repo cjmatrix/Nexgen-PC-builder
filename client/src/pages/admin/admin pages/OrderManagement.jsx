@@ -21,7 +21,7 @@ const OrderManagement = () => {
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
-  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [viewingOrderId, setViewingOrderId] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
@@ -48,6 +48,21 @@ const OrderManagement = () => {
     keepPreviousData: true,
   });
 
+  const { data: orderDetails, isLoading: isDetailsLoading } = useQuery({
+    queryKey: ["order", viewingOrderId],
+    queryFn: async () => {
+      const response = await api.get(`/admin/orders/${viewingOrderId}`);
+      return response.data;
+    },
+    enabled: !!viewingOrderId,
+  });
+
+  useEffect(() => {
+    if (orderDetails && !isDetailsLoading && viewingOrderId) {
+      setIsModalOpen(true);
+    }
+  }, [orderDetails, isDetailsLoading, viewingOrderId]);
+
   const handleSearchChange = (e) => {
     setSearch(e.target.value);
     setPage(1);
@@ -59,8 +74,12 @@ const OrderManagement = () => {
   };
 
   const handleViewDetails = (order) => {
-    setSelectedOrder(order);
-    setIsModalOpen(true);
+    setViewingOrderId(order._id);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setViewingOrderId(null);
   };
 
   const OrderStatusBadge = ({ status }) => {
@@ -270,9 +289,16 @@ const OrderManagement = () => {
                     <td className="py-4 px-6 text-right">
                       <button
                         onClick={() => handleViewDetails(order)}
-                        className="bg-gray-900 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-gray-800 transition-colors shadow-lg shadow-gray-900/10"
+                        disabled={
+                          viewingOrderId === order._id && isDetailsLoading
+                        }
+                        className="bg-gray-900 text-white min-w-[100px] h-[32px] flex items-center justify-center rounded-lg text-xs font-bold hover:bg-gray-800 transition-colors shadow-lg shadow-gray-900/10 disabled:opacity-70 disabled:cursor-not-allowed mx-auto ml-auto"
                       >
-                        View Details
+                        {viewingOrderId === order._id && isDetailsLoading ? (
+                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        ) : (
+                          "View Details"
+                        )}
                       </button>
                     </td>
                   </tr>
@@ -311,8 +337,8 @@ const OrderManagement = () => {
 
       <OrderDetailsModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        order={selectedOrder}
+        onClose={handleCloseModal}
+        order={orderDetails}
       />
     </div>
   );

@@ -3,7 +3,7 @@ import { Outlet, Navigate } from "react-router-dom";
 
 const ProtectedRoute = () => {
   const { user, isLoading } = useSelector((state) => state.auth);
-
+    console.log(isLoading)
   if (isLoading) {
     return <div>Loading...</div>;
   }

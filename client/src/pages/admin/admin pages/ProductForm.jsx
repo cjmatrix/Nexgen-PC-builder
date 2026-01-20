@@ -14,6 +14,7 @@ import {
   updateProduct,
   fetchProductById,
 } from "../../../store/slices/productSlice";
+import { useLocation } from "react-router-dom";
 import {
   Cpu,
   HardDrive,
@@ -27,6 +28,8 @@ import {
   X,
   Check,
   ZoomIn,
+  Sparkles,
+  Wrench,
 } from "lucide-react";
 import api from "../../../api/axios";
 import CustomModal from "../../../components/CustomModal";
@@ -34,14 +37,17 @@ import ImageCropperModal from "../../../components/ImageCropperModal";
 import PartSelector from "./components/PartSelector";
 
 const AddProductForm = () => {
+  const location = useLocation();
+  const prefill = location?.state?.prefill;
+
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { selected, options, totalPrice, estimatedWattage } = useSelector(
-    (state) => state.builder
+    (state) => state.builder,
   );
 
   const { id } = useParams();
-  const isEditMode = !!id;
+  const isEditMode = !!id || !!location.state;
 
   const {
     register,
@@ -121,15 +127,17 @@ const AddProductForm = () => {
     }
   };
 
+  console.log(selected);
+
   useEffect(() => {
-    if (isEditMode) {
+    if (isEditMode && !location.state) {
       dispatch(fetchProductById(id))
         .unwrap()
         .then((data) => {
           reset({
             name: data.name,
             description: data.description,
-            category: data.category?._id || data.category, 
+            category: data.category?._id || data.category,
             base_price: data.base_price / 100,
             discount: data.discount || 0,
             images: data.images || [],
@@ -146,14 +154,25 @@ const AddProductForm = () => {
             onConfirm: () => navigate("/admin/products"),
           });
         });
+    } else if (isEditMode && location.state) {
+      reset({
+        name: prefill.name,
+        description: prefill.description,
+        base_price: prefill.price / 100,
+        images: [prefill.image],
+      });
+      dispatch(setSelected(prefill.components));
     }
-  }, [isEditMode, id, navigate, dispatch, reset]);
+  }, [isEditMode, id, navigate, dispatch, reset, prefill]);
+ 
 
   useEffect(() => {
-    dispatch(resetBuild());
+    if (!isEditMode && !location.state) {
+      dispatch(resetBuild());
+    }
     dispatch(fetchComponents({ category: "cpu" }));
     dispatch(fetchComponents({ category: "storage" }));
-  }, [dispatch]);
+  }, [dispatch, isEditMode, location.state]);
 
   useEffect(() => {
     if (selected.cpu) {
@@ -161,19 +180,19 @@ const AddProductForm = () => {
         fetchComponents({
           category: "motherboard",
           params: { cpuId: selected.cpu._id },
-        })
+        }),
       );
       dispatch(
         fetchComponents({
           category: "cooler",
           params: { cpuId: selected.cpu._id },
-        })
+        }),
       );
       dispatch(
         fetchComponents({
           category: "gpu",
           params: { maxTier: selected.cpu.tier_level + 1 },
-        })
+        }),
       );
     }
   }, [dispatch, selected.cpu]);
@@ -184,13 +203,13 @@ const AddProductForm = () => {
         fetchComponents({
           category: "ram",
           params: { motherboardId: selected.motherboard._id },
-        })
+        }),
       );
       dispatch(
         fetchComponents({
           category: "case",
           params: { motherboardId: selected.motherboard._id },
-        })
+        }),
       );
     }
   }, [dispatch, selected.motherboard]);
@@ -201,7 +220,7 @@ const AddProductForm = () => {
         fetchComponents({
           category: "psu",
           params: { minWattage: estimatedWattage + 150 },
-        })
+        }),
       );
     }
   }, [dispatch, estimatedWattage]);
@@ -228,7 +247,7 @@ const AddProductForm = () => {
         isOpen: true,
         title: "Validation Error",
         message: `Please select all components. Missing: ${missingParts.join(
-          ", "
+          ", ",
         )}`,
         type: "error",
       });
@@ -246,14 +265,21 @@ const AddProductForm = () => {
         storage: selected.storage._id,
         case: selected.case._id,
         psu: selected.psu._id,
-        cooler: selected.cooler._id,
+        cooler: selected.cooler._id,  
       },
     };
+     productPayload.originalOrderId=null;
+     productPayload.buildType="standard";
+     productPayload.isFeaturedBuild=false;
 
-    console.log("product payload --------", productPayload);
+    if(prefill){
+      productPayload.isFeaturedBuild=prefill.isFeaturedBuild;
+      productPayload.originalOrderId=prefill.originalOrderId;
+      productPayload.buildType=prefill.buildType;
+    }
 
     try {
-      if (isEditMode) {
+      if (isEditMode &&!location.state) {
         await dispatch(updateProduct({ id, data: productPayload })).unwrap();
         setModal({
           isOpen: true,
@@ -263,11 +289,13 @@ const AddProductForm = () => {
           onConfirm: () => navigate("/admin/products"),
         });
       } else {
+         const successMsg = prefill ? "Featured Build Added to Inventory!" : "Product Created Successfully!";
+
         await dispatch(createProduct(productPayload)).unwrap();
         setModal({
           isOpen: true,
           title: "Success",
-          message: "Product Created Successfully!",
+          message: successMsg,
           type: "success",
           onConfirm: () => navigate("/admin/products"),
         });
@@ -286,18 +314,17 @@ const AddProductForm = () => {
     queryKey: ["adminCategory"],
     queryFn: async () => {
       const response = await api.get("/admin/category");
-      console.log(response.data);
+
       return response.data;
     },
   });
 
-   useEffect(() => {
-    if (data.categories && data.categories.length > 0 && !isEditMode) {
+  useEffect(() => {
+    if (data?.categories && data.categories.length > 0 &&( !isEditMode || location.state && !prefill.category)) {
       setValue("category", data.categories[0]._id);
     }
-  }, [data.categories, isEditMode]);
+  }, [data?.categories, isEditMode]);
 
-  
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
@@ -306,7 +333,7 @@ const AddProductForm = () => {
       </div>
     );
   }
-
+  
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 text-red-500">
@@ -314,8 +341,6 @@ const AddProductForm = () => {
       </div>
     );
   }
-
- 
 
   return (
     <div className="min-h-screen bg-gray-50 pt-10 pb-12 px-4 sm:px-6 lg:px-8 font-sans">
@@ -332,13 +357,42 @@ const AddProductForm = () => {
         <div className="flex items-center gap-4 mb-8">
           <button
             onClick={() => navigate(-1)}
-            className="p-2 hover:bg-gray-200 rounded-full"
+            className="p-2 hover:bg-gray-200 rounded-full transition-colors"
           >
             <ArrowLeft size={24} />
           </button>
-          <h1 className="text-3xl font-bold text-gray-900">
-            {isEditMode ? "Edit Pre-Built PC" : "Create New Pre-Built PC"}
-          </h1>
+
+          <div className="flex items-center gap-3">
+            {prefill?.buildType?.includes("ai") ? (
+              <div className="p-2 bg-indigo-100 rounded-lg text-indigo-600 shadow-sm border border-indigo-200">
+                <Sparkles size={24} />
+              </div>
+            ) : prefill?.buildType?.includes("custom") ? (
+              <div className="p-2 bg-purple-100 rounded-lg text-purple-600 shadow-sm border border-purple-200">
+                <Wrench size={24} />
+              </div>
+            ) : null}
+
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">
+                {prefill
+                  ? "Promote Featured Build"
+                  : isEditMode
+                    ? "Edit Pre-Built PC"
+                    : "Create New Pre-Built PC"}
+              </h1>
+              {prefill && (
+                <p className="text-sm text-gray-500 mt-1 flex items-center gap-2">
+                  <ZoomIn size={14} />
+                  Converting{" "}
+                  <span className="font-semibold text-gray-700 uppercase tracking-wide">
+                    {prefill.buildType === "ai_featured" ? "AI" : "Custom"}
+                  </span>{" "}
+                  generated build into a store product
+                </p>
+              )}
+            </div>
+          </div>
         </div>
 
         <form
@@ -607,9 +661,24 @@ const AddProductForm = () => {
           {/* RIGHT COLUMN: Sticky Summary & Action */}
           <div className="lg:col-span-1">
             <div className="sticky top-24 bg-white rounded-xl shadow-lg border border-gray-200 p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">
-                Build Summary
-              </h2>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-gray-900">
+                  Build Summary
+                </h2>
+                {prefill && (
+                  <span
+                    className={`px-2 py-1 text-xs font-bold rounded uppercase tracking-wider border ${
+                      prefill.buildType?.includes("ai")
+                        ? "bg-indigo-50 text-indigo-700 border-indigo-200"
+                        : "bg-purple-50 text-purple-700 border-purple-200"
+                    }`}
+                  >
+                    {prefill.buildType === "ai_featured"
+                      ? "AI Feature"
+                      : "User Feature"}
+                  </span>
+                )}
+              </div>
 
               <div className="aspect-video bg-gray-100 rounded-lg mb-6 flex items-center justify-center overflow-hidden">
                 {selected.case ? (
@@ -637,7 +706,7 @@ const AddProductForm = () => {
                           {part.name}
                         </span>
                       </div>
-                    )
+                    ),
                 )}
               </div>
 
@@ -681,7 +750,7 @@ const AddProductForm = () => {
                 className="w-full bg-blue-600 text-white py-3.5 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
               >
                 <Save size={20} />{" "}
-                {isEditMode ? "Update Product" : "Create Product"}
+                {isEditMode && !prefill ? "Update Product":(isEditMode && prefill)? "Add To Inventory":"Create Product"}
               </button>
             </div>
           </div>

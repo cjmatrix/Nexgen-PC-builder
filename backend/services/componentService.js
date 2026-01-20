@@ -1,5 +1,7 @@
 import Component from "../models/Component.js";
 import AppError from "../utils/AppError.js";
+import { HTTP_STATUS } from "../constants/httpStatus.js";
+import { MESSAGES } from "../constants/responseMessages.js";
 
 const createComponent = async (componentData) => {
   const component = await Component.create(componentData);
@@ -12,7 +14,7 @@ const getAdminComponents = async (
   search,
   category,
   status,
-  sort
+  sort,
 ) => {
   const query = {};
   if (status && status !== "stock_low")
@@ -57,7 +59,7 @@ const deleteComponent = async (userId) => {
 const getComponentById = async (id) => {
   const component = await Component.findById(id);
   if (!component) {
-    throw new AppError("Component not found", 404);
+    throw new AppError(MESSAGES.COMPONENT.NOT_FOUND, HTTP_STATUS.NOT_FOUND);
   }
   return component;
 };
@@ -68,7 +70,7 @@ const updateComponent = async (id, updateData) => {
     runValidators: true,
   });
   if (!component) {
-    throw new AppError("Component not found", 404);
+    throw new AppError(MESSAGES.COMPONENT.NOT_FOUND, HTTP_STATUS.NOT_FOUND);
   }
   return component;
 };

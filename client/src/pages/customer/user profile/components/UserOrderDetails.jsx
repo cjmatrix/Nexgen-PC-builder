@@ -6,6 +6,8 @@ import {
   Package,
   AlertTriangle,
   Eye,
+  Wrench,
+  Sparkles,
 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../../../../api/axios";
@@ -19,8 +21,17 @@ const UserOrderDetails = ({ isOpen, onClose, order }) => {
   const [actionType, setActionType] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
 
-  const [viewDetailItem, setViewDetailItem] = useState(null);
+  const [viewDetailItem, setViewDetailItem] = useState({});
   const [isItemDetailsOpen, setIsItemDetailsOpen] = useState(false);
+  const [imageModal, setImageModal] = useState({
+    isOpen: false,
+    src: "",
+    alt: "",
+  });
+
+  const closeImageModal = () => {
+    setImageModal((prev) => ({ ...prev, isOpen: false }));
+  };
 
   const [infoModal, setInfoModal] = useState({
     isOpen: false,
@@ -150,7 +161,7 @@ const UserOrderDetails = ({ isOpen, onClose, order }) => {
           item.status !== "Cancelled" &&
           item.status !== "Returned" &&
           item.status !== "Return Requested" &&
-          item.status !== "Return Approved"
+          item.status !== "Return Approved",
       );
       if (!hasActiveItems) return false;
     }
@@ -177,12 +188,37 @@ const UserOrderDetails = ({ isOpen, onClose, order }) => {
           item.status !== "Cancelled" &&
           item.status !== "Returned" &&
           item.status !== "Return Requested" &&
-          item.status !== "Return Approved"
+          item.status !== "Return Approved",
       );
       if (!hasActiveItems) return false;
     }
 
     return true;
+  };
+
+  const handleViewDetailItem = async (item) => {
+    try {
+      if (item.isCustomBuild || item.isAiBuild) {
+        setViewDetailItem({ components: item.components, item });
+        setIsItemDetailsOpen(true);
+      } else {
+        const data = await queryClient.fetchQuery({
+          queryKey: ["order", item.product._id],
+          queryFn: async () => {
+            const response = await api.get(
+              `/orders/${order._id}/items/${item._id}`,
+            );
+            return response.data;
+          },
+          staleTime: 1000 * 60 * 5,
+        });
+        console.log(data);
+        setViewDetailItem({ components: data, item });
+        setIsItemDetailsOpen(true);
+      }
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   return (
@@ -224,11 +260,20 @@ const UserOrderDetails = ({ isOpen, onClose, order }) => {
                 key={idx}
                 className="flex gap-4 p-4 border border-gray-100 rounded-xl hover:border-gray-200 transition-colors cursor-pointer group"
                 onClick={() => {
-                  setViewDetailItem(item);
-                  setIsItemDetailsOpen(true);
+                  handleViewDetailItem(item);
                 }}
               >
-                <div className="w-20 h-20 bg-gray-100 rounded-lg shrink-0 flex items-center justify-center relative overflow-hidden">
+                <div
+                  className="w-20 h-20 bg-gray-100 rounded-lg shrink-0 flex items-center justify-center relative overflow-hidden cursor-zoom-in"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setImageModal({
+                      isOpen: true,
+                      src: item.image,
+                      alt: item.name,
+                    });
+                  }}
+                >
                   <img
                     src={item.image}
                     alt={item.name}
@@ -241,8 +286,18 @@ const UserOrderDetails = ({ isOpen, onClose, order }) => {
                 <div className="flex-1">
                   <div className="flex justify-between items-start">
                     <div>
-                      <h4 className="font-bold text-gray-900 text-sm group-hover:text-blue-600 transition-colors">
+                      <h4 className="font-bold text-gray-900 text-sm group-hover:text-blue-600 transition-colors flex items-center gap-2 flex-wrap">
                         {item.name}
+                        {item.isCustomBuild && !item.isAiBuild && (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-100 text-purple-700 border border-purple-200">
+                            <Wrench className="w-3 h-3" /> Custom
+                          </span>
+                        )}
+                        {item.isAiBuild && (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-indigo-100 text-indigo-700 border border-indigo-200">
+                            <Sparkles className="w-3 h-3" /> AI Build
+                          </span>
+                        )}
                       </h4>
                       <p className="text-xs text-gray-500 mt-1">
                         Quantity: {item.qty} |{" "}
@@ -289,11 +344,11 @@ const UserOrderDetails = ({ isOpen, onClose, order }) => {
                         item.status === "Return Rejected"
                           ? "bg-red-50 text-red-600"
                           : item.status === "Returned" ||
-                            item.status === "Return Approved"
-                          ? "bg-green-50 text-green-600"
-                          : item.status === "Return Requested"
-                          ? "bg-orange-50 text-orange-600"
-                          : "bg-blue-50 text-blue-600"
+                              item.status === "Return Approved"
+                            ? "bg-green-50 text-green-600"
+                            : item.status === "Return Requested"
+                              ? "bg-orange-50 text-orange-600"
+                              : "bg-blue-50 text-blue-600"
                       }`}
                     >
                       {item.status || "Active"}
@@ -411,10 +466,30 @@ const UserOrderDetails = ({ isOpen, onClose, order }) => {
         </div>
       )}
 
+      {imageModal.isOpen && (
+        <div
+          className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={closeImageModal}
+        >
+          <button
+            onClick={closeImageModal}
+            className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
+          >
+            <X className="w-6 h-6" />
+          </button>
+          <img
+            src={imageModal.src}
+            alt={imageModal.alt}
+            className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
+
       <ItemDetailsModal
         isOpen={isItemDetailsOpen}
         onClose={() => setIsItemDetailsOpen(false)}
-        item={viewDetailItem}
+        items={viewDetailItem}
         order={order}
       />
     </div>

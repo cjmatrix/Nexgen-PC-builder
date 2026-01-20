@@ -2,6 +2,8 @@ import User from "../models/User.js";
 import Address from "../models/Address.js";
 import sendEmail from "../utils/sendEmail.js";
 import AppError from "../utils/AppError.js";
+import { HTTP_STATUS } from "../constants/httpStatus.js";
+import { MESSAGES } from "../constants/responseMessages.js";
 
 const getAllUsers = async (page, limit, search, status, sort) => {
   const query = { isDeleted: { $ne: true } };
@@ -39,7 +41,7 @@ const getAllUsers = async (page, limit, search, status, sort) => {
 
 const toggleBlockStatus = async (userId) => {
   const user = await User.findById(userId);
-  if (!user) throw new AppError("User not found", 404);
+  if (!user) throw new AppError(MESSAGES.USER.NOT_FOUND, HTTP_STATUS.NOT_FOUND);
 
   user.status = user.status === "active" ? "suspended" : "active";
   await user.save();
@@ -48,11 +50,12 @@ const toggleBlockStatus = async (userId) => {
 
 const updateUserProfile = async (userId, updateData) => {
   const user = await User.findById(userId);
-  if (!user) throw new AppError("User not found", 404);
+  if (!user) throw new AppError(MESSAGES.USER.NOT_FOUND, HTTP_STATUS.NOT_FOUND);
 
   if (updateData.email && updateData.email !== user.email) {
     const emailExists = await User.findOne({ email: updateData.email });
-    if (emailExists) throw new AppError("Email already in use", 400);
+    if (emailExists)
+      throw new AppError(MESSAGES.USER.EMAIL_IN_USE, HTTP_STATUS.BAD_REQUEST);
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const otpExpires = Date.now() + 10 * 60 * 1000;
@@ -75,7 +78,10 @@ const updateUserProfile = async (userId, updateData) => {
     } catch (error) {
       console.error("Email send failed:", error);
 
-      throw new AppError("Email could not be sent", 500);
+      throw new AppError(
+        MESSAGES.USER.EMAIL_SEND_FAILED,
+        HTTP_STATUS.INTERNAL_SERVER_ERROR,
+      );
     }
 
     return { user, emailChanged: true, pendingMail: updateData.email };
@@ -95,13 +101,13 @@ const createAddress = async (id, payload) => {
 const updateAddress = async (userId, addressId, updateData) => {
   const address = await Address.findOne({ _id: addressId, user: userId });
   if (!address) {
-    throw new AppError("Address not found or unauthorized", 404);
+    throw new AppError(MESSAGES.ADDRESS.NOT_FOUND, HTTP_STATUS.NOT_FOUND);
   }
 
   if (updateData.isDefault) {
     await Address.updateMany(
       { user: userId, _id: { $ne: addressId } },
-      { isDefault: false }
+      { isDefault: false },
     );
   }
 
@@ -113,7 +119,7 @@ const updateAddress = async (userId, addressId, updateData) => {
 const deleteAddress = async (userId, addressId) => {
   const address = await Address.findOne({ _id: addressId, user: userId });
   if (!address) {
-    throw new AppError("Address not found or unauthorized", 404);
+    throw new AppError(MESSAGES.ADDRESS.NOT_FOUND, HTTP_STATUS.NOT_FOUND);
   }
 
   address.isDeleted = true;
@@ -127,7 +133,7 @@ const getAddressesByUserId = async (userId) => {
     {
       isDefault: -1,
       createdAt: -1,
-    }
+    },
   );
   return addresses;
 };
@@ -138,27 +144,28 @@ const verifyEmailChangeOTP = async (tempEmail, otp) => {
   }).select("+otp +otpExpires +tempEmail");
 
   if (!user) {
-    throw new AppError("Invalid or expired verification attempt", 404);
+    throw new AppError(
+      MESSAGES.USER.VERIFICATION_INVALID,
+      HTTP_STATUS.NOT_FOUND,
+    );
   }
 
   if (!user.otp || !user.otpExpires) {
-    throw new AppError("No OTP found", 404);
+    throw new AppError(MESSAGES.USER.OTP_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
   }
 
   if (user.otp !== otp) {
-    throw new AppError("Invalid OTP", 400);
+    throw new AppError(MESSAGES.USER.INVALID_OTP, HTTP_STATUS.BAD_REQUEST);
   }
 
   if (user.otpExpires < Date.now()) {
-    throw new AppError("OTP expired", 400);
+    throw new AppError(MESSAGES.USER.OTP_EXPIRED, HTTP_STATUS.BAD_REQUEST);
   }
 
- 
   const existingUser = await User.findOne({ email: tempEmail });
   if (existingUser) {
-    throw new AppError("Email has already been taken by another user", 400);
+    throw new AppError(MESSAGES.USER.EMAIL_TAKEN, HTTP_STATUS.BAD_REQUEST);
   }
-
 
   user.email = user.tempEmail;
   user.tempEmail = undefined;
@@ -167,7 +174,7 @@ const verifyEmailChangeOTP = async (tempEmail, otp) => {
 
   await user.save();
 
-  return { message: "Email changed successfully", user };
+  return { message: MESSAGES.USER.EMAIL_UPDATED, user };
 };
 
 export {

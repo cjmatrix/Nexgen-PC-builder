@@ -1,5 +1,8 @@
 import WalletTransaction from "../models/WalletTransaction.js";
 import User from "../models/User.js";
+import AppError from "../utils/AppError.js";
+import { HTTP_STATUS } from "../constants/httpStatus.js";
+import { MESSAGES } from "../constants/responseMessages.js";
 
 const addFunds = async (
   userId,
@@ -7,12 +10,12 @@ const addFunds = async (
   type,
   orderId,
   description,
-  session
+  session,
 ) => {
   const user = await User.findByIdAndUpdate(
     userId,
     { $inc: { walletBalance: amount } },
-    { new: true, session }
+    { new: true, session },
   );
 
   const wallet = await WalletTransaction.create(
@@ -25,12 +28,11 @@ const addFunds = async (
         description,
       },
     ],
-    { session }
+    { session },
   );
 
   return wallet;
 };
-
 
 const deductFunds = async (
   userId,
@@ -38,12 +40,12 @@ const deductFunds = async (
   type,
   orderId,
   description,
-  session
+  session,
 ) => {
   const user = await User.findByIdAndUpdate(
     userId,
     { $inc: { walletBalance: -amount } },
-    { new: true, session }
+    { new: true, session },
   );
 
   const wallet = await WalletTransaction.create(
@@ -56,17 +58,17 @@ const deductFunds = async (
         description,
       },
     ],
-    { session }
+    { session },
   );
 
   return wallet;
 };
 
-
-
-
 const getWalletDetails = async (userId, page = 1, limit = 10) => {
   const user = await User.findById(userId).select("walletBalance");
+  if (!user) {
+    throw new AppError(MESSAGES.USER.NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+  }
 
   const totalTransactions = await WalletTransaction.countDocuments({
     user: userId,
@@ -89,4 +91,4 @@ const getWalletDetails = async (userId, page = 1, limit = 10) => {
   };
 };
 
-export { addFunds, getWalletDetails ,deductFunds};
+export { addFunds, getWalletDetails, deductFunds };

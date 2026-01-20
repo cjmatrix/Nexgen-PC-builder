@@ -303,17 +303,18 @@ const Cart = () => {
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Discount</span>
-                      <span className="font-medium text-green-600">
-                        -₹{summary.discount.toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Coupon</span>
                       <span className="font-medium text-green-600">
                         -₹{summary.couponDiscount.toLocaleString()}
                       </span>
                     </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Discount</span>
+                      <span className="font-medium text-green-600">
+                        -₹{summary.discount.toLocaleString()}
+                      </span>
+                    </div>
+                    
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Shipping</span>
                       <span className="font-medium text-gray-900">

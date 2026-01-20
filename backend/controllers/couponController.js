@@ -1,10 +1,12 @@
 import * as couponService from "../services/couponService.js";
+import { HTTP_STATUS } from "../constants/httpStatus.js";
+import { MESSAGES } from "../constants/responseMessages.js";
 
 export const createCoupon = async (req, res, next) => {
   try {
     const coupon = await couponService.createCoupon(req.body);
 
-    res.status(201).json({
+    res.status(HTTP_STATUS.CREATED).json({
       success: true,
       coupon,
     });
@@ -16,8 +18,8 @@ export const createCoupon = async (req, res, next) => {
 export const getAvailableCoupons = async (req, res, next) => {
   try {
     const coupons = await couponService.getAvailableCoupons(req.user._id);
-    
-    res.status(200).json({
+
+    res.status(HTTP_STATUS.OK).json({
       success: true,
       coupons,
     });
@@ -29,10 +31,10 @@ export const getAvailableCoupons = async (req, res, next) => {
 export const getAllCoupons = async (req, res, next) => {
   try {
     const { coupons, total, page, pages } = await couponService.getAllCoupons(
-      req.query
+      req.query,
     );
 
-    res.status(200).json({
+    res.status(HTTP_STATUS.OK).json({
       success: true,
       coupons,
       pagination: {
@@ -50,7 +52,7 @@ export const getCouponById = async (req, res, next) => {
   try {
     const coupon = await couponService.getCouponById(req.params.id);
 
-    res.status(200).json({
+    res.status(HTTP_STATUS.OK).json({
       success: true,
       coupon,
     });
@@ -63,7 +65,7 @@ export const updateCoupon = async (req, res, next) => {
   try {
     const coupon = await couponService.updateCoupon(req.params.id, req.body);
 
-    res.status(200).json({
+    res.status(HTTP_STATUS.OK).json({
       success: true,
       coupon,
     });
@@ -76,11 +78,11 @@ export const deleteCoupon = async (req, res, next) => {
   try {
     const coupon = await couponService.deleteCoupon(req.params.id);
 
-    res.status(200).json({
+    res.status(HTTP_STATUS.OK).json({
       success: true,
-      message: `Coupon ${
-        coupon.isActive ? "activated" : "deactivated"
-      } successfully`,
+      message: coupon.isActive
+        ? MESSAGES.COUPON.ACTIVATED
+        : MESSAGES.COUPON.DEACTIVATED,
       coupon,
     });
   } catch (error) {

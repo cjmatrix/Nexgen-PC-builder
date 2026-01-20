@@ -1,6 +1,22 @@
 import * as userService from "../services/userService.js";
 import Order from "../models/Order.js";
 import { generateResponse } from "../config/gemini.js";
+import { HTTP_STATUS } from "../constants/httpStatus.js";
+import { MESSAGES } from "../constants/responseMessages.js";
+import Redis from "ioredis";
+
+const redisSubscriber = new Redis();
+const localSalesClients = new Set();
+
+redisSubscriber.subscribe("sales_updates");
+
+redisSubscriber.on("message", (channel, message) => {
+  if (channel === "sales_updates") {
+    localSalesClients.forEach((res) => {
+      res.write(`data: ${message}\n\n`);
+    });
+  }
+});
 
 const getUsers = async (req, res) => {
   const page = parseInt(req.query.page) || 1;
@@ -15,28 +31,38 @@ const getUsers = async (req, res) => {
     limit,
     search,
     status,
-    sort
+    sort,
   );
-  res.status(200).json(result);
+  res.status(HTTP_STATUS.OK).json(result);
 };
 
 const blockUser = async (req, res) => {
   const user = await userService.toggleBlockStatus(req.params.id);
   res
-    .status(200)
-    .json({ message: `User status updated to ${user.status}`, user });
+    .status(HTTP_STATUS.OK)
+    .json({ message: MESSAGES.ADMIN.BLOCK_STATUS_UPDATED(user.status), user });
 };
 
 const updateUser = async (req, res) => {
   const user = await userService.updateUserProfile(req.params.id, req.body);
-  res.status(200).json({ success: true, message: "User updated", user });
+  res
+    .status(HTTP_STATUS.OK)
+    .json({ success: true, message: MESSAGES.ADMIN.USER_UPDATED, user });
 };
 
 const getSalesReport = async (req, res) => {
   try {
-    const { startDate, endDate, interval = "daily" } = req.query;
+    const {
+      startDate,
+      endDate,
+      interval = "daily",
+      componentType = "all",
+    } = req.query;
 
-    let dateFilter = { isPaid: true };
+    let dateFilter = {
+      isPaid: true,
+      status: { $nin: ["Cancelled", "Returned", "Return Approved"] },
+    };
 
     if (startDate && endDate) {
       dateFilter.createdAt = {
@@ -44,10 +70,23 @@ const getSalesReport = async (req, res) => {
         $lte: new Date(new Date(endDate).setHours(23, 59, 59, 999)),
       };
     } else {
-      
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      dateFilter.createdAt = { $gte: thirtyDaysAgo };
+      const today = new Date();
+      let pastDate = new Date();
+
+      switch (interval) {
+        case "weekly":
+          pastDate.setDate(today.getDate() - 7 * 12); // Last 12 weeks
+          break;
+        case "monthly":
+          pastDate.setMonth(today.getMonth() - 12); // Last 12 months
+          break;
+        case "yearly":
+          pastDate.setFullYear(today.getFullYear() - 5); // Last 5 years
+          break;
+        default:
+          pastDate.setDate(today.getDate() - 30); // Last 30 days
+      }
+      dateFilter.createdAt = { $gte: pastDate };
     }
 
     const totalSales = await Order.aggregate([
@@ -101,8 +140,7 @@ const getSalesReport = async (req, res) => {
       },
     ]);
 
- 
-    let format = "%Y-%m-%d"; 
+    let format = "%Y-%m-%d";
     if (interval === "weekly") format = "%Y-W%U";
     if (interval === "monthly") format = "%Y-%m";
     if (interval === "yearly") format = "%Y";
@@ -146,6 +184,73 @@ const getSalesReport = async (req, res) => {
       { $limit: 10 },
     ]);
 
+    const topCategories = await Order.aggregate([
+      { $match: dateFilter },
+      { $unwind: "$orderItems" },
+      {
+        $lookup: {
+          from: "products",
+          localField: "orderItems.product",
+          foreignField: "_id",
+          as: "productData",
+        },
+      },
+      { $unwind: "$productData" },
+      {
+        $lookup: {
+          from: "categories",
+          localField: "productData.category",
+          foreignField: "_id",
+          as: "categoryData",
+        },
+      },
+      { $unwind: "$categoryData" },
+      {
+        $group: {
+          _id: "$categoryData.name",
+          totalSold: { $sum: "$orderItems.qty" },
+          revenue: {
+            $sum: { $multiply: ["$orderItems.price", "$orderItems.qty"] },
+          },
+        },
+      },
+      {
+        $addFields: {
+          revenue: { $divide: ["$revenue", 100] },
+        },
+      },
+      { $sort: { totalSold: -1 } },
+      { $limit: 10 },
+    ]);
+
+    const topComponents = await Order.aggregate([
+      { $match: dateFilter },
+      { $unwind: "$orderItems" },
+      {
+        $project: {
+          components: { $objectToArray: "$orderItems.components" },
+          orderQty: "$orderItems.qty",
+        },
+      },
+      { $unwind: "$components" },
+      {
+        $match: {
+          "components.v.name": { $exists: true },
+          ...(componentType !== "all"
+            ? { "components.k": componentType.toLowerCase() }
+            : {}),
+        },
+      },
+      {
+        $group: {
+          _id: "$components.v.name",
+          totalSold: { $sum: "$orderQty" },
+        },
+      },
+      { $sort: { totalSold: -1 } },
+      { $limit: 10 },
+    ]);
+
     const orderStatusStats = await Order.aggregate([
       { $match: dateFilter },
       {
@@ -156,7 +261,7 @@ const getSalesReport = async (req, res) => {
       },
     ]);
 
-    res.status(200).json({
+    res.status(HTTP_STATUS.OK).json({
       success: true,
       stats: totalSales[0] || {
         totalRevenue: 0,
@@ -166,10 +271,14 @@ const getSalesReport = async (req, res) => {
       },
       salesOverTime,
       topProducts,
+      topCategories,
+      topComponents,
       orderStatusStats,
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ success: false, message: error.message });
   }
 };
 
@@ -205,13 +314,35 @@ const getSalesInsights = async (req, res) => {
 
     const insights = await generateResponse(prompt);
 
-    res.status(200).json({ success: true, insights });
+    res.status(HTTP_STATUS.OK).json({ success: true, insights });
   } catch (error) {
     console.error("AI Insight Error:", error);
     res
-      .status(500)
-      .json({ success: false, message: "Failed to generate insights" });
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ success: false, message: MESSAGES.ADMIN.INSIGHTS_FAILURE });
   }
 };
 
-export { getUsers, blockUser, updateUser, getSalesReport, getSalesInsights };
+const streamSalesUpdates = (req, res) => {
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.flushHeaders();
+
+  localSalesClients.add(res);
+
+  res.write(`data: ${JSON.stringify({ type: "connected" })}\n\n`);
+
+  req.on("close", () => {
+    localSalesClients.delete(res);
+  });
+};
+
+export {
+  getUsers,
+  blockUser,
+  updateUser,
+  getSalesReport,
+  getSalesInsights,
+  streamSalesUpdates,
+};

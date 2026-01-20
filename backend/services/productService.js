@@ -2,6 +2,8 @@ import mongoose from "mongoose";
 import Product from "../models/Product.js";
 import Category from "../models/Category.js";
 import AppError from "../utils/AppError.js";
+import { HTTP_STATUS } from "../constants/httpStatus.js";
+import { MESSAGES } from "../constants/responseMessages.js";
 
 const createProduct = async (productData) => {
   if (!productData.slug) {
@@ -13,7 +15,11 @@ const createProduct = async (productData) => {
 
   const category = await Category.findById(productData.category);
 
-  if (!category) throw new AppError("Unmatched category", 400);
+  if (!category)
+    throw new AppError(
+      MESSAGES.PRODUCT.UNMATCHED_CATEGORY,
+      HTTP_STATUS.BAD_REQUEST,
+    );
 
   productData.category = category._id;
 
@@ -77,7 +83,7 @@ const getPublicProducts = async ({ page, limit, search, category, sort }) => {
 
   if (category) {
     const requestedCategory = activeCategories.find(
-      (cat) => cat.name === category
+      (cat) => cat.name === category,
     );
 
     if (requestedCategory) {
@@ -109,7 +115,7 @@ const getPublicProducts = async ({ page, limit, search, category, sort }) => {
   const total = await Product.countDocuments(query);
   const products = await Product.find(query)
     .select(
-      "name slug final_price base_price images category isActive discount description applied_offer default_config"
+      "name slug final_price base_price images category isActive discount description applied_offer default_config",
     )
     .populate("category", "name")
     .populate([
@@ -153,14 +159,16 @@ const getProductById = async (req, id) => {
       { path: "default_config.cooler" },
     ]);
 
-  if (!product) throw new AppError("Product not found", 404);
+  if (!product)
+    throw new AppError(MESSAGES.PRODUCT.NOT_FOUND, HTTP_STATUS.NOT_FOUND);
   return product;
 };
 
 const updateProduct = async (id, updateData) => {
   const product = await Product.findById(id);
 
-  if (!product) throw new AppError("Product not found", 404);
+  if (!product)
+    throw new AppError(MESSAGES.PRODUCT.NOT_FOUND, HTTP_STATUS.NOT_FOUND);
 
   if (updateData.name && !updateData.slug) {
     updateData.slug = updateData.name.toLowerCase().split(" ").join("-");
@@ -172,10 +180,17 @@ const updateProduct = async (id, updateData) => {
     category = await Category.findById(updateData.category);
     console.log(category);
     if (!category)
-      throw new AppError(`Category ${updateData.category} not found`, 404);
+      throw new AppError(
+        MESSAGES.PRODUCT.CATEGORY_NOT_FOUND(updateData.category),
+        HTTP_STATUS.NOT_FOUND,
+      );
   } else {
     category = await Category.findById(product.category);
-    if (!category) throw new AppError("Original Category not found", 404);
+    if (!category)
+      throw new AppError(
+        MESSAGES.PRODUCT.ORIGINAL_CATEGORY_NOT_FOUND,
+        HTTP_STATUS.NOT_FOUND,
+      );
   }
 
   if (updateData.category) {

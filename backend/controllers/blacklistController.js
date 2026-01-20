@@ -1,5 +1,6 @@
 import Blacklist from "../models/Blacklist.js";
 import AppError from "../utils/AppError.js";
+import { HTTP_STATUS } from "../constants/httpStatus.js";
 
 export const getBlacklistedItems = async (req, res) => {
   const { page = 1, limit = 10, search } = req.query;
@@ -21,7 +22,7 @@ export const getBlacklistedItems = async (req, res) => {
     .limit(pageSize)
     .skip(pageSize * (pageNum - 1));
 
-  res.status(200).json({
+  res.status(HTTP_STATUS.OK).json({
     items,
     page: pageNum,
     pages: Math.ceil(count / pageSize),

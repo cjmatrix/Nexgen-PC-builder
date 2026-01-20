@@ -6,6 +6,8 @@ import {
   Package,
   ChevronRight,
   AlertCircle,
+  Wrench,
+  Sparkles,
 } from "lucide-react";
 import api from "../../../../api/axios";
 import UserOrderDetails from "./UserOrderDetails";
@@ -40,7 +42,7 @@ const OrderHistory = () => {
         params: {
           search: searchInput || "",
           page: page,
-          limit: 10,
+          limit: 9,
         },
       });
       return response.data;
@@ -85,7 +87,7 @@ const OrderHistory = () => {
     doc.text(
       `${order.shippingAddress.city}, ${order.shippingAddress.postalCode}`,
       14,
-      83
+      83,
     );
 
     const tableColumn = ["Item", "Qty", "Price", "Total"];
@@ -141,7 +143,7 @@ const OrderHistory = () => {
     doc.text(
       `Total Amount: ${(order.totalPrice / 100).toLocaleString()}`,
       14,
-      finalY + 10
+      finalY + 10,
     );
     doc.text("Thank you for your business!", 105, finalY + 30, {
       align: "center",
@@ -232,13 +234,14 @@ const OrderHistory = () => {
                   {/* Order Images Stack */}
                   <div className="flex items-center mb-4 pl-2">
                     {order.orderItems.slice(0, 4).map((item, index) => {
-                      const image = item.isCustomBuild
-                        ? "/custom-pc.png"
-                        : item.image || "https://placehold.co/100";
+                      const image =
+                        item.isCustomBuild && !item.isAiBuild
+                          ? "/custom-pc.png"
+                          : item.image || "https://placehold.co/100";
                       return (
                         <div
                           key={item._id || index}
-                          className="relative w-16 h-16 rounded-full border-2 border-white -ml-3 hover:scale-110 transition-transform cursor-pointer bg-white"
+                          className="relative w-20 h-20 md:w-16 md:h-16 rounded-full border-2 border-white -ml-4 md:-ml-3 hover:scale-110 transition-transform cursor-pointer bg-white"
                           title={item.name}
                           style={{ zIndex: 10 - index }}
                         >
@@ -247,12 +250,22 @@ const OrderHistory = () => {
                             alt={item.name}
                             className="w-full h-full object-cover rounded-full"
                           />
+                          {item.isCustomBuild && !item.isAiBuild && (
+                            <div className="absolute -bottom-1 -right-1 bg-purple-100 p-1 rounded-full border border-white shadow-sm z-20">
+                              <Wrench className="w-3 h-3 text-purple-600" />
+                            </div>
+                          )}
+                          {item.isAiBuild && (
+                            <div className="absolute -bottom-1 -right-1 bg-indigo-100 p-1 rounded-full border border-white shadow-sm z-20">
+                              <Sparkles className="w-3 h-3 text-indigo-600" />
+                            </div>
+                          )}
                         </div>
                       );
                     })}
                     {order.orderItems.length > 4 && (
                       <div
-                        className="relative w-10 h-10 rounded-full border-2 border-white -ml-3 bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-600 z-0"
+                        className="relative w-12 h-12 md:w-10 md:h-10 rounded-full border-2 border-white -ml-4 md:-ml-3 bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-600 z-0"
                         title={`${order.orderItems.length - 4} more items`}
                       >
                         +{order.orderItems.length - 4}

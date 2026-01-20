@@ -6,6 +6,7 @@ import {
   updateUser,
   getSalesReport,
   getSalesInsights,
+  streamSalesUpdates,
 } from "../controllers/adminController.js";
 
 import {
@@ -34,12 +35,18 @@ import {
   getCategoryById,
 } from "../controllers/categoryController.js";
 
+import {
+  getOrderById,
+  getOrderItemDetail,
+} from "../controllers/orderController.js";
+
 router.get("/componentspublic", getComponents);
 
 router.use(protectAdmin);
 
 router.get("/users", getUsers);
 router.get("/sales-report", getSalesReport);
+router.get("/sales-updates", streamSalesUpdates);
 
 router.post("/sales-insights", getSalesInsights);
 router.patch("/users/:id/block", blockUser);
@@ -61,5 +68,8 @@ router.get("/category/:id", getCategoryById);
 router.post("/category", createCategory);
 router.put("/category/:id", updateCategory);
 router.delete("/category/:id", deleteCategory);
+
+router.get("/orders/:id", getOrderById);
+router.get("/orders/:id/items/:itemId", getOrderItemDetail);
 
 export default router;

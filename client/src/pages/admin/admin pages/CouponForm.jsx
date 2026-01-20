@@ -116,7 +116,7 @@ const CouponForm = () => {
   const onSubmit = (formData) => {
     if (isEditMode) {
       const changedData = Object.fromEntries(
-        Object.keys(dirtyFields).map((key) => [key, formData[key]])
+        Object.keys(dirtyFields).map((key) => [key, formData[key]]),
       );
       console.log(changedData.length);
       if (Object.keys(changedData).length === 0) {
@@ -212,6 +212,16 @@ const CouponForm = () => {
                     validate: (value) => {
                       if (discountType === "percentage" && value > 100)
                         return "Percentage cannot exceed 100%";
+
+                      const minOrder = watch("minOrderValue");
+                      if (
+                        discountType === "fixed" &&
+                        minOrder &&
+                        Number(value) >= Number(minOrder)
+                      ) {
+                        return "Fixed discount must be less than Minimum Order Value";
+                      }
+
                       return true;
                     },
                   })}

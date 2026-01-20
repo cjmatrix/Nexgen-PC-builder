@@ -16,7 +16,7 @@ export const adminLogin = createAsyncThunk(
         error.toString();
       return thunkAPI.rejectWithValue(message);
     }
-  }
+  },
 );
 
 export const adminLogout = createAsyncThunk(
@@ -33,7 +33,7 @@ export const adminLogout = createAsyncThunk(
         error.toString();
       return thunkAPI.rejectWithValue(message);
     }
-  }
+  },
 );
 
 export const fetchAdminProfile = createAsyncThunk(
@@ -43,7 +43,6 @@ export const fetchAdminProfile = createAsyncThunk(
       const response = await api.get("/auth/admin/profile");
       return response.data;
     } catch (error) {
-
       const message =
         (error.response &&
           error.response.data &&
@@ -52,7 +51,7 @@ export const fetchAdminProfile = createAsyncThunk(
         error.toString();
       return thunkAPI.rejectWithValue(message);
     }
-  }
+  },
 );
 
 const initialState = {
@@ -78,11 +77,15 @@ const adminSlice = createSlice({
     builder
       .addCase(adminLogin.pending, (state) => {
         state.isLoading = true;
+        state.isError = false;
+        state.isSuccess = false;
+        state.message = "";
       })
       .addCase(adminLogin.fulfilled, (state, action) => {
         state.isLoading = false;
         state.isSuccess = true;
         state.adminUser = action.payload;
+        state.message = "";
       })
       .addCase(adminLogin.rejected, (state, action) => {
         state.isLoading = false;
@@ -90,10 +93,21 @@ const adminSlice = createSlice({
         state.message = action.payload;
         state.adminUser = null;
       })
-      .addCase(adminLogout.fulfilled, (state) => {
-        state.adminUser = null;
+      .addCase(adminLogout.pending, (state) => {
+        state.isLoading = true;
       })
-      // Fetch Admin Profile
+      .addCase(adminLogout.fulfilled, (state) => {
+        state.isLoading = false;
+        state.adminUser = null;
+        state.isSuccess = false;
+        state.isError = false;
+        state.message = "";
+      })
+      .addCase(adminLogout.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.message = action.payload;
+      })
       .addCase(fetchAdminProfile.pending, (state) => {
         state.isLoading = true;
       })
@@ -101,8 +115,11 @@ const adminSlice = createSlice({
         state.isLoading = false;
         state.adminUser = action.payload;
       })
-      .addCase(fetchAdminProfile.rejected, (state) => {
+      .addCase(fetchAdminProfile.rejected, (state, action) => {
+        console.log("here is error")
         state.isLoading = false;
+       
+      
         state.adminUser = null;
       });
   },

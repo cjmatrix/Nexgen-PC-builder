@@ -8,6 +8,7 @@ import { useWishlist } from "../../hooks/useWishlist";
 import { Heart as HeartIcon } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import FeatureShowcase from "./components/FeatureShowcase";
+import api from "../../api/axios";
 
 const ProductList = () => {
   const dispatch = useDispatch();
@@ -128,24 +129,25 @@ const ProductList = () => {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6 lg:gap-8 mb-12">
             {items.map((product, index) => {
               const isOutOfStock =
                 product.default_config &&
                 Object.values(product.default_config).some(
-                  (component) => component?.stock < 1 || !component?.isActive
+                  (component) => component?.stock < 1 || !component?.isActive,
                 );
 
               return (
                 <div
                   key={product._id}
+                  onClick={() => navigate(`/products/${product._id}`)}
                   style={{ animationDelay: `${index * 100}ms` }}
-                  className="group bg-white rounded-2xl shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 border border-gray-100 overflow-hidden flex flex-col animate-in fade-in slide-in-from-bottom-8 fill-mode-backwards"
+                  className="group bg-white rounded-2xl shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 border border-gray-100 overflow-hidden flex flex-col animate-in fade-in slide-in-from-bottom-8 fill-mode-backwards cursor-pointer"
                 >
                   <div className="relative aspect-[4/3] bg-gray-100 overflow-hidden">
                     {isOutOfStock && (
                       <div className="absolute inset-0 bg-black/60 z-30 flex items-center justify-center backdrop-blur-sm">
-                        <span className="bg-red-600 text-white px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg">
+                        <span className="bg-red-600 text-white px-3 py-1 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-wider shadow-lg">
                           Out of Stock
                         </span>
                       </div>
@@ -165,10 +167,10 @@ const ProductList = () => {
                     />
                     <button
                       onClick={(e) => handleWishlistToggle(e, product._id)}
-                      className="absolute top-3 right-3 p-2 bg-white/80 backdrop-blur-md rounded-full text-gray-500 hover:text-red-500 hover:bg-white transition-all shadow-md z-20 hover:scale-110 active:scale-95"
+                      className="absolute top-2 right-2 md:top-3 md:right-3 p-1.5 md:p-2 bg-white/80 backdrop-blur-md rounded-full text-gray-500 hover:text-red-500 hover:bg-white transition-all shadow-md z-20 hover:scale-110 active:scale-95"
                     >
                       <HeartIcon
-                        className={`h-5 w-5 ${
+                        className={`h-4 w-4 md:h-5 md:w-5 ${
                           isInWishlist(product._id)
                             ? "fill-red-500 text-red-500"
                             : "text-gray-600"
@@ -178,29 +180,29 @@ const ProductList = () => {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   </div>
 
-                  <div className="p-5 flex flex-col flex-grow relative">
-                    <div className="mb-4">
-                      <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-1 group-hover:text-blue-600 transition-colors">
+                  <div className="p-3 md:p-5 flex flex-col flex-grow relative">
+                    <div className="mb-2 md:mb-4">
+                      <h3 className="text-sm md:text-lg font-bold text-gray-900 mb-1 md:mb-2 line-clamp-2 md:line-clamp-1 group-hover:text-blue-600 transition-colors">
                         {product.name}
                       </h3>
                       {product.category && (
-                        <span className="inline-flex items-center px-2.5 py-1 mb-3 rounded-full text-[10px] font-bold bg-blue-50 text-blue-600 uppercase tracking-widest border border-blue-100">
+                        <span className="inline-flex items-center px-2 py-0.5 md:px-2.5 md:py-1 mb-2 md:mb-3 rounded-full text-[10px] font-bold bg-blue-50 text-blue-600 uppercase tracking-widest border border-blue-100">
                           {product.category.name}
                         </span>
                       )}
-                      <p className="text-sm text-gray-500 line-clamp-2 h-10 leading-relaxed">
+                      <p className="text-xs md:text-sm text-gray-500 line-clamp-2 h-8 md:h-10 leading-relaxed">
                         {product.description}
                       </p>
                     </div>
 
-                    <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between">
+                    <div className="mt-auto pt-3 md:pt-4 border-t border-gray-50 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-0">
                       <div>
                         {product.applied_offer > 0 ? (
                           <div className="flex flex-col">
-                            <span className="text-xs text-gray-400 line-through">
+                            <span className="text-[10px] md:text-xs text-gray-400 line-through">
                               ₹{(product.base_price / 100).toLocaleString()}
                             </span>
-                            <p className="text-xl font-bold text-gray-900">
+                            <p className="text-base md:text-xl font-bold text-gray-900">
                               ₹
                               {(
                                 product.final_price / 100 ||
@@ -210,10 +212,10 @@ const ProductList = () => {
                           </div>
                         ) : (
                           <div className="flex flex-col">
-                            <span className="text-xs text-gray-400 opacity-0">
+                            <span className="text-[10px] md:text-xs text-gray-400 opacity-0">
                               Starting
                             </span>
-                            <p className="text-xl font-bold text-gray-900">
+                            <p className="text-base md:text-xl font-bold text-gray-900">
                               ₹{(product.base_price / 100).toLocaleString()}
                             </p>
                           </div>
@@ -221,10 +223,10 @@ const ProductList = () => {
                       </div>
                       <button
                         onClick={() => navigate(`/products/${product._id}`)}
-                        className="bg-gray-900 text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-600 hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-300 transform group-hover:translate-x-1 flex items-center gap-2"
+                        className="w-full md:w-auto bg-gray-900 text-white px-3 py-2 md:px-5 md:py-2.5 rounded-lg md:rounded-xl text-xs md:text-sm font-semibold hover:bg-blue-600 hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-300 transform group-hover:translate-x-1 flex items-center justify-center gap-2"
                       >
                         View
-                        <Eye className="w-4 h-4" />
+                        <Eye className="w-3 h-3 md:w-4 md:h-4" />
                       </button>
                     </div>
                   </div>

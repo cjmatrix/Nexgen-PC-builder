@@ -5,7 +5,7 @@ const AdminRoutes = () => {
   const { adminUser, isLoading } = useSelector((state) => state.admin);
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div>Loading...jii</div>;
   }
 
   if (adminUser && adminUser.role === "admin") {

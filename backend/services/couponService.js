@@ -1,5 +1,7 @@
 import Coupon from "../models/Coupons.js";
 import AppError from "../utils/AppError.js";
+import { HTTP_STATUS } from "../constants/httpStatus.js";
+import { MESSAGES } from "../constants/responseMessages.js";
 
 const createCoupon = async (data) => {
   const {
@@ -15,14 +17,14 @@ const createCoupon = async (data) => {
 
   const existingCoupon = await Coupon.findOne({ code: code.toUpperCase() });
   if (existingCoupon) {
-    throw new AppError("Coupon code already exists", 400);
+    throw new AppError(MESSAGES.COUPON.ALREADY_EXISTS, HTTP_STATUS.BAD_REQUEST);
   }
   console.log(discountType, discountValue, minOrderValue);
-  if (discountType === "fixed" && discountValue >= minOrderValue) {
-    throw new AppError(
-      "Fixed discount value cannot exceed or equal minimum order value",
-      400
-    );
+  if (
+    discountType === "fixed" &&
+    Number(discountValue) >= Number(minOrderValue)
+  ) {
+    throw new AppError("Fixed discount must be less than Minimum Order Value", HTTP_STATUS.BAD_REQUEST);
   }
 
   const coupon = await Coupon.create({
@@ -70,7 +72,7 @@ const getCouponById = async (id) => {
   const coupon = await Coupon.findById(id);
 
   if (!coupon) {
-    throw new AppError("Coupon not found", 404);
+    throw new AppError(MESSAGES.COUPON.NOT_FOUND, HTTP_STATUS.NOT_FOUND);
   }
 
   return coupon;
@@ -95,15 +97,29 @@ const updateCoupon = async (id, updateData) => {
     const existing = await Coupon.findOne({
       code: updateData.code.toUpperCase(),
     });
-    if (existing) throw new AppError("Coupon code already exists", 400);
+    if (existing)
+      throw new AppError(
+        MESSAGES.COUPON.ALREADY_EXISTS,
+        HTTP_STATUS.BAD_REQUEST,
+      );
 
     updateData.code = updateData.code.toUpperCase();
   }
 
-  const updatedCoupon = await Coupon.findByIdAndUpdate(id, updateData, {
-    new: true,
-    runValidators: true,
-  });
+  Object.assign(coupon, updateData);
+
+  
+  if (
+    coupon.discountType === "fixed" &&
+    Number(coupon.discountValue) >= Number(coupon.minOrderValue)
+  ) {
+    throw new AppError(
+      "Fixed discount must be less than Minimum Order Value",
+      HTTP_STATUS.BAD_REQUEST,
+    );
+  }
+
+  const updatedCoupon = await coupon.save();
 
   return updatedCoupon;
 };
@@ -112,7 +128,7 @@ const deleteCoupon = async (id) => {
   const coupon = await Coupon.findById(id);
 
   if (!coupon) {
-    throw new AppError("Coupon not found", 404);
+    throw new AppError(MESSAGES.COUPON.NOT_FOUND, HTTP_STATUS.NOT_FOUND);
   }
 
   coupon.isActive = !coupon.isActive;
@@ -122,30 +138,33 @@ const deleteCoupon = async (id) => {
 };
 
 const validateCoupon = async (code, cartTotal, userId) => {
-  if (!code) throw new AppError("Coupon code is required", 400);
+  if (!code)
+    throw new AppError(MESSAGES.COUPON.CODE_REQUIRED, HTTP_STATUS.BAD_REQUEST);
 
   const coupon = await Coupon.findOne({ code: code.toUpperCase() });
 
-  if (!coupon) throw new AppError("Invalid coupon code", 404);
+  if (!coupon)
+    throw new AppError(MESSAGES.COUPON.INVALID_CODE, HTTP_STATUS.NOT_FOUND);
 
-  if (!coupon.isActive) throw new AppError("Coupon is inactive", 400);
+  if (!coupon.isActive)
+    throw new AppError(MESSAGES.COUPON.INACTIVE, HTTP_STATUS.BAD_REQUEST);
 
   if (coupon.usedBy.includes(userId)) {
-    throw new AppError("You have already used this coupon", 400);
+    throw new AppError(MESSAGES.COUPON.ALREADY_USED, HTTP_STATUS.BAD_REQUEST);
   }
 
   if (new Date() > new Date(coupon.expiryDate)) {
-    throw new AppError("Coupon has expired", 400);
+    throw new AppError(MESSAGES.COUPON.EXPIRED, HTTP_STATUS.BAD_REQUEST);
   }
 
   if (coupon.usageCount >= coupon.usageLimit) {
-    throw new AppError("Coupon usage limit reached", 400);
+    throw new AppError(MESSAGES.COUPON.LIMIT_REACHED, HTTP_STATUS.BAD_REQUEST);
   }
 
   if (cartTotal < coupon.minOrderValue) {
     throw new AppError(
-      `Minimum order value of ₹${coupon.minOrderValue} required`,
-      400
+      MESSAGES.COUPON.MIN_ORDER_VALUE(coupon.minOrderValue),
+      HTTP_STATUS.BAD_REQUEST,
     );
   }
 
@@ -153,7 +172,6 @@ const validateCoupon = async (code, cartTotal, userId) => {
   if (coupon.discountType === "percentage") {
     discountAmount = Math.round((cartTotal * coupon.discountValue) / 100);
 
-    // Check for maximum discount amount (if applicable)
     if (coupon.maxDiscountAmount && discountAmount > coupon.maxDiscountAmount) {
       discountAmount = coupon.maxDiscountAmount;
     }

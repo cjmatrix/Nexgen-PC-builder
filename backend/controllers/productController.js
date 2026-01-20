@@ -1,9 +1,12 @@
 import * as productService from "../services/productService.js";
 import AppError from "../utils/AppError.js";
+import { HTTP_STATUS } from "../constants/httpStatus.js";
+import { MESSAGES } from "../constants/responseMessages.js";
 
 const createProduct = async (req, res) => {
+  console.log(req.body,"hereeeeeeeeeee")
   const product = await productService.createProduct(req.body);
-  res.status(201).json({ success: true, data: product });
+  res.status(HTTP_STATUS.CREATED).json({ success: true, data: product });
 };
 
 const getAdminProducts = async (req, res) => {
@@ -16,9 +19,9 @@ const getAdminProducts = async (req, res) => {
     limit,
     search,
     category,
-    status
+    status,
   );
-  res.status(200).json({ success: true, ...result });
+  res.status(HTTP_STATUS.OK).json({ success: true, ...result });
 };
 
 const getPublicProducts = async (req, res) => {
@@ -34,24 +37,28 @@ const getPublicProducts = async (req, res) => {
     sort,
   });
 
-  res.status(200).json({ success: true, ...result });
+  res.status(HTTP_STATUS.OK).json({ success: true, ...result });
 };
 
 const getProductById = async (req, res) => {
   const product = await productService.getProductById(req, req.params.id);
-  res.status(200).json({ success: true, data: product });
+  res.status(HTTP_STATUS.OK).json({ success: true, data: product });
 };
 
 const updateProduct = async (req, res) => {
   const product = await productService.updateProduct(req.params.id, req.body);
-  res.status(200).json({ success: true, data: product });
+  res.status(HTTP_STATUS.OK).json({ success: true, data: product });
 };
 
 const deleteProduct = async (req, res) => {
   const result = await productService.deleteProduct(req.params.id);
   res
-    .status(200)
-    .json({ success: true, message: "Product deactivated", data: result });
+    .status(HTTP_STATUS.OK)
+    .json({
+      success: true,
+      message: MESSAGES.PRODUCT.DEACTIVATED,
+      data: result,
+    });
 };
 
 export {

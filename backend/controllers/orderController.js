@@ -1,12 +1,13 @@
 import * as orderService from "../services/orderService.js";
+import { HTTP_STATUS } from "../constants/httpStatus.js";
 
 export const createOrder = async (req, res) => {
   const order = await orderService.createOrder(
     req.user._id,
     req.user,
-    req.body
+    req.body,
   );
-  res.status(201).json(order);
+  res.status(HTTP_STATUS.CREATED).json(order);
 };
 
 export const getMyOrders = async (req, res) => {
@@ -16,12 +17,22 @@ export const getMyOrders = async (req, res) => {
     page,
     limit,
   });
-  res.status(200).json(result);
+  res.status(HTTP_STATUS.OK).json(result);
 };
 
 export const getOrderById = async (req, res) => {
   const order = await orderService.getOrderById(req.params.id, req.user);
-  res.json(order);
+  res.status(HTTP_STATUS.OK).json(order);
+};
+
+export const getOrderItemDetail = async (req, res) => {
+  const { id, itemId } = req.params;
+  const components = await orderService.getOrderItemDetail(
+    id,
+    itemId,
+    req.user,
+  );
+  res.status(HTTP_STATUS.OK).json(components);
 };
 
 export const getAllOrders = async (req, res) => {
@@ -32,16 +43,16 @@ export const getAllOrders = async (req, res) => {
     search,
     status,
   });
-  res.status(200).json(result);
+  res.status(HTTP_STATUS.OK).json(result);
 };
 
 export const updateOrderStatus = async (req, res) => {
   const { status } = req.body;
   const updatedOrder = await orderService.updateOrderStatus(
     req.params.id,
-    status
+    status,
   );
-  res.json(updatedOrder);
+  res.status(HTTP_STATUS.OK).json(updatedOrder);
 };
 
 export const cancelOrder = async (req, res) => {
@@ -50,9 +61,9 @@ export const cancelOrder = async (req, res) => {
     req.params.id,
     itemId,
     reason,
-    req.user._id
+    req.user._id,
   );
-  res.json(updatedOrder);
+  res.status(HTTP_STATUS.OK).json(updatedOrder);
 };
 
 export const requestReturn = async (req, res) => {
@@ -61,9 +72,9 @@ export const requestReturn = async (req, res) => {
     req.params.id,
     itemId,
     reason,
-    req.user._id
+    req.user._id,
   );
-  res.json(updatedOrder);
+  res.status(HTTP_STATUS.OK).json(updatedOrder);
 };
 
 export const approveReturn = async (req, res) => {
@@ -72,13 +83,13 @@ export const approveReturn = async (req, res) => {
     req.params.id,
     itemId,
     req.user._id,
-    addToBlacklist
+    addToBlacklist,
   );
-  res.json(updatedOrder);
+  res.status(HTTP_STATUS.OK).json(updatedOrder);
 };
 
 export const rejectReturn = async (req, res) => {
   const { itemId } = req.body;
   const updatedOrder = await orderService.rejectReturn(req.params.id, itemId);
-  res.json(updatedOrder);
+  res.status(HTTP_STATUS.OK).json(updatedOrder);
 };

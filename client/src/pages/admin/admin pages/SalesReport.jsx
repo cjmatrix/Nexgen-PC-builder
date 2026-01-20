@@ -26,7 +26,7 @@ import {
 import { FaShoppingCart, FaChartLine, FaBoxOpen } from "react-icons/fa";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import * as XLSX from "xlsx";
@@ -37,7 +37,7 @@ const StatsCard = ({ title, value, icon, color, delay }) => {
     gsap.fromTo(
       ".stats-card",
       { y: 20, opacity: 0 },
-      { y: 0, opacity: 1, duration: 0.5, stagger: 0.1 }
+      { y: 0, opacity: 1, duration: 0.5, stagger: 0.1 },
     );
   }, []);
 
@@ -49,19 +49,19 @@ const StatsCard = ({ title, value, icon, color, delay }) => {
   };
 
   return (
-    <div className="stats-card bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex items-center gap-4 transition-all hover:shadow-md">
+    <div className="stats-card bg-white rounded-xl shadow-sm border border-gray-100 p-3 md:p-5 flex items-center gap-3 md:gap-4 transition-all hover:shadow-md">
       <div
-        className={`p-3 rounded-lg ${
+        className={`p-2 md:p-3 rounded-lg ${
           colorClasses[color] || "bg-gray-100 text-gray-600"
-        } text-2xl`}
+        } text-[clamp(1.25rem,2vw,1.75rem)] shrink-0`}
       >
         {icon}
       </div>
-      <div>
-        <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider">
+      <div className="min-w-0 flex-1">
+        <p className="text-gray-500 text-[clamp(0.65rem,1vw,0.85rem)] font-semibold uppercase tracking-wider truncate mb-0.5">
           {title}
         </p>
-        <h3 className="text-2xl font-bold text-gray-800 mt-1">
+        <h3 className="text-[clamp(1.1rem,2vw,1.75rem)] font-bold text-gray-800 break-words leading-tight">
           {typeof value === "number" &&
           (title.includes("Revenue") ||
             title.includes("Discount") ||
@@ -97,7 +97,6 @@ const CustomTooltip = ({ active, payload, label }) => {
   return null;
 };
 
-// Fetch Functions
 const fetchSalesReport = async ({ queryKey }) => {
   const [_, { startDate, endDate, interval }] = queryKey;
   const params = new URLSearchParams();
@@ -125,44 +124,173 @@ const SalesReport = () => {
   } = useQuery({
     queryKey: ["salesReport", { ...dateRange, interval }],
     queryFn: fetchSalesReport,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
+
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const baseURL =
+      import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1";
+    const eventSource = new EventSource(`${baseURL}/admin/sales-updates`, {
+      withCredentials: true,
+    });
+
+    eventSource.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+      if (message.type === "NEW_ORDER" || message.type === "STATUS_UPDATE") {
+        queryClient.invalidateQueries({ queryKey: ["salesReport"] });
+      }
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, [queryClient]);
 
   const handleDownloadPDF = () => {
     if (!data) return;
     const doc = new jsPDF();
-    doc.text("Sales Report", 14, 20);
-    autoTable(doc,{
-      startY: 30,
+
+    // Header
+    doc.setFontSize(22);
+    doc.setTextColor(40);
+    doc.text("NexGen PC Builder", 14, 20);
+
+    doc.setFontSize(14);
+    doc.text("Sales Report", 14, 30);
+
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    const dateText =
+      dateRange.startDate && dateRange.endDate
+        ? `Period: ${dateRange.startDate} to ${dateRange.endDate}`
+        : `Period: ${interval.charAt(0).toUpperCase() + interval.slice(1)} View`;
+    doc.text(dateText, 14, 38);
+    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 44);
+
+    // Summary Section
+    const statsY = 55;
+    doc.setFontSize(12);
+    doc.setTextColor(0);
+    doc.text("Executive Summary", 14, statsY);
+
+    const summaryData = [
+      ["Total Revenue", `Rs. ${stats.totalRevenue.toLocaleString()}`],
+      ["Total Orders", stats.totalOrders.toString()],
+      [
+        "Avg. Order Value",
+        `Rs. ${Math.round(stats.avgOrderValue).toLocaleString()}`,
+      ],
+      ["Total Discount", `Rs. ${stats.totalDiscount.toLocaleString()}`],
+      [
+        "Net Sales",
+        `Rs. ${(stats.totalRevenue - (stats.totalDiscount || 0)).toLocaleString()}`,
+      ],
+    ];
+
+    autoTable(doc, {
+      startY: statsY + 5,
+      head: [],
+      body: summaryData,
+      theme: "plain",
+      styles: { fontSize: 10, cellPadding: 2 },
+      columnStyles: { 0: { fontStyle: "bold", cellWidth: 50 } },
+    });
+
+    // Sales Over Time Table
+
+    const finalY = doc.lastAutoTable.finalY + 15;
+    doc.setFontSize(14);
+    doc.text("Sales Detailed Breakdown", 14, finalY);
+
+    autoTable(doc, {
+      startY: finalY + 5,
       head: [["Date", "Orders", "Revenue (INR)"]],
       body: data.salesOverTime.map((item) => [
         item._id,
         item.dailyOrders,
         item.dailyRevenue.toLocaleString(),
       ]),
+      theme: "grid",
+      headStyles: { fillColor: [139, 92, 246] }, // Purple
     });
-    doc.save("sales_report.pdf");
+
+    // Top Products Table
+
+    const topProdY = doc.lastAutoTable.finalY + 15;
+    doc.setFontSize(14);
+    doc.text("Top Selling Products", 14, topProdY);
+
+    autoTable(doc, {
+      startY: topProdY + 5,
+      head: [["Product Name", "Units Sold", "Revenue (INR)"]],
+      body: data.topProducts.map((item) => [
+        item.name,
+        item.totalSold,
+        item.revenue.toLocaleString(),
+      ]),
+      theme: "striped",
+      headStyles: { fillColor: [236, 72, 153] }, // Pink
+    });
+
+    doc.save("sales_report_comprehensive.pdf");
   };
 
   const handleDownloadExcel = () => {
     if (!data) return;
-    const worksheet = XLSX.utils.json_to_sheet(
+    const wb = XLSX.utils.book_new();
+
+    // 1. Summary Sheet
+    const summaryWs = XLSX.utils.json_to_sheet([
+      { Metric: "Report Period", Value: interval },
+      { Metric: "Generated On", Value: new Date().toLocaleDateString() },
+      {},
+      { Metric: "Total Revenue", Value: stats.totalRevenue },
+      { Metric: "Total Orders", Value: stats.totalOrders },
+      { Metric: "Avg Order Value", Value: stats.avgOrderValue },
+      { Metric: "Total Discount", Value: stats.totalDiscount },
+    ]);
+    XLSX.utils.book_append_sheet(wb, summaryWs, "Summary");
+
+    // 2. Sales Data Sheet
+    const salesWs = XLSX.utils.json_to_sheet(
       data.salesOverTime.map((item) => ({
         Date: item._id,
         Orders: item.dailyOrders,
         Revenue: item.dailyRevenue,
-      }))
+      })),
     );
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Sales");
-    const excelBuffer = XLSX.write(workbook, {
+    XLSX.utils.book_append_sheet(wb, salesWs, "Sales Data");
+
+    // 3. Top Products Sheet
+    const productsWs = XLSX.utils.json_to_sheet(
+      data.topProducts.map((item) => ({
+        Product: item.name,
+        "Units Sold": item.totalSold,
+        Revenue: item.revenue,
+      })),
+    );
+    XLSX.utils.book_append_sheet(wb, productsWs, "Top Products");
+
+    // 4. Order Status Sheet
+    const statusWs = XLSX.utils.json_to_sheet(
+      data.orderStatusStats.map((item) => ({
+        Status: item._id,
+        Count: item.count,
+      })),
+    );
+    XLSX.utils.book_append_sheet(wb, statusWs, "Order Statuses");
+
+    const excelBuffer = XLSX.write(wb, {
       bookType: "xlsx",
       type: "array",
     });
     const blob = new Blob([excelBuffer], {
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     });
-    saveAs(blob, "sales_report.xlsx");
+    saveAs(blob, "sales_report_comprehensive.xlsx");
   };
 
   const {
@@ -183,13 +311,11 @@ const SalesReport = () => {
 
   useGSAP(() => {
     if (!loading && data) {
-      gsap.from(".chart-container", {
-        y: 30,
-        opacity: 0,
-        duration: 0.8,
-        stagger: 0.2,
-        ease: "power3.out",
-      });
+      gsap.fromTo(
+        ".chart-container",
+        { y: 30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.8, stagger: 0.2, ease: "power3.out" },
+      );
     }
   }, [loading, data]);
 
@@ -223,23 +349,39 @@ const SalesReport = () => {
 
   const COLORS = ["#8b5cf6", "#ec4899", "#3b82f6", "#10b981"];
 
+  const getChartSubtitle = () => {
+    if (dateRange.startDate && dateRange.endDate) {
+      return `(${dateRange.startDate} to ${dateRange.endDate})`;
+    }
+    switch (interval) {
+      case "weekly":
+        return "(Last 12 Weeks)";
+      case "monthly":
+        return "(Last 12 Months)";
+      case "yearly":
+        return "(Last 5 Years)";
+      default:
+        return "(Last 30 Days)";
+    }
+  };
+
   return (
-    <div className="p-8 bg-gray-100 min-h-screen font-sans">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+    <div className="p-3 md:p-8 bg-gray-100 min-h-screen font-sans">
+      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-6 md:mb-8 gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">
+          <h1 className="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-gray-800 mb-1 md:mb-2">
             Sales Intelligence
           </h1>
-          <p className="text-gray-500 text-sm">
+          <p className="text-gray-500 text-[clamp(0.75rem,1.5vw,1rem)]">
             Real-time financial analytics and performance metrics
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-3 items-center">
+        <div className="w-full xl:w-auto flex flex-wrap gap-2 md:gap-3 items-center">
           <select
             value={interval}
             onChange={(e) => setInterval(e.target.value)}
-            className="p-2 border rounded-lg text-sm bg-white"
+            className="flex-1 sm:flex-none p-2 border rounded-lg text-sm bg-white"
           >
             <option value="daily">Daily</option>
             <option value="weekly">Weekly</option>
@@ -247,14 +389,14 @@ const SalesReport = () => {
             <option value="yearly">Yearly</option>
           </select>
 
-          <div className="flex items-center gap-2 bg-white p-1 border rounded-lg">
+          <div className="flex items-center gap-2 bg-white p-1 border rounded-lg overflow-x-auto max-w-full">
             <input
               type="date"
               value={dateRange.startDate}
               onChange={(e) =>
                 setDateRange({ ...dateRange, startDate: e.target.value })
               }
-              className="text-sm p-1 outline-none"
+              className="text-sm p-1 outline-none w-28 sm:w-auto"
             />
             <span className="text-gray-400">-</span>
             <input
@@ -263,7 +405,7 @@ const SalesReport = () => {
               onChange={(e) =>
                 setDateRange({ ...dateRange, endDate: e.target.value })
               }
-              className="text-sm p-1 outline-none"
+              className="text-sm p-1 outline-none w-28 sm:w-auto"
             />
           </div>
 
@@ -284,7 +426,7 @@ const SalesReport = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 md:gap-6 mb-6 md:mb-8">
         <StatsCard
           title="Total Revenue"
           value={stats.totalRevenue}
@@ -307,7 +449,7 @@ const SalesReport = () => {
           title="Products Sold"
           value={data.topProducts.reduce(
             (acc, curr) => acc + curr.totalSold,
-            0
+            0,
           )}
           icon={<FaBoxOpen />}
           color="green"
@@ -320,13 +462,13 @@ const SalesReport = () => {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-        <div className="chart-container lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h2 className="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 mb-6 md:mb-8">
+        <div className="chart-container lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
+          <h2 className="text-[clamp(1rem,1.5vw,1.25rem)] font-bold text-gray-800 mb-4 md:mb-6 flex items-center gap-2">
             <span className="w-1 h-6 bg-purple-500 rounded-full"></span>
-            Revenue Trend (Last 30 Days)
+            Revenue Trend {getChartSubtitle()}
           </h2>
-          <div className="h-[350px]">
+          <div className="h-[300px] md:h-[350px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={salesOverTime}>
                 <defs>
@@ -374,18 +516,22 @@ const SalesReport = () => {
           </div>
         </div>
 
-        <div className="chart-container bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h2 className="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2">
+        <div className="chart-container bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
+          <h2 className="text-[clamp(1rem,1.5vw,1.25rem)] font-bold text-gray-800 mb-4 md:mb-6 flex items-center gap-2">
             <span className="w-1 h-6 bg-pink-500 rounded-full"></span>
             Top Products
           </h2>
-          <div className="h-[350px]">
+          <div
+            style={{
+              height: `${Math.max(300, (topProducts?.length || 0) * 45)}px`,
+            }}
+          >
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={topProducts}
                 layout="vertical"
-                margin={{ left: 0, right: 20 }}
-                barSize={20}
+                margin={{ left: 0, right: 10 }}
+                barSize={12}
               >
                 <CartesianGrid
                   strokeDasharray="3 3"
@@ -397,7 +543,7 @@ const SalesReport = () => {
                 <YAxis
                   dataKey="name"
                   type="category"
-                  width={100}
+                  width={90}
                   tick={{ fill: "#64748b", fontSize: 11 }}
                   tickLine={false}
                   axisLine={false}
@@ -424,21 +570,21 @@ const SalesReport = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="chart-container bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h2 className="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+        <div className="chart-container bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
+          <h2 className="text-[clamp(1rem,1.5vw,1.25rem)] font-bold text-gray-800 mb-4 md:mb-6 flex items-center gap-2">
             <span className="w-1 h-6 bg-blue-500 rounded-full"></span>
             Order Status Distribution
           </h2>
-          <div className="h-[300px] flex items-center justify-center">
+          <div className="h-[400px] md:h-[350px] flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={orderStatusStats}
                   cx="50%"
-                  cy="50%"
-                  innerRadius={70}
-                  outerRadius={100}
+                  cy="45%"
+                  innerRadius={55}
+                  outerRadius={80}
                   paddingAngle={5}
                   dataKey="count"
                   nameKey="_id"
@@ -457,20 +603,20 @@ const SalesReport = () => {
                 </Pie>
                 <Tooltip content={<CustomTooltip />} />
                 <Legend
-                  verticalAlign="middle"
-                  align="right"
-                  layout="vertical"
+                  verticalAlign="bottom"
+                  align="center"
+                  layout="horizontal"
                   iconType="circle"
-                  wrapperStyle={{ fontSize: "12px", color: "#64748b" }}
+                  wrapperStyle={{ fontSize: "11px", paddingTop: "10px" }}
                 />
               </PieChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        <div className="chart-container bg-linear-to-br from-indigo-900 to-slate-900 rounded-xl p-8 text-white relative overflow-hidden shadow-lg">
+        <div className="chart-container bg-linear-to-br from-indigo-900 to-slate-900 rounded-xl p-4 md:p-6 text-white relative overflow-hidden shadow-lg">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 blur-[80px] rounded-full pointer-events-none"></div>
-          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+          <h2 className="text-[clamp(1rem,1.5vw,1.25rem)] font-bold mb-4 flex items-center gap-2">
             ✨ AI Insights
           </h2>
 
@@ -492,7 +638,7 @@ const SalesReport = () => {
                       (insight, i) =>
                         insight.trim() && (
                           <li key={i}>{insight.replace(/^-\s*/, "")}</li>
-                        )
+                        ),
                     )}
                 </ul>
               ) : (

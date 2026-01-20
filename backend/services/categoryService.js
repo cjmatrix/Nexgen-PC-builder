@@ -1,6 +1,8 @@
 import Category from "../models/Category.js";
 import Product from "../models/Product.js";
 import AppError from "../utils/AppError.js";
+import { HTTP_STATUS } from "../constants/httpStatus.js";
+import { MESSAGES } from "../constants/responseMessages.js";
 
 const getAllCategories = async (queryParams, user) => {
   const { search, page, limit, status } = queryParams;
@@ -37,7 +39,10 @@ const createNewCategory = async (data) => {
   const categoryExists = await Category.findOne({ name });
 
   if (categoryExists) {
-    throw new AppError("Category already exists", 400);
+    throw new AppError(
+      MESSAGES.CATEGORY.ALREADY_EXISTS,
+      HTTP_STATUS.BAD_REQUEST,
+    );
   }
 
   let newOffer = offer !== undefined ? offer : 0;
@@ -51,22 +56,20 @@ const modifyCategory = async (id, data) => {
   let { name, offer } = data;
 
   const category = await Category.findById(id);
-  if (!category) throw new AppError("Category not found", 404);
+  if (!category)
+    throw new AppError(MESSAGES.CATEGORY.NOT_FOUND, HTTP_STATUS.NOT_FOUND);
 
   offer = offer !== undefined ? offer : category.offer;
 
- 
   const isOfferChanged = category.offer !== offer;
 
   category.name = name;
   category.offer = offer;
   const updatedCategory = await category.save();
 
- 
   if (!isOfferChanged) {
     return updatedCategory;
   }
-
 
   const products = await Product.find({ category: category._id });
 
@@ -99,9 +102,9 @@ const toggleCategoryStatus = async (id) => {
   if (category) {
     category.isActive = !category.isActive;
     await category.save();
-    return { message: "Category status updated" };
+    return { message: MESSAGES.CATEGORY.STATUS_UPDATED };
   } else {
-    throw new AppError("Category not found", 404);
+    throw new AppError(MESSAGES.CATEGORY.NOT_FOUND, HTTP_STATUS.NOT_FOUND);
   }
 };
 
@@ -111,7 +114,7 @@ const findCategoryById = async (id) => {
   if (category) {
     return category;
   } else {
-    throw new AppError("Category not found", 404);
+    throw new AppError(MESSAGES.CATEGORY.NOT_FOUND, HTTP_STATUS.NOT_FOUND);
   }
 };
 

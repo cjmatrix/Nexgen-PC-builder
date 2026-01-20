@@ -79,7 +79,9 @@ const builderSlice = createSlice({
     },
     resetBuild: () => initialState,
     setSelected: (state, action) => {
+      console.log(action.payload)
       state.selected = action.payload;
+      console.log(state.selected)
       let price = 0;
       let wattage = 0;
       Object.values(state.selected).forEach((part) => {
@@ -89,6 +91,7 @@ const builderSlice = createSlice({
         }
       });
       state.totalPrice = price;
+      console.log(state.totalPrice)
       state.estimatedWattage = wattage;
     },
   },

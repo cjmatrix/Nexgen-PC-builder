@@ -6,8 +6,8 @@ import CustomModal from "../../components/CustomModal";
 
 const Wishlist = () => {
   const navigate = useNavigate();
-  const { items, loading, error, removeFromWishlist, moveToCart,moveError } =
-  useWishlist();
+  const { items, loading, error, removeFromWishlist, moveToCart, moveError } =
+    useWishlist();
 
   const [showErrorModal, setShowErrorModal] = React.useState(false);
 
@@ -27,18 +27,20 @@ const Wishlist = () => {
   console.log(moveError?.response?.data.message);
   if (loading) {
     return (
-      <div className="min-h-screen pt-24 pb-12 flex justify-center items-center">
+      <div className="flex justify-center items-center py-20">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-24 pb-12 px-4 sm:px-6 lg:px-8 font-sans">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex items-center gap-3 mb-8">
-          <Heart className="h-8 w-8 text-red-500 fill-current" />
-          <h1 className="text-3xl font-extrabold text-gray-900">My Wishlist</h1>
+    <div className="w-full p-4 md:p-8 font-sans">
+      <div className="mx-auto">
+        <div className="flex items-center gap-3 mb-6 md:mb-8">
+          <Heart className="h-6 w-6 md:h-8 md:w-8 text-red-500 fill-current" />
+          <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900">
+            My Wishlist
+          </h1>
         </div>
         {items.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-2xl shadow-sm border border-gray-100">
@@ -62,7 +64,7 @@ const Wishlist = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {items.map((item) => {
               const product = item.product;
-              if (!product) return null; // Handle deleted products
+              if (!product) return null; 
 
               return (
                 <div
@@ -84,7 +86,7 @@ const Wishlist = () => {
                     </button>
                   </div>
 
-                  <div className="p-5 flex flex-col flex-1">
+                  <div className="p-3 flex flex-col flex-1">
                     <Link
                       to={`/products/${product._id}`}
                       className="block mb-2"
@@ -114,7 +116,7 @@ const Wishlist = () => {
 
                       <button
                         onClick={() => handleMoveToCart(product._id)}
-                        className="bg-black text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors flex items-center gap-2"
+                        className="bg-black ml-4 text-white px-2 py-2 rounded-lg text-xs font-medium hover:bg-gray-800 transition-colors flex items-center gap-2"
                       >
                         <ShoppingCart className="h-4 w-4" />
                         Move to Cart

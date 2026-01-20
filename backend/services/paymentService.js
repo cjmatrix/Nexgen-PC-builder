@@ -6,6 +6,8 @@ import {
   OrdersController,
 } from "@paypal/paypal-server-sdk";
 import AppError from "../utils/AppError.js";
+import { HTTP_STATUS } from "../constants/httpStatus.js";
+import { MESSAGES } from "../constants/responseMessages.js";
 
 const client = new Client({
   clientCredentialsAuthCredentials: {
@@ -38,23 +40,21 @@ const processPaymentVerification = async (paypalOrderId, dbOrderId) => {
     const order = await Order.findById(dbOrderId);
 
     if (!order) {
-      throw new AppError("Order not found", 404);
+      throw new AppError(MESSAGES.PAYMENT.NOT_FOUND, HTTP_STATUS.NOT_FOUND);
     }
-
 
     const paidAmount = parseFloat(orderDetails.purchase_units[0].amount.value);
     const orderTotal = parseFloat(order.totalPrice);
 
-   
     if (Math.abs(paidAmount - orderTotal) > 0.01) {
       throw new AppError(
-        `Payment verification failed: Amount mismatch. Paid: ${paidAmount}, Expected: ${orderTotal}`,
-        400
+        MESSAGES.PAYMENT.AMOUNT_MISMATCH(paidAmount, orderTotal),
+        HTTP_STATUS.BAD_REQUEST,
       );
     }
 
     if (order.isPaid) {
-      return { verified: true, order, message: "Already paid" };
+      return { verified: true, order, message: MESSAGES.PAYMENT.ALREADY_PAID };
     }
     order.isPaid = true;
     order.paidAt = new Date();
@@ -68,8 +68,8 @@ const processPaymentVerification = async (paypalOrderId, dbOrderId) => {
     return { verified: true, order };
   }
   throw new AppError(
-    "Payment verification failed or Status not Completed",
-    400
+    MESSAGES.PAYMENT.VERIFICATION_FAILED,
+    HTTP_STATUS.BAD_REQUEST,
   );
 };
 

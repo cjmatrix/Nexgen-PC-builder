@@ -4,6 +4,8 @@ import sendEmail from "../utils/sendEmail.js";
 import crypto from "crypto";
 import AppError from "../utils/AppError.js";
 import { addEmailJob } from "../queues/emailQueue.js";
+import { HTTP_STATUS } from "../constants/httpStatus.js";
+import { MESSAGES } from "../constants/responseMessages.js";
 
 const generateTokens = async (userId) => {
   const accessToken = jwt.sign(
@@ -11,7 +13,7 @@ const generateTokens = async (userId) => {
     process.env.ACCESS_TOKEN_SECRET,
     {
       expiresIn: "15m",
-    }
+    },
   );
 
   const refreshToken = jwt.sign(
@@ -19,7 +21,7 @@ const generateTokens = async (userId) => {
     process.env.REFRESH_TOKEN_SECRET,
     {
       expiresIn: "7d",
-    }
+    },
   );
 
   const user = await User.findById(userId).select("+refreshTokens");
@@ -35,14 +37,14 @@ const registerUser = async (userData) => {
   const { name, email, password, referralToken } = userData;
 
   if (!name || !email || !password) {
-    throw new AppError("Please add all fields", 400);
+    throw new AppError(MESSAGES.AUTH.MISSING_FIELDS, HTTP_STATUS.BAD_REQUEST);
   }
 
   let user = await User.findOne({ email });
   if (user) {
     if (!user.isVerified) {
     } else {
-      throw new AppError("User already exists", 400);
+      throw new AppError(MESSAGES.AUTH.USER_EXISTS, HTTP_STATUS.BAD_REQUEST);
     }
   }
 
@@ -85,7 +87,7 @@ const registerUser = async (userData) => {
         code: referrerCouponCode,
         discountType: "fixed",
         discountValue: 500,
-        expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), 
+        expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
         minOrderValue: 2000,
         usageLimit: 1,
         allowedUsers: [referrer._id],
@@ -96,10 +98,10 @@ const registerUser = async (userData) => {
         .toUpperCase()}-${Math.floor(Math.random() * 1000)}`;
       await createCoupon({
         code: newUserCouponCode,
-        discountType: "percentage", 
+        discountType: "percentage",
         discountValue: 10,
         minOrderValue: 1000,
-        expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), 
+        expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
 
         usageLimit: 1,
         allowedUsers: [user._id],
@@ -111,42 +113,42 @@ const registerUser = async (userData) => {
   }
 
   try {
-    
     await addEmailJob({
       email: user.email,
       subject: "NexGen PC Builder - Verify Your Email",
       message: `Your verification code is: ${otp}. It expires in 10 minutes.`,
-    })
-
+    });
   } catch (error) {
     console.error("Email send failed:", error);
-    throw new AppError("Email could not be sent", 500);
+    throw new AppError(
+      MESSAGES.AUTH.EMAIL_SEND_FAILED,
+      HTTP_STATUS.INTERNAL_SERVER_ERROR,
+    );
   }
 
-  return { message: "Registration successful! We are sending your confirmation email shortly." };
+  return { message: MESSAGES.AUTH.REGISTRATION_SUCCESS };
 };
 
 const verifyOTP = async (email, otp) => {
   const user = await User.findOne({
     email: email,
-  }).select("+otp +otpExpires"); 
+  }).select("+otp +otpExpires");
   if (!user) {
-    throw new AppError("User not found", 404);
+    throw new AppError(MESSAGES.AUTH.USER_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
   }
 
   console.log(user);
   if (!user.otp || !user.otpExpires) {
-    throw new AppError("No OTP found", 404);
+    throw new AppError(MESSAGES.AUTH.NO_OTP, HTTP_STATUS.NOT_FOUND);
   }
 
   if (user.otp !== otp) {
-    throw new AppError("Invalid OTP", 400);
+    throw new AppError(MESSAGES.AUTH.INVALID_OTP, HTTP_STATUS.BAD_REQUEST);
   }
 
   if (user.otpExpires < Date.now()) {
-    throw new AppError("OTP expired", 400);
+    throw new AppError(MESSAGES.AUTH.OTP_EXPIRED, HTTP_STATUS.BAD_REQUEST);
   }
-
 
   user.isVerified = true;
   user.otp = undefined;
@@ -162,7 +164,7 @@ const resendOTP = async (email) => {
     $or: [{ email: email }, { tempEmail: email }],
   });
   if (!user) {
-    throw new AppError("User not found", 404);
+    throw new AppError(MESSAGES.AUTH.USER_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
   }
 
   console.log(email, "this wone");
@@ -181,26 +183,29 @@ const resendOTP = async (email) => {
     message: `Your new verification code is: ${otp}. It expires in 10 minutes.`,
   });
 
-  return { message: "OTP resent" };
+  return { message: MESSAGES.AUTH.OTP_RESENT };
 };
 
 const loginUser = async (email, password) => {
   const user = await User.findOne({ email }).select("+password");
 
   if (!user) {
-    throw new AppError("Invalid credentials", 401);
+    throw new AppError(
+      MESSAGES.AUTH.INVALID_CREDENTIALS,
+      HTTP_STATUS.UNAUTHORIZED,
+    );
   }
 
   if (user.status === "suspended" || user.status === "banned") {
-    throw new AppError(
-      "Your account has been suspended or banned. Please contact support.",
-      403
-    );
+    throw new AppError(MESSAGES.AUTH.ACCOUNT_SUSPENDED, HTTP_STATUS.FORBIDDEN);
   }
 
   const isMatch = await user.matchPassword(password);
   if (!isMatch) {
-    throw new AppError("Invalid credentials", 401);
+    throw new AppError(
+      MESSAGES.AUTH.INVALID_CREDENTIALS,
+      HTTP_STATUS.UNAUTHORIZED,
+    );
   }
 
   user.lastLogin = Date.now();
@@ -218,7 +223,7 @@ const logoutUser = async (incomingRefreshToken) => {
       const user = await User.findById(decoded.id).select("+refreshTokens");
       if (user) {
         user.refreshTokens = user.refreshTokens.filter(
-          (t) => t !== incomingRefreshToken
+          (t) => t !== incomingRefreshToken,
         );
         await user.save();
       }
@@ -228,38 +233,42 @@ const logoutUser = async (incomingRefreshToken) => {
 };
 
 const refreshAccessToken = async (incomingRefreshToken) => {
-  if (!incomingRefreshToken) throw new AppError("No token", 401);
+  if (!incomingRefreshToken)
+    throw new AppError(MESSAGES.AUTH.NO_TOKEN, HTTP_STATUS.UNAUTHORIZED);
 
   const decoded = jwt.verify(
     incomingRefreshToken,
-    process.env.REFRESH_TOKEN_SECRET
+    process.env.REFRESH_TOKEN_SECRET,
   );
   const user = await User.findOne({ _id: decoded.id }).select("+refreshTokens");
-    if (user.status !== 'active') {
-      throw new AppError("Your account is suspended", 403);
-    }
-  
+  if (user.status !== "active") {
+    throw new AppError(MESSAGES.AUTH.ACCOUNT_SUSPENDED, HTTP_STATUS.FORBIDDEN);
+  }
+
   if (!user || !user.refreshTokens.includes(incomingRefreshToken)) {
     if (user) {
       user.refreshTokens = [];
       await user.save();
     }
-    throw new AppError("Invalid refresh token (Reuse detected)", 403);
+    throw new AppError(
+      MESSAGES.AUTH.INVALID_REFRESH_TOKEN,
+      HTTP_STATUS.FORBIDDEN,
+    );
   }
 
   const newAccessToken = jwt.sign(
     { id: user._id },
     process.env.ACCESS_TOKEN_SECRET,
-    { expiresIn: "15m" }
+    { expiresIn: "15m" },
   );
   const newRefreshToken = jwt.sign(
     { id: user._id },
     process.env.REFRESH_TOKEN_SECRET,
-    { expiresIn: "7d" }
+    { expiresIn: "7d" },
   );
 
   user.refreshTokens = user.refreshTokens.filter(
-    (t) => t !== incomingRefreshToken
+    (t) => t !== incomingRefreshToken,
   );
   user.refreshTokens.push(newRefreshToken);
   await user.save();
@@ -270,7 +279,7 @@ const refreshAccessToken = async (incomingRefreshToken) => {
 const forgotPassword = async (email) => {
   const user = await User.findOne({ email });
   if (!user) {
-    throw new AppError("User not found", 404);
+    throw new AppError(MESSAGES.AUTH.USER_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
   }
 
   const resetToken = crypto.randomBytes(20).toString("hex");
@@ -295,13 +304,16 @@ const forgotPassword = async (email) => {
       message,
     });
 
-    return { message: "Email sent" };
+    return { message: MESSAGES.AUTH.EMAIL_SENT };
   } catch (error) {
     console.error("Send Email Error:", error);
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;
     await user.save();
-    throw new AppError("Email could not be sent", 500);
+    throw new AppError(
+      MESSAGES.AUTH.EMAIL_SEND_FAILED,
+      HTTP_STATUS.INTERNAL_SERVER_ERROR,
+    );
   }
 };
 
@@ -317,7 +329,7 @@ const resetPassword = async (resetToken, password) => {
   });
 
   if (!user) {
-    throw new AppError("Invalid token", 400);
+    throw new AppError(MESSAGES.AUTH.INVALID_TOKEN, HTTP_STATUS.BAD_REQUEST);
   }
 
   user.password = password;
@@ -325,26 +337,29 @@ const resetPassword = async (resetToken, password) => {
   user.resetPasswordExpire = undefined;
   await user.save();
 
-  return { message: "Password updated success" };
+  return { message: MESSAGES.AUTH.PASSWORD_UPDATED };
 };
 
 const changePassword = async (userId, currentPassword, newPassword) => {
   const user = await User.findById(userId).select("+password");
 
   if (!user) {
-    throw new AppError("User not found", 404);
+    throw new AppError(MESSAGES.AUTH.USER_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
   }
 
   const isMatch = await user.matchPassword(currentPassword);
   if (!isMatch) {
-    throw new AppError("Invalid current password", 401);
+    throw new AppError(
+      MESSAGES.AUTH.INVALID_CURRENT_PASSWORD,
+      HTTP_STATUS.UNAUTHORIZED,
+    );
   }
 
   user.password = newPassword;
   user.passwordChangedAt = Date.now();
   await user.save();
 
-  return { message: "Password changed successfully" };
+  return { message: MESSAGES.AUTH.PASSWORD_CHANGED };
 };
 
 export {

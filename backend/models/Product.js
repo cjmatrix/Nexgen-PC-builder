@@ -96,31 +96,22 @@ const productSchema = new mongoose.Schema(
       },
     },
 
-    is_featured_community_build: {
-      type: Boolean,
-      default: false,
-      index: true,
-    },
-    original_order_id: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Order",
-      default: null,
+    isFeaturedBuild: { type: Boolean, default: false },
+    originalOrderId: { type: mongoose.Schema.Types.ObjectId, ref: "Order" }, // Good for auditing
+    buildType: {
+      type: String,
+      enum: ["standard", "custom_featured", "ai_featured"],
+      default: "standard",
     },
 
     isActive: {
       type: Boolean,
       default: true,
     },
-
-    is_ai_generated: {
-      type: Boolean,
-      default: false,
-      index: true,
-    },
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 productSchema.pre("save", function () {

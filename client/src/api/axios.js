@@ -27,11 +27,13 @@ api.interceptors.response.use(
     if (
       originalRequest.url.includes("/auth/login") ||
       originalRequest.url.includes("/auth/logout") ||
-      originalRequest.url.includes("/auth/refresh")
+      originalRequest.url.includes("/auth/refresh") ||
+      originalRequest.url.includes("/auth/admin/refresh") 
+    
     ) {
       return Promise.reject(error);
     }
-    
+
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
         return new Promise(function (resolve, reject) {
@@ -45,11 +47,18 @@ api.interceptors.response.use(
           });
       }
 
+      console.log(originalRequest);
       originalRequest._retry = true;
       isRefreshing = true;
+      const isAdmin = originalRequest.url?.includes("/admin");
+      console.log(isAdmin);
 
       try {
-        await api.post("/auth/refresh");
+        if (isAdmin) {
+          await api.post("/auth/admin/refresh");
+        } else {
+          await api.post("/auth/refresh");
+        }
 
         processQueue(null);
         isRefreshing = false;
@@ -58,13 +67,13 @@ api.interceptors.response.use(
       } catch (refreshError) {
         processQueue(refreshError, null);
         isRefreshing = false;
-        localStorage.removeItem("user");
+
         return Promise.reject(refreshError);
       }
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export default api;

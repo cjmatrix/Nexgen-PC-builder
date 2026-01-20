@@ -10,6 +10,11 @@ import * as walletService from "../services/walletService.js";
 import Blacklist from "../models/Blacklist.js";
 
 import { PRICING } from "../constants/pricing.js";
+import { HTTP_STATUS } from "../constants/httpStatus.js";
+import { MESSAGES } from "../constants/responseMessages.js";
+import Redis from "ioredis";
+
+const redisPublisher = new Redis();
 
 const calculateRefundAmount = (order, itemId) => {
   if (!itemId) {
@@ -17,7 +22,7 @@ const calculateRefundAmount = (order, itemId) => {
   }
 
   const item = order.orderItems.find(
-    (i) => i._id.toString() === itemId.toString()
+    (i) => i._id.toString() === itemId.toString(),
   );
   if (!item) return 0;
 
@@ -61,7 +66,7 @@ export const createOrder = async (userId, user, orderData) => {
       .session(session);
 
     if (!cart || cart.items.length === 0) {
-      throw new AppError("Cart is empty", 400);
+      throw new AppError(MESSAGES.ORDER.CART_EMPTY, HTTP_STATUS.BAD_REQUEST);
     }
 
     const orderItems = [];
@@ -154,13 +159,13 @@ export const createOrder = async (userId, user, orderData) => {
           stock: { $gte: totalNeeded },
         },
         { $inc: { stock: -totalNeeded } },
-        { new: true, session }
+        { new: true, session },
       );
 
       if (!updatedComponent) {
         throw new AppError(
-          `Stock insufficient for component ID: ${compId}. Found while processing.`,
-          400
+          MESSAGES.ORDER.STOCK_INSUFFICIENT(compId),
+          HTTP_STATUS.BAD_REQUEST,
         );
       }
     }
@@ -171,6 +176,65 @@ export const createOrder = async (userId, user, orderData) => {
       const discountedPrice = price * (1 - discount / 100);
       return acc + discountedPrice * item.qty;
     }, 0);
+
+    // Dynamic Coupon Validation & Calculation (Strict Checkout)
+    let couponDiscount = 0;
+    const billableTotalRupees = itemsPrice / 100;
+
+    if (cart.coupon) {
+      const coupon = await import("../models/Coupons.js").then((m) =>
+        m.default.findById(cart.coupon._id).session(session),
+      );
+
+      if (!coupon) {
+        throw new AppError(
+          "Applied coupon no longer exists",
+          HTTP_STATUS.BAD_REQUEST,
+        );
+      }
+
+      if (!coupon.isActive)
+        throw new AppError(MESSAGES.COUPON.INACTIVE, HTTP_STATUS.BAD_REQUEST);
+      if (new Date() > new Date(coupon.expiryDate))
+        throw new AppError(MESSAGES.COUPON.EXPIRED, HTTP_STATUS.BAD_REQUEST);
+      if (coupon.usageCount >= coupon.usageLimit)
+        throw new AppError(
+          MESSAGES.COUPON.LIMIT_REACHED,
+          HTTP_STATUS.BAD_REQUEST,
+        );
+      if (coupon.usedBy.includes(userId))
+        throw new AppError(
+          MESSAGES.COUPON.ALREADY_USED,
+          HTTP_STATUS.BAD_REQUEST,
+        );
+
+      if (billableTotalRupees < coupon.minOrderValue) {
+        throw new AppError(
+          MESSAGES.COUPON.MIN_ORDER_VALUE(coupon.minOrderValue),
+          HTTP_STATUS.BAD_REQUEST,
+        );
+      }
+
+      if (coupon.discountType === "percentage") {
+        couponDiscount = Math.round(
+          (billableTotalRupees * coupon.discountValue) / 100,
+        );
+        if (
+          coupon.maxDiscountAmount &&
+          couponDiscount > coupon.maxDiscountAmount
+        ) {
+          couponDiscount = coupon.maxDiscountAmount;
+        }
+      } else {
+        couponDiscount = coupon.discountValue;
+      }
+      if (couponDiscount > billableTotalRupees)
+        couponDiscount = billableTotalRupees;
+
+      coupon.usageCount += 1;
+      coupon.usedBy.push(userId);
+      await coupon.save({ session });
+    }
 
     const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
     const randomStr = Math.random().toString(36).substring(2, 6).toUpperCase();
@@ -194,10 +258,9 @@ export const createOrder = async (userId, user, orderData) => {
       itemsPrice,
       taxPrice,
       shippingPrice,
-      totalPrice:
-        itemsPrice + shippingPrice + taxPrice - (cart.discount * 100 || 0),
-      coupon: cart.coupon,
-      couponDiscount: cart.discount || 0,
+      totalPrice: itemsPrice + shippingPrice + taxPrice - couponDiscount * 100, // couponDiscount is Rupees
+      coupon: cart.coupon ? cart.coupon._id : null,
+      couponDiscount: couponDiscount, // Rupees
       isPaid: false,
       paidAt: null,
       paymentResult: {},
@@ -205,7 +268,10 @@ export const createOrder = async (userId, user, orderData) => {
 
     if (paymentMethod === "wallet") {
       if (user.walletBalance < order.totalPrice) {
-        throw new AppError("Insufficient wallet balance", 400);
+        throw new AppError(
+          MESSAGES.ORDER.WALLET_BALANCE_LOW,
+          HTTP_STATUS.BAD_REQUEST,
+        );
       }
 
       await walletService.deductFunds(
@@ -214,7 +280,7 @@ export const createOrder = async (userId, user, orderData) => {
         "DEBIT",
         order._id,
         "Order Payment",
-        session
+        session,
       );
 
       order.isPaid = true;
@@ -222,11 +288,8 @@ export const createOrder = async (userId, user, orderData) => {
     }
 
     const createdOrder = await order.save({ session });
-    if (cart.coupon) {
-      cart.coupon.usageCount += 1;
-      cart.coupon.usedBy.push(userId);
-      await cart.coupon.save({ session });
-    }
+
+    // Cleanup Cart
     cart.items = [];
     cart.coupon = null;
     cart.discount = 0;
@@ -234,6 +297,11 @@ export const createOrder = async (userId, user, orderData) => {
 
     await session.commitTransaction();
     session.endSession();
+
+    redisPublisher.publish(
+      "sales_updates",
+      JSON.stringify({ type: "NEW_ORDER" }),
+    );
 
     return createdOrder;
   } catch (error) {
@@ -245,7 +313,7 @@ export const createOrder = async (userId, user, orderData) => {
 
 export const getUserOrders = async (
   userId,
-  { search, page = 1, limit = 5 }
+  { search, page = 1, limit = 5 },
 ) => {
   let query = { user: userId };
 
@@ -258,7 +326,7 @@ export const getUserOrders = async (
 
   const orders = await Order.find(query)
     .select(
-      "orderId status totalPrice createdAt orderItems.image"
+      "orderId status totalPrice createdAt orderItems.image orderItems.isAiBuild orderItems.isCustomBuild",
     )
     .sort({ createdAt: -1 })
     .limit(limit)
@@ -268,7 +336,7 @@ export const getUserOrders = async (
 };
 
 export const getOrderById = async (orderId, user) => {
-  const order = await Order.findById(orderId)
+  let order = await Order.findById(orderId)
     .populate("user", "name email")
     .populate({
       path: "orderItems.product",
@@ -276,17 +344,48 @@ export const getOrderById = async (orderId, user) => {
     });
 
   if (!order) {
-    throw new AppError("Order not found", 404);
+    throw new AppError(MESSAGES.ORDER.NOT_FOUND, HTTP_STATUS.NOT_FOUND);
   }
 
   if (
     user.role !== "admin" &&
     order.user._id.toString() !== user._id.toString()
   ) {
-    throw new AppError("Unauthorized access to this order", 403);
+    throw new AppError(MESSAGES.ORDER.UNAUTHORIZED, HTTP_STATUS.FORBIDDEN);
   }
 
+  order = order.toObject();
+
+  order.orderItems = order.orderItems.map((item) => {
+    if (!item.isCustomBuild && !item.isAiBuild) {
+      delete item.components;
+    }
+    return item;
+  });
+
   return order;
+};
+
+export const getOrderItemDetail = async (orderId, itemId, user) => {
+  console.log(orderId);
+  const order = await Order.findById(orderId).select(
+    "orderItems._id orderItems.components user",
+  );
+
+  if (!order) {
+    throw new AppError(MESSAGES.ORDER.NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+  }
+
+  if (user.role !== "admin" && order.user.toString() !== user._id.toString()) {
+    throw new AppError(MESSAGES.ORDER.UNAUTHORIZED, HTTP_STATUS.FORBIDDEN);
+  }
+
+  const item = order.orderItems.find((i) => i._id.toString() === itemId);
+  if (!item) {
+    throw new AppError(MESSAGES.ORDER.ITEM_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+  }
+
+  return item.components;
 };
 
 export const getAllOrders = async ({
@@ -323,6 +422,9 @@ export const getAllOrders = async ({
 
   const count = await Order.countDocuments({ ...keyword });
   const orders = await Order.find({ ...keyword })
+    .select(
+      "orderId user userName totalPrice status isPaid createdAt paymentMethod",
+    )
     .populate("user", "id name email")
     .sort({ createdAt: -1 })
     .limit(pageSize)
@@ -340,11 +442,14 @@ export const updateOrderStatus = async (orderId, status) => {
   const order = await Order.findById(orderId);
 
   if (!order) {
-    throw new AppError("Order not found", 404);
+    throw new AppError(MESSAGES.ORDER.NOT_FOUND, HTTP_STATUS.NOT_FOUND);
   }
 
   if (order.status === "Delivered" || order.status === "Cancelled") {
-    throw new AppError(`Cannot change status of a ${order.status} order.`, 400);
+    throw new AppError(
+      MESSAGES.ORDER.STATUS_CHANGE_ERROR(order.status),
+      HTTP_STATUS.BAD_REQUEST,
+    );
   }
 
   order.status = status;
@@ -352,6 +457,10 @@ export const updateOrderStatus = async (orderId, status) => {
   if (status === "Delivered") {
     order.isDelivered = true;
     order.deliveredAt = Date.now();
+    if (!order.isPaid) {
+      order.isPaid = true;
+      order.paidAt = Date.now();
+    }
   }
 
   if (status === "Paid") {
@@ -360,6 +469,18 @@ export const updateOrderStatus = async (orderId, status) => {
   }
 
   const updatedOrder = await order.save();
+
+  if (status === "Delivered" || status === "Paid") {
+    try {
+      await redisPublisher.publish(
+        "sales_updates",
+        JSON.stringify({ type: "STATUS_UPDATE" }),
+      );
+    } catch (error) {
+      console.error("Redis Publish Error:", error);
+    }
+  }
+
   return updatedOrder;
 };
 
@@ -372,7 +493,7 @@ export const cancelOrder = async (orderId, itemId, reason, userId) => {
       .session(session);
 
     if (!order) {
-      throw new AppError("Order not found", 404);
+      throw new AppError(MESSAGES.ORDER.NOT_FOUND, HTTP_STATUS.NOT_FOUND);
     }
 
     if (
@@ -381,8 +502,8 @@ export const cancelOrder = async (orderId, itemId, reason, userId) => {
       order.status === "Cancelled"
     ) {
       throw new AppError(
-        `Cannot cancel order with status: ${order.status}`,
-        400
+        MESSAGES.ORDER.CANCEL_STATUS_ERROR(order.status),
+        HTTP_STATUS.BAD_REQUEST,
       );
     }
 
@@ -413,7 +534,10 @@ export const cancelOrder = async (orderId, itemId, reason, userId) => {
       const item = order.orderItems.find((i) => i._id.toString() === itemId);
 
       if (!item) {
-        throw new AppError("Item not found in order", 404);
+        throw new AppError(
+          MESSAGES.ORDER.ITEM_NOT_FOUND,
+          HTTP_STATUS.NOT_FOUND,
+        );
       }
 
       if (order.coupon && order.coupon.minOrderValue) {
@@ -428,12 +552,11 @@ export const cancelOrder = async (orderId, itemId, reason, userId) => {
 
         if (remainingTotal < order.coupon.minOrderValue * 100) {
           throw new AppError(
-            `Cannot cancel this item. The remaining order value (₹${(
-              remainingTotal / 100
-            ).toLocaleString()}) would be less than the coupon's minimum requirement (₹${
-              order.coupon.minOrderValue
-            }). Please cancel the entire order instead.`,
-            400
+            MESSAGES.ORDER.COUPON_LIMIT_ERROR(
+              remainingTotal / 100,
+              order.coupon.minOrderValue,
+            ),
+            HTTP_STATUS.BAD_REQUEST,
           );
         }
       }
@@ -441,7 +564,7 @@ export const cancelOrder = async (orderId, itemId, reason, userId) => {
       let amount = calculateRefundAmount(order, itemId);
 
       const otherActiveItems = order.orderItems.filter(
-        (i) => i.status !== "Cancelled" && i._id.toString() !== itemId
+        (i) => i.status !== "Cancelled" && i._id.toString() !== itemId,
       );
 
       if (otherActiveItems.length === 0) {
@@ -455,12 +578,15 @@ export const cancelOrder = async (orderId, itemId, reason, userId) => {
           "CREDIT",
           order._id,
           `Refund for Order Cancellation of ${item.name}`,
-          session
+          session,
         );
       }
 
       if (item.status === "Cancelled") {
-        throw new AppError("Item already cancelled", 400);
+        throw new AppError(
+          MESSAGES.ORDER.ALREADY_CANCELLED,
+          HTTP_STATUS.BAD_REQUEST,
+        );
       }
 
       await restoreStock(item);
@@ -468,10 +594,11 @@ export const cancelOrder = async (orderId, itemId, reason, userId) => {
       item.cancellationReason = reason;
 
       const allCancelled = order.orderItems.every(
-        (i) => i.status === "Cancelled"
+        (i) => i.status === "Cancelled",
       );
       if (allCancelled) {
         order.status = "Cancelled";
+
         order.cancellationReason = "All items cancelled";
       }
     } else {
@@ -494,7 +621,7 @@ export const cancelOrder = async (orderId, itemId, reason, userId) => {
           "CREDIT",
           order._id,
           "Refund for Order Cancellation",
-          session
+          session,
         );
       }
     }
@@ -516,25 +643,34 @@ export const requestReturn = async (orderId, itemId, reason, userId) => {
   session.startTransaction();
   try {
     if (!reason) {
-      throw new AppError("Return reason is mandatory", 400);
+      throw new AppError(
+        MESSAGES.ORDER.RETURN_REASON_REQUIRED,
+        HTTP_STATUS.BAD_REQUEST,
+      );
     }
 
     const order = await Order.findOne({ _id: orderId, user: userId }).session(
-      session
+      session,
     );
 
     if (!order) {
-      throw new AppError("Order not found", 404);
+      throw new AppError(MESSAGES.ORDER.NOT_FOUND, HTTP_STATUS.NOT_FOUND);
     }
 
     if (order.status !== "Delivered" && order.status !== "Return Requested") {
-      throw new AppError("Can only request return for delivered orders", 400);
+      throw new AppError(
+        MESSAGES.ORDER.RETURN_STATUS_ERROR,
+        HTTP_STATUS.BAD_REQUEST,
+      );
     }
 
     if (itemId) {
       const item = order.orderItems.find((i) => i._id.toString() === itemId);
       if (!item) {
-        throw new AppError("Item not found", 404);
+        throw new AppError(
+          MESSAGES.ORDER.ITEM_NOT_FOUND,
+          HTTP_STATUS.NOT_FOUND,
+        );
       }
 
       if (
@@ -543,8 +679,8 @@ export const requestReturn = async (orderId, itemId, reason, userId) => {
         item.status === "Return Approved"
       ) {
         throw new AppError(
-          "Return already requested or processed for item",
-          400
+          MESSAGES.ORDER.RETURN_ALREADY_REQUESTED,
+          HTTP_STATUS.BAD_REQUEST,
         );
       }
 
@@ -555,7 +691,7 @@ export const requestReturn = async (orderId, itemId, reason, userId) => {
         (i) =>
           i.status === "Return Requested" ||
           i.status === "Cancelled" ||
-          i.status === "Returned"
+          i.status === "Returned",
       );
       if (allRequested) {
         order.status = "Return Requested";
@@ -590,7 +726,7 @@ export const approveReturn = async (
   orderId,
   itemId,
   userId,
-  addToBlacklist
+  addToBlacklist,
 ) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -598,7 +734,7 @@ export const approveReturn = async (
     const order = await Order.findById(orderId).session(session);
 
     if (!order) {
-      throw new AppError("Order not found", 404);
+      throw new AppError(MESSAGES.ORDER.NOT_FOUND, HTTP_STATUS.NOT_FOUND);
     }
 
     const restoreStock = async (item) => {
@@ -632,15 +768,21 @@ export const approveReturn = async (
         "CREDIT",
         order._id,
         "Refund for Order return",
-        session
+        session,
       );
 
       if (!item) {
-        throw new AppError("Item not found", 404);
+        throw new AppError(
+          MESSAGES.ORDER.ITEM_NOT_FOUND,
+          HTTP_STATUS.NOT_FOUND,
+        );
       }
 
       if (item.status !== "Return Requested") {
-        throw new AppError("Item is not in Return Requested state", 400);
+        throw new AppError(
+          MESSAGES.ORDER.RETURN_NOT_REQUESTED,
+          HTTP_STATUS.BAD_REQUEST,
+        );
       }
 
       if (addToBlacklist) {
@@ -654,7 +796,7 @@ export const approveReturn = async (
               components: item.components,
             },
           ],
-          { session }
+          { session },
         );
       } else {
         await restoreStock(item);
@@ -662,7 +804,7 @@ export const approveReturn = async (
       item.status = "Return Approved";
 
       const allReturned = order.orderItems.every(
-        (i) => i.status === "Return Approved" || i.status === "Cancelled"
+        (i) => i.status === "Return Approved" || i.status === "Cancelled",
       );
       if (allReturned) {
         order.status = "Return Approved";
@@ -672,10 +814,13 @@ export const approveReturn = async (
       let refundSum = 0;
       if (order.status !== "Return Requested") {
         const hasRequestedItems = order.orderItems.some(
-          (i) => i.status === "Return Requested"
+          (i) => i.status === "Return Requested",
         );
         if (!hasRequestedItems) {
-          throw new AppError("Order is not in Return Requested state", 400);
+          throw new AppError(
+            MESSAGES.ORDER.ORDER_RETURN_NOT_REQUESTED,
+            HTTP_STATUS.BAD_REQUEST,
+          );
         }
       }
 
@@ -694,7 +839,7 @@ export const approveReturn = async (
                   components: item.components,
                 },
               ],
-              { session }
+              { session },
             );
           } else {
             await restoreStock(item);
@@ -704,7 +849,7 @@ export const approveReturn = async (
       }
 
       const allReturned = order.orderItems.every(
-        (i) => i.status === "Return Approved" || i.status === "Cancelled"
+        (i) => i.status === "Return Approved" || i.status === "Cancelled",
       );
       if (allReturned) {
         order.status = "Return Approved";
@@ -717,7 +862,7 @@ export const approveReturn = async (
         "CREDIT",
         order._id,
         "Refund for Order return",
-        session
+        session,
       );
     }
 
@@ -740,24 +885,30 @@ export const rejectReturn = async (orderId, itemId) => {
     const order = await Order.findById(orderId).session(session);
 
     if (!order) {
-      throw new AppError("Order not found", 404);
+      throw new AppError(MESSAGES.ORDER.NOT_FOUND, HTTP_STATUS.NOT_FOUND);
     }
 
     if (itemId) {
       const item = order.orderItems.find((i) => i._id.toString() === itemId);
       if (!item) {
-        throw new AppError("Item not found", 404);
+        throw new AppError(
+          MESSAGES.ORDER.ITEM_NOT_FOUND,
+          HTTP_STATUS.NOT_FOUND,
+        );
       }
 
       if (item.status !== "Return Requested") {
-        throw new AppError("Item is not in Return Requested state", 400);
+        throw new AppError(
+          MESSAGES.ORDER.RETURN_NOT_REQUESTED,
+          HTTP_STATUS.BAD_REQUEST,
+        );
       }
 
       item.status = "Return Rejected";
 
       if (order.status === "Return Requested") {
         const otherRequested = order.orderItems.some(
-          (i) => i.status === "Return Requested" && i._id.toString() !== itemId
+          (i) => i.status === "Return Requested" && i._id.toString() !== itemId,
         );
         if (!otherRequested) {
           order.status = "Delivered";

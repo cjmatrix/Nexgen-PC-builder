@@ -9,6 +9,7 @@ import {
   requestReturn,
   approveReturn,
   rejectReturn,
+  getOrderItemDetail,
 } from "../controllers/orderController.js";
 import { protect, protectAdmin } from "../middleware/authMiddleware.js";
 
@@ -18,6 +19,7 @@ router.route("/").post(protect, createOrder).get(protectAdmin, getAllOrders);
 
 router.get("/myorders", protect, getMyOrders);
 router.get("/:id", protect, getOrderById);
+router.get("/:id/items/:itemId", protect, getOrderItemDetail);
 router.put("/:id/status", protectAdmin, updateOrderStatus);
 router.put("/:id/cancel", protect, cancelOrder);
 router.put("/:id/return", protect, requestReturn);
