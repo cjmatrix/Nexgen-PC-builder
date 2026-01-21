@@ -33,6 +33,7 @@ import paymentRoutes from "./routes/paymentRoutes.js";
 import walletRoutes from "./routes/walletRoutes.js";
 
 import errorMiddleware from "./middleware/errorMiddleware.js";
+import componentRoutes from "./routes/componentRoutes.js"
 
 import morgan from "morgan";
 
@@ -91,6 +92,7 @@ app.use("/api/v1/coupons", couponRoutes);
 app.use("/api/v1/referral", referralRoutes);
 app.use("/api/v1/blacklist", blacklistRoutes);
 app.use("/api/v1/category", categoryRoutes);
+app.use("/api/v1/componentspublic",componentRoutes)
 
 app.use("/api/v1/wishlist", wishlistRoutes);
 app.use("/api/v1/payment", paymentRoutes);

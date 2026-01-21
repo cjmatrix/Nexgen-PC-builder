@@ -170,11 +170,11 @@ const OrderHistory = () => {
   };
 
   return (
-    <div className="bg-gray-100 min-h-screen p-8 font-sans">
+    <div className=" bg-gray-100 min-h-screen p-8 font-sans">
       <div className="max-w-5xl mx-auto">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Order History</h1>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div className="animate-fade-up bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className=" p-6 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-4">
             <div>
               <h2 className="text-xl font-bold text-gray-900">Recent Orders</h2>
               <p className="text-sm text-gray-500 mt-1">
@@ -318,12 +318,13 @@ const OrderHistory = () => {
             </div>
           )}
 
-          <UserOrderDetails
+          
+        </div>
+        <UserOrderDetails
             isOpen={isDetailsOpen}
             onClose={() => setIsDetailsOpen(false)}
             order={selectedOrder}
           />
-        </div>
       </div>
       {!isLoading && (
         <Pagination

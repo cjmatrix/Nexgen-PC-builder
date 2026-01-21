@@ -7,7 +7,7 @@ import {
   resetBuild,
 } from "../../../store/slices/builderSlice";
 import { addToCart } from "../../../store/slices/cartSlice";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Navigate } from "react-router-dom";
 import api from "../../../api/axios";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
@@ -25,6 +25,7 @@ import {
   ShoppingCart,
   Trash2,
 } from "lucide-react";
+import { toast } from "react-toastify";
 import {
   MotherboardSVG,
   CpuSVG,
@@ -77,7 +78,7 @@ const VisualizerPart = ({
         rotation: 0,
         duration: 0.6,
         ease: "back.out(1.7)",
-      }
+      },
     );
   }, [part]);
 
@@ -91,7 +92,7 @@ const VisualizerPart = ({
         isOver: !!monitor.isOver(),
       }),
     }),
-    [handleSelect]
+    [handleSelect],
   );
 
   const isGhost = !part && type === "motherboard";
@@ -191,8 +192,10 @@ const PCBuilder = () => {
 
   console.log(draggedItem);
 
+  const { user } = useSelector((state) => state.auth);
+
   const { selected, options, totalPrice, estimatedWattage } = useSelector(
-    (state) => state.builder
+    (state) => state.builder,
   );
 
   const [visible, setVisibile] = useState(true);
@@ -226,29 +229,35 @@ const PCBuilder = () => {
     dispatch(fetchComponents({ category: "cpu" }));
     dispatch(fetchComponents({ category: "storage" }));
   }, [id, dispatch]);
-  //hello
+
   useEffect(() => {
     if (selected.cpu) {
       dispatch(
         fetchComponents({
           category: "motherboard",
           params: { cpuId: selected.cpu._id },
-        })
+        }),
       );
       dispatch(
         fetchComponents({
           category: "cooler",
-          params: { cpuId: selected.cpu._id },
-        })
+          params: {
+            cpuId: selected.cpu._id,
+            maxHeight: selected.case?.specs?.maxCpuCoolerHeight_mm,
+          },
+        }),
       );
       dispatch(
         fetchComponents({
           category: "gpu",
-          params: { maxTier: selected.cpu.tier_level + 1 },
-        })
+          params: {
+            maxTier: selected.cpu.tier_level + 1,
+            caseId: selected.case?._id,
+          },
+        }),
       );
     }
-  }, [dispatch, selected.cpu]);
+  }, [dispatch, selected.cpu, selected.case]);
 
   useEffect(() => {
     if (selected.motherboard) {
@@ -256,16 +265,19 @@ const PCBuilder = () => {
         fetchComponents({
           category: "ram",
           params: { motherboardId: selected.motherboard._id },
-        })
+        }),
       );
       dispatch(
         fetchComponents({
           category: "case",
-          params: { motherboardId: selected.motherboard._id },
-        })
+          params: {
+            motherboardId: selected.motherboard._id,
+            gpuId: selected.gpu?._id,
+          },
+        }),
       );
     }
-  }, [dispatch, selected.motherboard]);
+  }, [dispatch, selected.motherboard, selected.gpu, selected.cooler]);
 
   useEffect(() => {
     if (estimatedWattage > 0) {
@@ -273,20 +285,67 @@ const PCBuilder = () => {
         fetchComponents({
           category: "psu",
           params: { minWattage: estimatedWattage + 150 },
-        })
+        }),
       );
     }
   }, [dispatch, estimatedWattage]);
 
+  useEffect(() => {
+    if (selected.case && selected.gpu) {
+      const gpuLength = selected.gpu.specs?.length_mm || 0;
+      const maxGpuLength = selected.case.specs?.maxGpuLength_mm || 0;
+
+      if (gpuLength > maxGpuLength) {
+        toast.warn(
+          `Case deselected! Selected Case is too small for ${selected.gpu.name}`,
+        );
+        dispatch(selectPart({ category: "case", component: null }));
+      }
+    }
+
+    if (selected.case && selected.motherboard) {
+      const moboForm = selected.motherboard.specs?.formFactor?.toUpperCase();
+      const caseForm = selected.case.specs?.formFactor?.toUpperCase();
+
+      let isCompatible = true;
+      // Logic:
+      // ATX Case supports: ATX, mATX, ITX
+      // mATX Case supports: mATX, ITX (Usually doesn't support ATX)
+      // ITX Case supports: ITX (Usually doesn't support mATX/ATX)
+
+      if (caseForm === "ITX" && moboForm !== "ITX") isCompatible = false;
+      if (caseForm === "MATX" && moboForm === "ATX") isCompatible = false;
+
+      if (!isCompatible) {
+        toast.warn(
+          `Case deselected! ${caseForm} case cannot fit ${moboForm} motherboard.`,
+        );
+        dispatch(selectPart({ category: "case", component: null }));
+      }
+    }
+  }, [selected.case, selected.gpu, selected.motherboard, dispatch]);
+
   const handleSelect = (item) => {
     dispatch(
-      selectPart({ category: STEPS[currentStep].id, component: item.part })
+      selectPart({ category: STEPS[currentStep].id, component: item.part }),
     );
   };
 
   const handleAddToCart = async () => {
-   
-    const requiredParts = ["cpu", "motherboard", "ram", "case", "psu","gpu","storage","cooler"];
+    if (!user) {
+      return navigate("/login");
+    }
+
+    const requiredParts = [
+      "cpu",
+      "motherboard",
+      "ram",
+      "case",
+      "psu",
+      "gpu",
+      "storage",
+      "cooler",
+    ];
     const missingParts = requiredParts.filter((key) => !selected[key]);
 
     if (missingParts.length > 0) {
@@ -294,13 +353,12 @@ const PCBuilder = () => {
         icon: "warning",
         title: "Incomplete Build",
         text: `Please select the following components: ${missingParts.join(
-          ", "
+          ", ",
         )}`,
       });
       return;
     }
 
-   
     const componentsSnapshot = {};
     Object.keys(selected).forEach((key) => {
       if (selected[key]) {
@@ -309,26 +367,24 @@ const PCBuilder = () => {
           name: selected[key].name,
           price: selected[key].price,
           image: selected[key].image,
-          specs: selected[key].specs || {}, 
+          specs: selected[key].specs || {},
         };
       }
     });
 
     const customBuildPayload = {
-      name: "Custom PC Build", 
-      totalPrice: totalPrice, 
+      name: "Custom PC Build",
+      totalPrice: totalPrice,
       components: componentsSnapshot,
     };
 
     try {
-      
-      await dispatch(addToCart(
-        {
+      await dispatch(
+        addToCart({
           quantity: 1,
-        customBuild: customBuildPayload
-      }
-      )
-      ).unwrap()
+          customBuild: customBuildPayload,
+        }),
+      ).unwrap();
 
       Swal.fire({
         icon: "success",
@@ -343,12 +399,11 @@ const PCBuilder = () => {
         }
       });
     } catch (error) {
-     
       console.error("Add to cart failed", error);
       Swal.fire({
         icon: "error",
         title: "Oops...",
-        text: error|| "Failed to add to cart",
+        text: error || "Failed to add to cart",
       });
     }
   };
@@ -369,7 +424,7 @@ const PCBuilder = () => {
     gsap.fromTo(
       stepRef.current,
       { opacity: 0, x: 50 },
-      { opacity: 1, x: 0, duration: 0.4, ease: "power2.out" }
+      { opacity: 1, x: 0, duration: 0.4, ease: "power2.out" },
     );
   }, [currentStep]);
 
@@ -407,15 +462,45 @@ const PCBuilder = () => {
     }
   }, [selected.case]);
 
+  const [mobileView, setMobileView] = useState("selection");
+
+  useGSAP(
+    () => {
+      const tl = gsap.timeline();
+
+      tl.fromTo(
+        ".animate-top",
+        { y: -50, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.8, ease: "power3.out" },
+      )
+        .fromTo(
+          ".animate-visualizer",
+          { scale: 0.9, opacity: 0 },
+          { scale: 1, opacity: 1, duration: 0.8, ease: "back.out(1.2)" },
+          "-=0.6",
+        )
+        .fromTo(
+          ".animate-panel",
+          { x: 50, opacity: 0 },
+          { x: 0, opacity: 1, duration: 0.8, ease: "power3.out" },
+          "-=0.6",
+        );
+    },
+    { scope: containerRef },
+  );
+
   const currentCategory = STEPS[currentStep].id;
   const currentOptions = options[currentCategory] || [];
   const currentSelection = selected[currentCategory];
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,var(--tw-gradient-stops))] from-gray-50 via-gray-100 to-gray-200 text-gray-900 font-sans overflow-hidden flex flex-col selection:bg-blue-500/30">
+    <div
+      ref={containerRef}
+      className="min-h-screen bg-[radial-gradient(ellipse_at_top,var(--tw-gradient-stops))] from-gray-50 via-gray-100 to-gray-200 text-gray-900 font-sans overflow-hidden flex flex-col selection:bg-blue-500/30"
+    >
       {/* Top Progress Bar */}
       <DragIndicator isVisible={visible} />
-      <div className="h-16 border-b border-gray-200 flex items-center px-6 overflow-x-auto no-scrollbar bg-white/90 backdrop-blur z-20">
+      <div className="animate-top h-16 border-b border-gray-200 flex items-center px-6 overflow-x-auto no-scrollbar bg-white/90 backdrop-blur z-20">
         {STEPS.map((step, idx) => (
           <div
             key={step.id}
@@ -424,8 +509,8 @@ const PCBuilder = () => {
               idx === currentStep
                 ? "text-blue-600 font-bold"
                 : selected[step.id]
-                ? "text-green-600"
-                : "text-gray-400"
+                  ? "text-green-600"
+                  : "text-gray-400"
             }`}
           >
             <div
@@ -433,8 +518,8 @@ const PCBuilder = () => {
                 idx === currentStep
                   ? "bg-blue-600 text-white shadow-lg shadow-blue-500/30"
                   : selected[step.id]
-                  ? "bg-green-100 text-green-600"
-                  : "bg-gray-100 text-gray-400"
+                    ? "bg-green-100 text-green-600"
+                    : "bg-gray-100 text-gray-400"
               }`}
             >
               {selected[step.id] ? (
@@ -451,10 +536,14 @@ const PCBuilder = () => {
         ))}
       </div>
 
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden relative">
         {/* Left: Visualizer (The "Case") */}
 
-        <div className=" flex-1 relative bg-transparent flex items-center justify-center p-10 overflow-hidden perspective-[2000px]">
+        <div
+          className={`animate-visualizer flex-1 relative bg-transparent flex items-center justify-center p-4 md:p-10 overflow-hidden perspective-[2000px] ${
+            mobileView === "visualizer" ? "block" : "hidden md:flex"
+          }`}
+        >
           {/* Ambient Glow */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-500/10 blur-[100px] rounded-full pointer-events-none mix-blend-multiply"></div>
 
@@ -471,17 +560,20 @@ const PCBuilder = () => {
           {/* New Gear Animation Background */}
           <BackgroundGears />
 
-          <ComponentsList
-            steps={STEPS}
-            selected={selected}
-            totalPrice={totalPrice}
-            currentStep={currentStep}
-            setCurrentStep={setCurrentStep}
-          />
+          {/* Hide ComponentsList on smaller screens to avoid overlap */}
+          <div className="hidden xl:block">
+            <ComponentsList
+              steps={STEPS}
+              selected={selected}
+              totalPrice={totalPrice}
+              currentStep={currentStep}
+              setCurrentStep={setCurrentStep}
+            />
+          </div>
 
           <div
             ref={caseFrameRef}
-            className="relative -top-[3%] w-full max-w-[35rem] aspect-3/4 border border-gray-200 bg-gray-400/20 rounded-3xl shadow-xl backdrop-blur-md overflow-hidden ring-1 ring-black/5 "
+            className="relative -top-[3%] w-full max-w-[20rem] md:max-w-[35rem] aspect-3/4 border border-gray-200 bg-gray-400/20 rounded-3xl shadow-xl backdrop-blur-md overflow-hidden ring-1 ring-black/5 scale-90 md:scale-100 origin-center transition-transform duration-500"
           >
             {/* "Case" Frame */}
             <div className=" absolute inset-0 border-20 border-gray-400 rounded-3xl pointer-events-none z-20"></div>
@@ -512,7 +604,12 @@ const PCBuilder = () => {
         </div>
 
         {/* Right: Selection Panel */}
-        <div className="w-[450px] bg-white/80 backdrop-blur-xl border-l border-white/50 flex flex-col z-20 shadow-[-20px_0_40px_rgba(0,0,0,0.05)] relative">
+
+        <div
+          className={`animate-panel w-full md:w-[450px] bg-white/80 backdrop-blur-xl border-l border-white/50 flex flex-col z-20 shadow-[-20px_0_40px_rgba(0,0,0,0.05)] relative ${
+            mobileView === "selection" ? "block" : "hidden md:flex"
+          }`}
+        >
           <div className="absolute inset-0 bg-linear-to-b from-white/50 to-transparent pointer-events-none"></div>
           <div className="p-6 border-b border-gray-100/50 relative">
             <div className="flex items-center justify-between mb-2">
@@ -555,7 +652,7 @@ const PCBuilder = () => {
             )}
           </div>
 
-          <div className="p-6 border-t border-gray-200 bg-gray-50">
+          <div className="p-6 border-t border-gray-200 bg-gray-50 pb-24 md:pb-6">
             <div className="flex justify-between items-center mb-4 text-sm">
               <div className="text-gray-500 font-medium">Total Estimate</div>
               <div className="text-2xl font-black text-gray-900">
@@ -593,7 +690,7 @@ const PCBuilder = () => {
               onClick={() => {
                 if (
                   window.confirm(
-                    "Are you sure you want to clear your current build?"
+                    "Are you sure you want to clear your current build?",
                   )
                 ) {
                   dispatch(resetBuild());
@@ -606,6 +703,30 @@ const PCBuilder = () => {
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Mobile View Toggle Bar */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3 z-50 flex gap-3 shadow-[0_-4px_20px_rgba(0,0,0,0.1)]">
+        <button
+          onClick={() => setMobileView("visualizer")}
+          className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${
+            mobileView === "visualizer"
+              ? "bg-blue-600 text-white shadow-lg shadow-blue-500/30"
+              : "bg-gray-100 text-gray-600"
+          }`}
+        >
+          <Monitor size={18} /> View Build
+        </button>
+        <button
+          onClick={() => setMobileView("selection")}
+          className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${
+            mobileView === "selection"
+              ? "bg-gray-900 text-white shadow-lg"
+              : "bg-gray-100 text-gray-600"
+          }`}
+        >
+          <Box size={18} /> Select Parts
+        </button>
       </div>
     </div>
   );

@@ -70,7 +70,7 @@ const getAdminProducts = async (page, limit, search, category, status) => {
   };
 };
 
-const getPublicProducts = async ({ page, limit, search, category, sort }) => {
+const getPublicProducts = async ({ page, limit, search, category, sort,hasDiscount }) => {
   let sortLogic = { createdAt: -1 };
 
   const activeCategories = await Category.find({ isActive: true });
@@ -112,6 +112,14 @@ const getPublicProducts = async ({ page, limit, search, category, sort }) => {
     }
   }
 
+  if (activeCategoryIds) {
+    if (search || category || sort || hasDiscount) {
+      if (hasDiscount) {
+        query.applied_offer = { $gt: 1 };
+      }
+    }
+  }
+
   const total = await Product.countDocuments(query);
   const products = await Product.find(query)
     .select(
@@ -140,11 +148,29 @@ const getPublicProducts = async ({ page, limit, search, category, sort }) => {
   };
 };
 
-const getProductById = async (req, id) => {
-  let query = { _id: id };
-  if (req.user.role === "customer") {
-    query.isActive = true;
-  }
+const getProductByIdPublic = async (id) => {
+  const query = { _id: id, isActive: true };
+
+  const product = await Product.findOne(query)
+    .populate("category")
+    .populate([
+      { path: "default_config.cpu" },
+      { path: "default_config.gpu" },
+      { path: "default_config.motherboard" },
+      { path: "default_config.ram" },
+      { path: "default_config.storage" },
+      { path: "default_config.case" },
+      { path: "default_config.psu" },
+      { path: "default_config.cooler" },
+    ]);
+
+  if (!product)
+    throw new AppError(MESSAGES.PRODUCT.NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+  return product;
+};
+
+const getProductByIdAdmin = async (id) => {
+  const query = { _id: id };
 
   const product = await Product.findOne(query)
     .populate("category")
@@ -228,7 +254,8 @@ const deleteProduct = async (id) => {
 export {
   createProduct,
   getAdminProducts,
-  getProductById,
+  getProductByIdPublic,
+  getProductByIdAdmin,
   updateProduct,
   deleteProduct,
   getPublicProducts,

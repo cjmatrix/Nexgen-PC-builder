@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchPublicProducts } from "../../store/slices/productSlice";
 import Pagination from "../../components/Pagination";
@@ -9,10 +9,15 @@ import { Heart as HeartIcon } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import FeatureShowcase from "./components/FeatureShowcase";
 import api from "../../api/axios";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
+
+gsap.registerPlugin(useGSAP);
 
 const ProductList = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const containerRef = useRef(null);
   const { items, pagination, loading } = useSelector((state) => state.products);
   const {
     items: wishlistItems,
@@ -26,7 +31,6 @@ const ProductList = () => {
     sort: "newest",
   });
   const [page, setPage] = useState(1);
-
   const [searchInput, setsearchInput] = useState("");
 
   useEffect(() => {
@@ -42,6 +46,38 @@ const ProductList = () => {
   useEffect(() => {
     dispatch(fetchPublicProducts({ ...filters, page }));
   }, [dispatch, filters, page]);
+
+  // Entrance Animations
+  useGSAP(
+    () => {
+      const tl = gsap.timeline();
+
+      tl.fromTo(
+        ".animate-showcase",
+        { y: -50, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+      )
+        .fromTo(
+          ".animate-filters",
+          { y: 20, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.8, ease: "power2.out" },
+          "-=0.5",
+        )
+        .fromTo(
+          ".product-card",
+          { y: 50, opacity: 0 },
+          {
+            y: 0,
+            opacity: 1,
+            duration: 0.6,
+            stagger: 0.1,
+            ease: "back.out(1.2)",
+          },
+          "-=0.4",
+        );
+    },
+    { scope: containerRef, dependencies: [loading] },
+  );
 
   const isInWishlist = (productId) => {
     if (!wishlistItems) return false;
@@ -66,11 +102,16 @@ const ProductList = () => {
   });
 
   return (
-    <div className="min-h-screen max-w-7xl mx-auto bg-gray-50 font-sans text-gray-900">
-      <FeatureShowcase />
+    <div
+      ref={containerRef}
+      className="min-h-screen w-full bg-gray-50 font-sans text-gray-900"
+    >
+      <div className="animate-showcase">
+        <FeatureShowcase />
+      </div>
 
-      <div className="px-4 sm:px-6 lg:px-8 py-8 -mt-4 relative z-20">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8 bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-lg border border-white/20 ring-1 ring-black/5">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-4 relative z-20">
+        <div className="animate-filters flex flex-col md:flex-row justify-between items-center gap-4 mb-8 bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-lg border border-white/20 ring-1 ring-black/5">
           <div className="relative w-full md:w-96 group">
             <Search
               className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors"
@@ -141,8 +182,7 @@ const ProductList = () => {
                 <div
                   key={product._id}
                   onClick={() => navigate(`/products/${product._id}`)}
-                  style={{ animationDelay: `${index * 100}ms` }}
-                  className="group bg-white rounded-2xl shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 border border-gray-100 overflow-hidden flex flex-col animate-in fade-in slide-in-from-bottom-8 fill-mode-backwards cursor-pointer"
+                  className="product-card opacity-0 group bg-white rounded-2xl shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 border border-gray-100 overflow-hidden flex flex-col cursor-pointer"
                 >
                   <div className="relative aspect-[4/3] bg-gray-100 overflow-hidden">
                     {isOutOfStock && (

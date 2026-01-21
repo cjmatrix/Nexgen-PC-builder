@@ -28,7 +28,12 @@ function DraggablePartCard({
     <div
       ref={drag}
       key={opt._id}
-      className={`group p-4 rounded-xl border cursor-pointer w-full text-left transition-all duration-300 transform hover:-translate-y-1 ${
+      onClick={() => {
+        if (window.innerWidth < 768) {
+          handleSelect({ part: opt });
+        }
+      }}
+      className={`group p-4 rounded-xl border cursor-pointer w-full text-left transition-all duration-300 transform hover:-translate-y-1 relative overflow-hidden ${
         selected[currentCategory]?._id === opt._id
           ? "bg-blue-50/80 border-blue-500 ring-2 ring-blue-500/20 shadow-lg shadow-blue-500/10"
           : "bg-white border-gray-100 hover:border-blue-200 hover:shadow-xl hover:shadow-blue-500/5"
@@ -59,12 +64,21 @@ function DraggablePartCard({
                 ))}
           </div>
         </div>
-        <div className="text-right">
-          
-            <div className="font-bold text-gray-900 tabular-nums tracking-tight">
-              ₹{(opt.price / 100).toLocaleString()}
-            </div>
-          
+        <div className="text-right flex flex-col items-end gap-2">
+          <div className="font-bold text-gray-900 tabular-nums tracking-tight">
+            ₹{(opt.price / 100).toLocaleString()}
+          </div>
+
+          {/* Mobile/Click Affordance Button */}
+          <button
+            className={`md:hidden text-xs font-bold px-3 py-1.5 rounded-lg transition-colors z-10 ${
+              selected[currentCategory]?._id === opt._id
+                ? "bg-blue-600 text-white"
+                : "bg-gray-100 text-gray-600 group-hover:bg-blue-100 group-hover:text-blue-700"
+            }`}
+          >
+            {selected[currentCategory]?._id === opt._id ? "Selected" : "Add +"}
+          </button>
         </div>
       </div>
     </div>

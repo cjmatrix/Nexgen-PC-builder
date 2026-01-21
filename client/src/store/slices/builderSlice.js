@@ -5,7 +5,7 @@ export const fetchComponents = createAsyncThunk(
   "builder/fetchComponents",
   async ({ category, params = {} }, { rejectWithValue }) => {
     try {
-      const response = await api.get("/admin/componentspublic", {
+      const response = await api.get("/componentspublic", {
         params: { category, ...params, limit: 100 },
       });
 

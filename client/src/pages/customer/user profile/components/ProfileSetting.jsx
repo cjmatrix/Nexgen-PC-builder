@@ -48,7 +48,7 @@ const OTPModal = ({ isOpen, onClose, onVerify, email, onResend }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-all">
+    <div className="animate-fade-up  fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-all">
       <div
         className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6"
         onClick={(e) => e.stopPropagation()}
@@ -296,7 +296,7 @@ const ProfileSetting = () => {
   };
 
   return (
-    <div className="bg-gray-100 min-h-screen p-8 font-sans">
+    <div className="animate-fade-up bg-gray-100 min-h-screen p-8 font-sans">
       <CustomModal
         isOpen={modal.isOpen}
         onClose={closeModal}

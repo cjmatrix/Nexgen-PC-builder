@@ -1,16 +1,14 @@
 import express from "express";
-
-const router = express.Router();
-
+const router=express.Router();
 import {
   getPublicProducts,
   getProductById,
-} from "../controllers/productController.js";
-import { protect } from "../middleware/authMiddleware.js";
 
-router.use(protect);
+} from "../controllers/productController.js";
+
 
 router.get("/", getPublicProducts);
 router.get("/:id", getProductById);
+
 
 export default router;

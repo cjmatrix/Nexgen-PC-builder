@@ -24,6 +24,7 @@ import {
   getProductById,
   updateProduct,
   deleteProduct,
+  getAdminProductById,
 } from "../controllers/productController.js";
 
 import { protectAdmin } from "../middleware/authMiddleware.js";
@@ -40,7 +41,7 @@ import {
   getOrderItemDetail,
 } from "../controllers/orderController.js";
 
-router.get("/componentspublic", getComponents);
+
 
 router.use(protectAdmin);
 
@@ -60,7 +61,7 @@ router.patch("/components/:id/delete", deleteComponent);
 
 router.post("/products", createProduct);
 router.get("/products", getAdminProducts);
-router.get("/products/:id", getProductById);
+router.get("/products/:id", getAdminProductById);
 router.put("/products/:id", updateProduct);
 router.patch("/products/:id", deleteProduct);
 router.get("/category", getCategories);

@@ -4,7 +4,7 @@ import { HTTP_STATUS } from "../constants/httpStatus.js";
 import { MESSAGES } from "../constants/responseMessages.js";
 
 const createProduct = async (req, res) => {
-  console.log(req.body,"hereeeeeeeeeee")
+  console.log(req.body, "hereeeeeeeeeee");
   const product = await productService.createProduct(req.body);
   res.status(HTTP_STATUS.CREATED).json({ success: true, data: product });
 };
@@ -27,7 +27,7 @@ const getAdminProducts = async (req, res) => {
 const getPublicProducts = async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
-  const { search, category, sort } = req.query;
+  const { search, category, sort, hasDiscount } = req.query;
 
   const result = await productService.getPublicProducts({
     page,
@@ -35,13 +35,19 @@ const getPublicProducts = async (req, res) => {
     search,
     category,
     sort,
+    hasDiscount,
   });
 
   res.status(HTTP_STATUS.OK).json({ success: true, ...result });
 };
 
 const getProductById = async (req, res) => {
-  const product = await productService.getProductById(req, req.params.id);
+  const product = await productService.getProductByIdPublic(req.params.id);
+  res.status(HTTP_STATUS.OK).json({ success: true, data: product });
+};
+
+const getAdminProductById = async (req, res) => {
+  const product = await productService.getProductByIdAdmin(req.params.id);
   res.status(HTTP_STATUS.OK).json({ success: true, data: product });
 };
 
@@ -52,19 +58,18 @@ const updateProduct = async (req, res) => {
 
 const deleteProduct = async (req, res) => {
   const result = await productService.deleteProduct(req.params.id);
-  res
-    .status(HTTP_STATUS.OK)
-    .json({
-      success: true,
-      message: MESSAGES.PRODUCT.DEACTIVATED,
-      data: result,
-    });
+  res.status(HTTP_STATUS.OK).json({
+    success: true,
+    message: MESSAGES.PRODUCT.DEACTIVATED,
+    data: result,
+  });
 };
 
 export {
   createProduct,
   getAdminProducts,
   getProductById,
+  getAdminProductById,
   updateProduct,
   deleteProduct,
   getPublicProducts,

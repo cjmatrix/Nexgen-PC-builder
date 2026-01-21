@@ -222,7 +222,7 @@ const UserOrderDetails = ({ isOpen, onClose, order }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
+    <div className="animate-fade-up fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
       <CustomModal
         isOpen={infoModal.isOpen}
         onClose={closeInfoModal}

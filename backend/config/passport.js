@@ -20,7 +20,6 @@ passport.use(
           await user.save();
           return done(null, user);
         }
-
         user = await User.create({
           googleId: profile.id,
           name: profile.displayName,

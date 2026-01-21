@@ -6,14 +6,14 @@ import {
   selectPart,
   resetBuild,
   setSelected,
-} from "../../../store/slices/builderSlice";
+} from "../../../../store/slices/builderSlice";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   createProduct,
   updateProduct,
   fetchProductById,
-} from "../../../store/slices/productSlice";
+} from "../../../../store/slices/productSlice";
 import { useLocation } from "react-router-dom";
 import {
   Cpu,
@@ -31,10 +31,11 @@ import {
   Sparkles,
   Wrench,
 } from "lucide-react";
-import api from "../../../api/axios";
-import CustomModal from "../../../components/CustomModal";
-import ImageCropperModal from "../../../components/ImageCropperModal";
+import api from "../../../../api/axios";
+import CustomModal from "../../../../components/CustomModal";
+import ImageCropperModal from "../../../../components/ImageCropperModal";
 import PartSelector from "./components/PartSelector";
+import { toast } from "react-toastify";
 
 const AddProductForm = () => {
   const location = useLocation();
@@ -164,7 +165,6 @@ const AddProductForm = () => {
       dispatch(setSelected(prefill.components));
     }
   }, [isEditMode, id, navigate, dispatch, reset, prefill]);
- 
 
   useEffect(() => {
     if (!isEditMode && !location.state) {
@@ -185,17 +185,23 @@ const AddProductForm = () => {
       dispatch(
         fetchComponents({
           category: "cooler",
-          params: { cpuId: selected.cpu._id },
+          params: {
+            cpuId: selected.cpu._id,
+            maxHeight: selected.case?.specs?.maxCpuCoolerHeight_mm,
+          },
         }),
       );
       dispatch(
         fetchComponents({
           category: "gpu",
-          params: { maxTier: selected.cpu.tier_level + 1 },
+          params: {
+            maxTier: selected.cpu.tier_level + 1,
+            caseId: selected.case?._id,
+          },
         }),
       );
     }
-  }, [dispatch, selected.cpu]);
+  }, [dispatch, selected.cpu, selected.case]);
 
   useEffect(() => {
     if (selected.motherboard) {
@@ -208,11 +214,14 @@ const AddProductForm = () => {
       dispatch(
         fetchComponents({
           category: "case",
-          params: { motherboardId: selected.motherboard._id },
+          params: {
+            motherboardId: selected.motherboard._id,
+            gpuId: selected.gpu?._id,
+          },
         }),
       );
     }
-  }, [dispatch, selected.motherboard]);
+  }, [dispatch, selected.motherboard, selected.gpu]);
 
   useEffect(() => {
     if (estimatedWattage > 0) {
@@ -224,6 +233,41 @@ const AddProductForm = () => {
       );
     }
   }, [dispatch, estimatedWattage]);
+
+  useEffect(() => {
+    if (selected.case && selected.gpu) {
+      const gpuLength = selected.gpu.specs?.length_mm || 0;
+      const maxGpuLength = selected.case.specs?.maxGpuLength_mm || 0;
+
+      if (gpuLength > maxGpuLength) {
+        toast.warn(
+          `Case deselected! ${selected.gpu.name} is too long for this case.`,
+        );
+        dispatch(selectPart({ category: "case", component: null }));
+      }
+    }
+
+    if (selected.case && selected.motherboard) {
+      const moboForm = selected.motherboard.specs?.formFactor?.toUpperCase();
+      const caseForm = selected.case.specs?.formFactor?.toUpperCase();
+
+      let isCompatible = true;
+      // Logic:
+      // ATX Case supports: ATX, mATX, ITX
+      // mATX Case supports: mATX, ITX (Usually doesn't support ATX)
+      // ITX Case supports: ITX (Usually doesn't support mATX/ATX)
+
+      if (caseForm === "ITX" && moboForm !== "ITX") isCompatible = false;
+      if (caseForm === "MATX" && moboForm === "ATX") isCompatible = false;
+
+      if (!isCompatible) {
+        toast.warn(
+          `Case deselected! ${caseForm} case cannot fit ${moboForm} motherboard.`,
+        );
+        dispatch(selectPart({ category: "case", component: null }));
+      }
+    }
+  }, [selected.case, selected.gpu, selected.motherboard, dispatch]);
 
   const handleSelect = (category, component) => {
     dispatch(selectPart({ category, component }));
@@ -265,21 +309,21 @@ const AddProductForm = () => {
         storage: selected.storage._id,
         case: selected.case._id,
         psu: selected.psu._id,
-        cooler: selected.cooler._id,  
+        cooler: selected.cooler._id,
       },
     };
-     productPayload.originalOrderId=null;
-     productPayload.buildType="standard";
-     productPayload.isFeaturedBuild=false;
+    productPayload.originalOrderId = null;
+    productPayload.buildType = "standard";
+    productPayload.isFeaturedBuild = false;
 
-    if(prefill){
-      productPayload.isFeaturedBuild=prefill.isFeaturedBuild;
-      productPayload.originalOrderId=prefill.originalOrderId;
-      productPayload.buildType=prefill.buildType;
+    if (prefill) {
+      productPayload.isFeaturedBuild = prefill.isFeaturedBuild;
+      productPayload.originalOrderId = prefill.originalOrderId;
+      productPayload.buildType = prefill.buildType;
     }
 
     try {
-      if (isEditMode &&!location.state) {
+      if (isEditMode && !location.state) {
         await dispatch(updateProduct({ id, data: productPayload })).unwrap();
         setModal({
           isOpen: true,
@@ -289,7 +333,9 @@ const AddProductForm = () => {
           onConfirm: () => navigate("/admin/products"),
         });
       } else {
-         const successMsg = prefill ? "Featured Build Added to Inventory!" : "Product Created Successfully!";
+        const successMsg = prefill
+          ? "Featured Build Added to Inventory!"
+          : "Product Created Successfully!";
 
         await dispatch(createProduct(productPayload)).unwrap();
         setModal({
@@ -320,7 +366,11 @@ const AddProductForm = () => {
   });
 
   useEffect(() => {
-    if (data?.categories && data.categories.length > 0 &&( !isEditMode || location.state && !prefill.category)) {
+    if (
+      data?.categories &&
+      data.categories.length > 0 &&
+      (!isEditMode || (location.state && !prefill.category))
+    ) {
       setValue("category", data.categories[0]._id);
     }
   }, [data?.categories, isEditMode]);
@@ -333,7 +383,7 @@ const AddProductForm = () => {
       </div>
     );
   }
-  
+
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 text-red-500">
@@ -750,7 +800,11 @@ const AddProductForm = () => {
                 className="w-full bg-blue-600 text-white py-3.5 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
               >
                 <Save size={20} />{" "}
-                {isEditMode && !prefill ? "Update Product":(isEditMode && prefill)? "Add To Inventory":"Create Product"}
+                {isEditMode && !prefill
+                  ? "Update Product"
+                  : isEditMode && prefill
+                    ? "Add To Inventory"
+                    : "Create Product"}
               </button>
             </div>
           </div>

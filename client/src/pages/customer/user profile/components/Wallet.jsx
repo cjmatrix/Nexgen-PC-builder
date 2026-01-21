@@ -43,7 +43,7 @@ const Wallet = () => {
   };
 
   return (
-    <div className="bg-gray-100 min-h-screen p-8 font-sans">
+    <div className="animate-fade-up bg-gray-100 min-h-screen p-8 font-sans">
       <div className="max-w-5xl mx-auto">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">My Wallet</h1>
 

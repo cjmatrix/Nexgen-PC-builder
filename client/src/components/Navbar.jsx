@@ -39,13 +39,13 @@ const Navbar = () => {
 
   const getNavLinkClass = ({ isActive }) =>
     isActive
-      ? "text-gray-900 font-bold text-sm"
-      : "text-gray-500 hover:text-gray-900 font-medium transition-colors text-sm";
+      ? "bg-gray-900 text-white font-semibold text-sm px-4 py-2 rounded-full shadow-md transition-all duration-300"
+      : "text-gray-600 hover:text-gray-900 font-medium text-sm px-4 py-2 hover:bg-gray-50 rounded-full transition-all duration-300";
 
   const getMobileNavLinkClass = ({ isActive }) =>
     isActive
-      ? "block px-3 py-2 rounded-md text-base font-medium text-gray-900 bg-gray-50"
-      : "block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50";
+      ? "block px-4 py-3 rounded-xl text-base font-bold text-white bg-gray-900 shadow-md transform scale-[1.02] transition-all"
+      : "block px-4 py-3 rounded-xl text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-all";
 
   return (
     <nav className="bg-white border-b border-gray-200 fixed w-full z-50 top-0 left-0">
@@ -63,39 +63,54 @@ const Navbar = () => {
             </span>
           </div>
 
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="hidden md:flex items-center space-x-1">
             <NavLink to="/" className={getNavLinkClass} end>
               Home
-            </NavLink>
-            <NavLink to="/builder" className={getNavLinkClass}>
-              Build
             </NavLink>
             <NavLink to="/products" className={getNavLinkClass}>
               Products
             </NavLink>
-            <NavLink to="/components" className={getNavLinkClass}>
-              Components
+            <NavLink to="/deals" className={getNavLinkClass}>
+              Deals
+            </NavLink>
+            <NavLink to="/builder" className={getNavLinkClass}>
+              Build
             </NavLink>
           </div>
 
           <div className="hidden md:flex items-center space-x-4">
-            <Link to="/ai-assistant">
-              <button className="flex items-center space-x-2 bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors">
-                <Sparkles className="h-4 w-4" />
-                <span>AI Assistant</span>
-              </button>
-            </Link>
+            <NavLink
+              to="/ai-assistant"
+              className={({ isActive }) =>
+                `flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 ${
+                  isActive
+                    ? "bg-linear-to-r from-violet-600 to-indigo-600 text-white font-bold text-sm shadow-lg shadow-violet-500/30 scale-105"
+                    : "bg-violet-50 text-violet-700 font-bold text-sm border border-violet-200 shadow-sm hover:shadow-md hover:scale-105 active:scale-95 hover:bg-violet-100"
+                }`
+              }
+            >
+              <Sparkles className="h-4 w-4" />
+              <span>AI Assistant</span>
+            </NavLink>
 
             {user ? (
               <div className="flex items-center space-x-3">
-                <Link to="/user/profile">
-                  <div className="flex items-center justify-center h-10 w-10 rounded-full bg-gray-100 hover:bg-gray-200 cursor-pointer transition-colors">
-                    <User className="h-5 w-5 text-gray-600" />
-                  </div>
-                </Link>
+                <NavLink
+                  to="/user/profile"
+                  className={({ isActive }) =>
+                    `flex items-center justify-center h-10 w-10 rounded-full transition-all duration-300 ${
+                      isActive
+                        ? "bg-gray-900 text-white shadow-md scale-105"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200 hover:scale-105"
+                    }`
+                  }
+                >
+                  <User className="h-5 w-5" />
+                </NavLink>
+
                 <button
                   onClick={handleLogout}
-                  className="p-2 text-gray-500 hover:text-red-600 transition-colors"
+                  className="flex items-center justify-center h-10 w-10 rounded-full bg-gray-100 text-gray-600 hover:text-white hover:bg-red-500 transition-all duration-300 hover:shadow-md hover:scale-105"
                   title="Logout"
                 >
                   <LogOut className="h-5 w-5" />
@@ -103,42 +118,58 @@ const Navbar = () => {
               </div>
             ) : (
               <div className="flex items-center space-x-3">
-                <Link
+                <NavLink
                   to="/login"
-                  className="text-gray-600 hover:text-gray-900 font-medium text-sm"
+                  className={({ isActive }) =>
+                    isActive
+                      ? "text-gray-900 font-bold text-sm"
+                      : "text-gray-600 hover:text-gray-900 font-medium text-sm transition-colors"
+                  }
                 >
                   Log in
-                </Link>
-                <Link
+                </NavLink>
+                <NavLink
                   to="/signup"
-                  className="bg-gray-100 text-gray-900 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors"
+                  className="bg-gray-900 text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-gray-800 shadow-md transition-all duration-300 hover:scale-105"
                 >
                   Sign up
-                </Link>
+                </NavLink>
               </div>
             )}
-            <Link to="/cart">
-              <div className="relative flex items-center justify-center h-10 w-10 rounded-full bg-gray-100 hover:bg-gray-200 cursor-pointer transition-colors">
-                <ShoppingCart className="h-5 w-5 text-gray-600" />
-                {totalItems > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center border-2 border-white">
-                    {totalItems}
-                  </span>
-                )}
-              </div>
-            </Link>
+
+            <NavLink
+              to="/cart"
+              className={({ isActive }) =>
+                `relative flex items-center justify-center h-10 w-10 rounded-full transition-all duration-300 ${
+                  isActive
+                    ? "bg-gray-900 text-white shadow-md scale-105"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200 hover:scale-105"
+                }`
+              }
+            >
+              <ShoppingCart className="h-5 w-5" />
+              {totalItems > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center border-2 border-white shadow-sm">
+                  {totalItems}
+                </span>
+              )}
+            </NavLink>
           </div>
 
           <div className="md:hidden flex items-center">
             <button
               onClick={toggleMenu}
-              className="text-gray-600 hover:text-gray-900 focus:outline-none"
+              className="text-gray-600 hover:text-gray-900 focus:outline-none p-2 rounded-full hover:bg-gray-100 transition-all duration-300"
             >
-              {isOpen ? (
-                <X className="h-6 w-6" />
-              ) : (
-                <Menu className="h-6 w-6" />
-              )}
+              <div
+                className={`transition-transform duration-300 ${isOpen ? "rotate-180" : "rotate-0"}`}
+              >
+                {isOpen ? (
+                  <X className="h-6 w-6" />
+                ) : (
+                  <Menu className="h-6 w-6" />
+                )}
+              </div>
             </button>
           </div>
         </div>
@@ -168,13 +199,6 @@ const Navbar = () => {
               onClick={() => setIsOpen(false)}
             >
               Products
-            </NavLink>
-            <NavLink
-              to="/components"
-              className={getMobileNavLinkClass}
-              onClick={() => setIsOpen(false)}
-            >
-              Components
             </NavLink>
 
             <div className="pt-4 border-t border-gray-100 mt-2">

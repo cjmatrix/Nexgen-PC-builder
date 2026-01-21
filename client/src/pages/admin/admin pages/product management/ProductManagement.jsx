@@ -4,7 +4,7 @@ import {
   fetchAdminProducts,
   deleteProduct,
   updateProduct,
-} from "../../../store/slices/productSlice";
+} from "../../../../store/slices/productSlice";
 import { Link } from "react-router-dom";
 import {
   Edit,
@@ -15,10 +15,10 @@ import {
   ToggleRight,
   RefreshCw,
 } from "lucide-react";
-import CustomModal from "../../../components/CustomModal";
-import Pagination from "../../../components/Pagination";
+import CustomModal from "../../../../components/CustomModal";
+import Pagination from "../../../../components/Pagination";
 import { useQuery } from "@tanstack/react-query";
-import api from "../../../api/axios";
+import api from "../../../../api/axios";
 
 const ProductManagement = () => {
   const dispatch = useDispatch();

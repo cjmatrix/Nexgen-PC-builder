@@ -24,9 +24,9 @@ const Login = () => {
   };
 
   const { user, isLoading, isError, isSuccess, message } = useSelector(
-    (state) => state.auth
+    (state) => state.auth,
   );
-  console.log(user)
+  console.log(user);
   const {
     register,
     handleSubmit,
@@ -59,9 +59,8 @@ const Login = () => {
     }
   }, [user, isError, isSuccess, message, navigate, dispatch]);
 
-  const onSubmit = async(data) => {
-  const res= await dispatch(login(data)).unwrap();
-
+  const onSubmit = async (data) => {
+    const res = await dispatch(login(data)).unwrap();
   };
 
   if (isLoading) {
@@ -95,7 +94,7 @@ const Login = () => {
         </p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md animate-fade-up">
         <div className="bg-white py-8 px-4 shadow-xl shadow-slate-200/50 sm:rounded-2xl sm:px-10 border border-gray-100">
           <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
             <div>

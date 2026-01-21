@@ -51,7 +51,7 @@ const CustomModal = ({
   }
 
   const handleBackdropClick = (e) => {
-    e.stopPropagation()
+    e.stopPropagation();
     if (modalRef.current && !modalRef.current.contains(e.target)) {
       onClose();
     }

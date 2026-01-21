@@ -34,6 +34,7 @@ import AddProductForm from "./pages/admin/admin pages/ProductForm";
 import ProductList from "./pages/customer/ProductList";
 import ProductDetail from "./pages/customer/ProductDetail";
 import AIPCAssistant from "./pages/customer/AIPCAssistant";
+import Deals from "./pages/customer/Deals";
 import Cart from "./pages/customer/Cart";
 import Checkout from "./pages/customer/Checkout";
 import AdminRoutes from "./protectedroutes/AdminRoute";
@@ -75,6 +76,29 @@ const router = createBrowserRouter([
     path: "/reset-password/:resetToken",
     element: <ResetPassword />,
   },
+  {
+    path: "/",
+    element: <CustomerPage></CustomerPage>,
+    children: [
+      {
+        path: "/products",
+        element: <ProductList />,
+      },
+      {
+        path: "/products/:id",
+        element: <ProductDetail />,
+      },
+      {
+        path: "/products/customization/:id",
+        element: <PCBuilder />,
+      },
+      {
+        path: "/builder",
+        element: <PCBuilder />,
+      },
+    ],
+  },
+
   {
     element: <AdminRoutes />,
     children: [
@@ -169,26 +193,16 @@ const router = createBrowserRouter([
             path: "/dashboard",
             element: <CustomerDashboard />,
           },
-          {
-            path: "/products",
-            element: <ProductList />,
-          },
-          {
-            path: "/products/:id",
-            element: <ProductDetail />,
-          },
+
           {
             path: "/ai-assistant",
             element: <AIPCAssistant />,
           },
           {
-            path: "/builder",
-            element: <PCBuilder />,
+            path: "/deals",
+            element: <Deals />,
           },
-          {
-            path: "/products/customization/:id",
-            element: <PCBuilder />,
-          },
+
           {
             path: "/cart",
             element: <Cart />,

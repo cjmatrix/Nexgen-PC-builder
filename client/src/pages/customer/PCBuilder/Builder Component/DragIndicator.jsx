@@ -14,25 +14,23 @@ const DragIndicator = ({ isVisible }) => {
 
       const tl = gsap.timeline({ repeat: -1, repeatDelay: 1 });
 
-      tl.set(handRef.current, { x: 750, y: 0, opacity: 0, scale: 1 });
+      tl.set(handRef.current, { x: "38vw", y: 0, opacity: 0, scale: 1 });
       tl.to(handRef.current, { opacity: 1, duration: 0.4 });
 
       tl.to(handRef.current, { scale: 0.9, duration: 0.2 });
 
-      
       tl.to(handRef.current, {
         x: 0,
         y: 100,
         duration: 1.5,
         ease: "power2.inOut",
-       
       });
 
       tl.to(handRef.current, { scale: 1, duration: 0.2 });
 
       tl.to(handRef.current, { opacity: 0, duration: 0.4 });
     },
-    { scope: containerRef, dependencies: [isVisible] }
+    { scope: containerRef, dependencies: [isVisible] },
   );
 
   if (!isVisible) return null;
@@ -44,7 +42,6 @@ const DragIndicator = ({ isVisible }) => {
     >
       <div className="relative w-full h-full">
         <div className="absolute top-[40%] left-[35%]-translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] flex items-center justify-center">
-        
           <div className="absolute top-[30%] left-[100%] bg-white/90 backdrop-blur px-3 py-1.5 rounded-full shadow-lg border border-gray-100 text-xs font-bold text-blue-600 whitespace-nowrap animate-pulse">
             Drag component here
           </div>

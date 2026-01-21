@@ -16,7 +16,7 @@ const Referral = () => {
       setReferralLink(data.referralLink);
     } catch (err) {
       setError(
-        err.response?.data?.message || "Failed to generate referral link"
+        err.response?.data?.message || "Failed to generate referral link",
       );
     } finally {
       setLoading(false);
@@ -30,7 +30,7 @@ const Referral = () => {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+    <div className="animate-fade-up bg-white rounded-xl shadow-sm border border-gray-100 p-8">
       <div className="flex items-center gap-3 mb-6">
         <div className="p-3 bg-blue-50 rounded-lg text-blue-600">
           <Share2 className="w-6 h-6" />
@@ -43,14 +43,14 @@ const Referral = () => {
         </div>
       </div>
 
-      <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl p-8 text-white mb-8 relative overflow-hidden">
+      <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-2xl p-8 text-white mb-8 relative overflow-hidden">
         <div className="absolute right-0 top-0 opacity-10 transform translate-x-1/4 -translate-y-1/4">
           <Gift className="w-64 h-64" />
         </div>
 
         <div className="relative z-10 max-w-lg">
           <h3 className="text-2xl font-bold mb-4">Give ₹500, Get ₹500!</h3>
-          <p className="mb-6 text-blue-100">
+          <p className="mb-6 text-gray-400">
             Share your unique referral link with friends. When they sign up and
             make their first purchase (min ₹2000), you both get a flat ₹500
             discount coupon!

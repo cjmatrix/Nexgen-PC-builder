@@ -1,6 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { generatePCBuild, resetAIState } from "../../store/slices/aiSlice";
+import {
+  generatePCBuild,
+  resetAIState,
+  setShowPromptBar,
+} from "../../store/slices/aiSlice";
 import {
   FaMicrochip,
   FaMemory,
@@ -10,31 +14,61 @@ import {
   FaBolt,
   FaDesktop,
 } from "react-icons/fa";
-import { BsGpuCard } from "react-icons/bs";
-import { MdOutlineSdStorage } from "react-icons/md";
+import { BsGpuCard, BsStars, BsCpu } from "react-icons/bs";
 import { useNavigate } from "react-router-dom";
 import api from "../../api/axios";
 import Swal from "sweetalert2";
-import { toast } from "react-toastify";
-import { setShowPromptBar } from "../../store/slices/aiSlice";
 import { showCustomToast } from "../../utils/toastUtils";
 import AIBuildLoader from "../../components/AIBuildLoader";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
+import { ArrowRight, Sparkles, RefreshCcw, ShoppingCart } from "lucide-react";
+import { resetBuild } from "../../store/slices/builderSlice";
+
+gsap.registerPlugin(useGSAP);
 
 const AIPCAssistant = () => {
   const [prompt, setPrompt] = useState("");
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const containerRef = useRef(null);
+  const resultRef = useRef(null);
+
   const { loading, aiBuild, error, success, showPromptBar } = useSelector(
-    (state) => state.ai
+    (state) => state.ai,
   );
 
+  useGSAP(
+    () => {
+      const tl = gsap.timeline();
 
-  useEffect(() => {
-    // return () => dispatch(resetAIState());
-  }, [dispatch]);
+      tl.fromTo(
+        ".hero-text",
+        { y: 50, opacity: 0 },
+        { y: 0, opacity: 1, duration: 1, stagger: 0.2, ease: "power3.out" },
+      ).fromTo(
+        ".input-container",
+        { y: 30, opacity: 0, scale: 0.95 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.8, ease: "back.out(1.7)" },
+        "-=0.5",
+      );
+    },
+    { scope: containerRef },
+  );
+
+  useGSAP(() => {
+    if (aiBuild && resultRef.current) {
+      gsap.fromTo(
+        resultRef.current,
+        { y: 100, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.8, ease: "power3.out" },
+      );
+    }
+  }, [aiBuild]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    dispatch(resetAIState())
     if (prompt.trim()) {
       try {
         const data = await dispatch(generatePCBuild(prompt)).unwrap();
@@ -83,10 +117,16 @@ const AIPCAssistant = () => {
         text: "Your AI-generated build has been added to your cart.",
         showCancelButton: true,
         confirmButtonText: "Go to Cart",
-        cancelButtonText: "Close",
+        cancelButtonText: "Build Another",
+        background: "#fff",
+        confirmButtonColor: "#2563eb",
       }).then((result) => {
         if (result.isConfirmed) {
           navigate("/cart");
+        } else {
+          dispatch(resetAIState());
+          setPrompt("");
+          dispatch(setShowPromptBar(true));
         }
       });
     } catch (error) {
@@ -100,212 +140,238 @@ const AIPCAssistant = () => {
   };
 
   const getComponentIcon = (category) => {
+    const iconClass = "w-5 h-5";
     switch (category?.toLowerCase()) {
       case "cpu":
-        return <FaMicrochip className="text-blue-500 w-6 h-6" />;
+        return <BsCpu className={`${iconClass} text-blue-500`} />;
       case "gpu":
-        return <BsGpuCard className="text-green-500 w-6 h-6" />;
+        return <BsGpuCard className={`${iconClass} text-green-500`} />;
       case "motherboard":
-        return <FaBox className="text-purple-500 w-6 h-6" />;
+        return <FaBox className={`${iconClass} text-purple-500`} />;
       case "ram":
-        return <FaMemory className="text-yellow-500 w-6 h-6" />;
+        return <FaMemory className={`${iconClass} text-yellow-500`} />;
       case "storage":
-        return <FaHdd className="text-red-500 w-6 h-6" />;
+        return <FaHdd className={`${iconClass} text-red-500`} />;
       case "case":
-        return <FaDesktop className="text-gray-500 w-6 h-6" />;
+        return <FaDesktop className={`${iconClass} text-gray-500`} />;
       case "psu":
-        return <FaBolt className="text-yellow-600 w-6 h-6" />;
+        return <FaBolt className={`${iconClass} text-yellow-600`} />;
       case "cooler":
-        return <FaFan className="text-cyan-500 w-6 h-6" />;
+        return <FaFan className={`${iconClass} text-cyan-500`} />;
       default:
-        return <FaBox className="text-gray-400 w-6 h-6" />;
+        return <FaBox className={`${iconClass} text-gray-400`} />;
     }
   };
 
-  const formatSpecKey = (key) => {
-    return key
-      .replace(/([A-Z])/g, " $1")
-      .replace(/^./, (str) => str.toUpperCase());
-  };
-
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto space-y-8 mt-32">
-        {/* Header */}
-        <div className="text-center space-y-4">
-          <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">
-            AI PC Assistant
-          </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Tell our AI what you need, and we'll generate a personalized build
-            for you.
-          </p>
-        </div>
+    <div
+      ref={containerRef}
+      className="min-h-screen bg-gray-50 text-gray-900 selection:bg-purple-100 font-sans overflow-x-hidden relative"
+    >
+      {/* Dynamic Background (Light Mode) */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-purple-200/40 blur-[120px] rounded-full mix-blend-multiply animate-pulse"></div>
+        <div className="absolute bottom-[10%] right-[-5%] w-[600px] h-[600px] bg-blue-200/40 blur-[150px] rounded-full mix-blend-multiply"></div>
+        <div className="absolute top-[40%] left-[30%] w-[300px] h-[300px] bg-cyan-200/30 blur-[100px] rounded-full mix-blend-multiply"></div>
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-40 mix-blend-soft-light"></div>
+      </div>
 
-        {/* Input Section */}
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 flex flex-col items-center">
+        {/* Header */}
+        {showPromptBar&& <div className="text-center space-y-6 mb-16 max-w-3xl">
+          <div className="hero-text inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-gray-200 shadow-sm mb-4">
+            <BsStars className="text-purple-600 animate-pulse" />
+            <span className="text-sm font-bold text-gray-600 tracking-wide uppercase">
+              Next-Gen PC Building
+            </span>
+          </div>
+          <h1 className="hero-text text-5xl md:text-7xl font-extrabold tracking-tight text-gray-900">
+            Design Your Dream <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600">
+              Powered by AI
+            </span>
+          </h1>
+          <p className="hero-text text-lg md:text-xl text-gray-600 leading-relaxed max-w-2xl mx-auto">
+            Describe your needs, budget, or favorite games. Our advanced AI
+            architect will instantly design the perfect rig for you.
+          </p>
+        </div>}
+
+        
         {showPromptBar && (
-          <div className="bg-white rounded-2xl shadow-xl p-8 transition-all hover:shadow-2xl">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">
-              Describe your ideal PC
-            </h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <textarea
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                placeholder="For example: 'I need a high-end gaming PC for 4K streaming and video editing. My budget is around ₹1,50,000.'"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none resize-none h-32 text-gray-700 placeholder-gray-400"
-                disabled={loading}
-              />
-              <button
-                type="submit"
-                disabled={loading || !prompt.trim()}
-                className={`w-full py-4 px-6 rounded-xl text-white font-bold text-lg transition-all transform hover:scale-[1.02] active:scale-[0.98] ${
-                  loading
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-[#0f172a] hover:bg-[#1e293b] shadow-lg hover:shadow-xl"
-                }`}
-              >
-                {loading ? (
-                  <div className="flex items-center justify-center space-x-2">
-                    <div className="w-5 h-5 border-t-2 border-b-2 border-white rounded-full animate-spin"></div>
-                    <span>Generating Recommendation...</span>
+          <div className="input-container w-full max-w-3xl">
+            <div className="relative group">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl blur opacity-30 group-hover:opacity-60 transition duration-1000 group-hover:duration-200"></div>
+              <div className="relative bg-white rounded-2xl p-2 shadow-2xl ring-1 ring-gray-100">
+                <form onSubmit={handleSubmit} className="relative">
+                  <textarea
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    placeholder="I want a white-themed PC for 4K video editing and Cyberpunk 2077. Budget is ₹2,00,000..."
+                    className="w-full bg-transparent text-lg text-gray-900 placeholder-gray-400 p-6 min-h-[140px] focus:outline-none resize-none rounded-xl"
+                    disabled={loading}
+                  />
+                  <div className="flex justify-between items-center px-4 pb-2 border-t border-gray-100 pt-3 mt-2">
+                    <div className="flex gap-2">
+                      <span className="text-xs text-gray-500 flex items-center gap-1 font-medium">
+                        <Sparkles size={12} className="text-purple-500" /> Gemini
+                        Turbo Optimized
+                      </span>
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={loading || !prompt.trim()}
+                      className={`px-8 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg ${
+                        loading || !prompt.trim()
+                          ? "bg-gray-100 text-gray-400 cursor-not-allowed shadow-none"
+                          : "bg-gray-900 text-white hover:bg-gray-800 hover:scale-105 active:scale-95 shadow-gray-900/20"
+                      }`}
+                    >
+                      {loading ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-gray-400 border-t-white rounded-full animate-spin"></div>
+                          <span>Designing...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>Generate Build</span>
+                          <ArrowRight size={18} />
+                        </>
+                      )}
+                    </button>
                   </div>
-                ) : (
-                  "Generate Recommendation"
-                )}
-              </button>
-            </form>
+                </form>
+              </div>
+            </div>
             {error && (
-              <div className="mt-4 p-4 bg-red-50 text-red-600 rounded-lg border border-red-100 flex items-center">
-                <span className="font-medium">Error:</span>&nbsp;{error}
+              <div className="mt-4 p-4 bg-red-50 border border-red-100 text-red-600 rounded-xl flex items-center gap-3 shadow-sm">
+                <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
+                {error}
               </div>
             )}
           </div>
         )}
 
-        {/* Result Section */}
-        {!aiBuild && success && <AIBuildLoader />}
+       
+        {!aiBuild &&!showPromptBar && <AIBuildLoader />}
+
         {aiBuild && (
-          <div className="space-y-8 animate-fade-in-up">
-            <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
-              <div className="md:flex">
-                {/* Image Section */}
-                <div className="md:w-1/2 relative bg-gray-50 min-h-[300px] flex items-center justify-center p-6">
+          <div
+            ref={resultRef}
+            className="w-full max-w-5xl mt-12 mb-20 animate-fade-in-up"
+          >
+            <div className="bg-white rounded-3xl border border-gray-200 overflow-hidden shadow-2xl ring-1 ring-black/5">
+              <div className="grid grid-cols-1 lg:grid-cols-2">
+                {/* Left: Preview */}
+                <div className="relative bg-gray-50 p-8 flex items-center justify-center group overflow-hidden border-b lg:border-b-0 lg:border-r border-gray-200">
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-100/50 via-transparent to-transparent opacity-70"></div>
                   {aiBuild.images && aiBuild.images.length > 0 ? (
                     <img
                       src={aiBuild.images[0]}
-                      alt={aiBuild.name}
-                      className="w-full h-auto max-h-[350px] object-contain drop-shadow-xl"
+                      alt="PC Preview"
+                      className="relative z-10 w-full max-w-sm object-contain drop-shadow-xl transition-transform duration-700 group-hover:scale-105 group-hover:rotate-1"
                     />
                   ) : (
                     <div className="text-gray-400 flex flex-col items-center">
-                      <FaDesktop className="w-20 h-20 mb-2" />
-                      <span className="text-sm">No Preview Available</span>
+                      <BsCpu className="w-24 h-24 mb-4 opacity-50" />
+                      <p className="font-medium">System Diagram</p>
                     </div>
                   )}
                 </div>
 
-                {/* Build Info */}
-                <div className="md:w-1/2 p-8 flex flex-col justify-center space-y-6 bg-white">
-                  <div>
-                    <div className="text-sm font-bold text-blue-600 uppercase tracking-wider mb-1">
-                      AI Recommended Configuration
-                    </div>
-                    <h3 className="text-3xl font-extrabold text-gray-900 leading-tight">
-                      {aiBuild.name}
-                    </h3>
-                  </div>
-
-                  <p className="text-gray-600 leading-relaxed text-sm border-l-4 border-blue-500 pl-4 py-1 bg-blue-50/50 rounded-r-lg">
-                    {aiBuild.description}
-                  </p>
-
-                  <div className="pt-6 border-t border-gray-100">
-                    <span className="text-gray-500 font-medium text-sm">
-                      Estimated Total Price
-                    </span>
-                    <div className="text-4xl font-extrabold text-gray-900 mt-2 flex items-baseline gap-1">
-                      ₹{(aiBuild.base_price / 100).toLocaleString()}
-                      <span className="text-sm font-normal text-gray-500">
-                        .00
+                {/* Right: Info */}
+                <div className="p-8 lg:p-10 flex flex-col bg-white">
+                  <div className="mb-auto">
+                    <div className="flex items-center gap-2 mb-4">
+                      <span className="px-3 py-1 rounded-full bg-green-50 text-green-700 text-xs font-bold border border-green-200 uppercase tracking-widest">
+                        AI Configuration
+                      </span>
+                      <span className="px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold border border-blue-200 uppercase tracking-widest">
+                        Custom Build
                       </span>
                     </div>
+                    <h2 className="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-4 leading-tight">
+                      {aiBuild.name}
+                    </h2>
+                    <p className="text-gray-600 leading-relaxed border-l-4 border-blue-500 pl-4 py-1 italic bg-blue-50 rounded-r-lg">
+                      "{aiBuild.description}"
+                    </p>
+                  </div>
+
+                  <div className="py-8 border-t border-gray-100 mt-8">
+                    <div className="flex justify-between items-end">
+                      <div>
+                        <p className="text-gray-500 text-sm font-semibold mb-1">
+                          Total Estimated Price
+                        </p>
+                        <p className="text-4xl font-extrabold text-gray-900 flex items-baseline gap-1">
+                          ₹{(aiBuild.base_price / 100).toLocaleString()}
+                          <span className="text-lg text-gray-500 font-medium">
+                            .00
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 mt-4">
+                    <button
+                      onClick={() => {
+                        dispatch(resetAIState());
+                        setPrompt("");
+                        dispatch(setShowPromptBar(true));
+                      }}
+                      className="py-4 rounded-xl font-bold bg-white text-gray-700 hover:bg-gray-50 transition-colors border border-gray-200 shadow-sm flex items-center justify-center gap-2 group"
+                    >
+                      <RefreshCcw
+                        size={18}
+                        className="group-hover:-rotate-180 transition-transform duration-500 text-gray-500"
+                      />
+                      New Build
+                    </button>
+                    <button
+                      onClick={handleAddToCart}
+                      className="py-4 rounded-xl font-bold bg-gray-900 text-white hover:bg-black transition-colors shadow-lg shadow-gray-900/20 flex items-center justify-center gap-2"
+                    >
+                      <ShoppingCart size={18} />
+                      Add to Cart
+                    </button>
                   </div>
                 </div>
               </div>
 
-              {/* Components Grid */}
-              <div className="p-8 bg-gray-50 border-t border-gray-200">
-                <h4 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                  <FaMicrochip className="text-gray-700" /> Component Breakdown
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {Array.isArray(aiBuild.default_config) &&
-                    aiBuild.default_config.map(
-                      (component) =>
-                        component && (
-                          <div
-                            key={component._id}
-                            className="bg-white p-4 rounded-xl shadow-sm border border-gray-200/60 flex items-start space-x-4 hover:shadow-md transition-all hover:border-blue-200 group"
-                          >
-                            <div className="p-3 bg-gray-50 rounded-lg group-hover:bg-blue-50 transition-colors">
-                              {getComponentIcon(component.category)}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex justify-between items-start">
-                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
-                                  {component.category}
-                                </p>
-                                <p className="text-xs font-bold text-gray-900">
-                                  ₹{(component.price / 100).toLocaleString()}
-                                </p>
-                              </div>
-                              <p
-                                className="font-semibold text-gray-900 line-clamp-1 mb-2"
-                                title={component.name}
-                              >
-                                {component.name}
-                              </p>
-
-                              {/* Specs Preview */}
-                              {component.specs && (
-                                <div className="flex flex-wrap gap-1.5 mt-2">
-                                  {Object.entries(component.specs)
-                                    .slice(0, 3)
-                                    .map(([key, value]) => (
-                                      <span
-                                        key={key}
-                                        className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200"
-                                      >
-                                        {key === "vram_gb"
-                                          ? `${value}GB`
-                                          : value.toString()}
-                                      </span>
-                                    ))}
-                                </div>
-                              )}
-                            </div>
+              {/* Components List */}
+              <div className="bg-gray-50 border-t border-gray-200 p-8">
+                <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+                  <FaMicrochip className="text-blue-600" />
+                  Component Breakdown
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {aiBuild.default_config.map(
+                    (comp) =>
+                      comp && (
+                        <div
+                          key={comp._id}
+                          className="bg-white p-4 rounded-xl border border-gray-200 flex gap-4 hover:shadow-md transition-all hover:border-blue-300 group"
+                        >
+                          <div className="p-3 bg-gray-50 rounded-lg h-fit text-gray-500 group-hover:text-blue-600 transition-colors">
+                            {getComponentIcon(comp.category)}
                           </div>
-                        )
-                    )}
+                          <div className="min-w-0">
+                            <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-0.5">
+                              {comp.category}
+                            </p>
+                            <p className="text-sm font-bold text-gray-900 truncate group-hover:text-blue-600 transition-colors">
+                              {comp.name}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1 font-medium">
+                              ₹{(comp.price / 100).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                      ),
+                  )}
                 </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="p-6 bg-white border-t border-gray-200 flex justify-end gap-4">
-                <button
-                  type="button"
-                  onClick={() => dispatch(resetAIState())}
-                  className="px-6 py-3 rounded-xl text-gray-700 font-semibold border border-gray-300 hover:bg-gray-50 transition-colors"
-                >
-                  Clear & Try Again
-                </button>
-                <button
-                  onClick={handleAddToCart}
-                  className="bg-[#0f172a] text-white px-8 py-3 rounded-xl font-semibold hover:bg-[#1e293b] transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
-                >
-                  Add to Cart
-                </button>
               </div>
             </div>
           </div>

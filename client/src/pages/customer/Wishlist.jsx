@@ -34,7 +34,7 @@ const Wishlist = () => {
   }
 
   return (
-    <div className="w-full p-4 md:p-8 font-sans">
+    <div className="animate-fade-up w-full p-4 md:p-8 font-sans">
       <div className="mx-auto">
         <div className="flex items-center gap-3 mb-6 md:mb-8">
           <Heart className="h-6 w-6 md:h-8 md:w-8 text-red-500 fill-current" />
