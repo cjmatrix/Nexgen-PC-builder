@@ -28,9 +28,13 @@ api.interceptors.response.use(
       originalRequest.url.includes("/auth/login") ||
       originalRequest.url.includes("/auth/logout") ||
       originalRequest.url.includes("/auth/refresh") ||
-      originalRequest.url.includes("/auth/admin/refresh") 
-    
+      originalRequest.url.includes("/auth/admin/refresh")
     ) {
+      return Promise.reject(error);
+    }
+
+    if (error.response?.status === 404) {
+      window.location.href = "/404";
       return Promise.reject(error);
     }
 

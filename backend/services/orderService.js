@@ -177,7 +177,7 @@ export const createOrder = async (userId, user, orderData) => {
       return acc + discountedPrice * item.qty;
     }, 0);
 
-    // Dynamic Coupon Validation & Calculation (Strict Checkout)
+    // Dynamic Coupon Validation & Calculation
     let couponDiscount = 0;
     const billableTotalRupees = itemsPrice / 100;
 
@@ -289,7 +289,6 @@ export const createOrder = async (userId, user, orderData) => {
 
     const createdOrder = await order.save({ session });
 
-    // Cleanup Cart
     cart.items = [];
     cart.coupon = null;
     cart.discount = 0;
@@ -620,7 +619,10 @@ export const cancelOrder = async (orderId, itemId, reason, userId) => {
           refundSum,
           "CREDIT",
           order._id,
-          "Refund for Order Cancellation",
+          `Refund for Order Cancellation of ${order.orderItems
+            .filter((i) => i.status !== "Cancelled")
+            .map((i) => i.name)
+            .join(", ")}`,
           session,
         );
       }
@@ -701,7 +703,8 @@ export const requestReturn = async (orderId, itemId, reason, userId) => {
         if (
           item.status !== "Returned" &&
           item.status !== "Cancelled" &&
-          item.status !== "Return Requested"
+          item.status !== "Return Requested" &&
+          item.status !== "Return Approved"
         ) {
           item.status = "Return Requested";
           item.returnReason = reason;
@@ -732,7 +735,7 @@ export const approveReturn = async (
   session.startTransaction();
   try {
     const order = await Order.findById(orderId).session(session);
-
+    console.log(order);
     if (!order) {
       throw new AppError(MESSAGES.ORDER.NOT_FOUND, HTTP_STATUS.NOT_FOUND);
     }
@@ -763,11 +766,11 @@ export const approveReturn = async (
       const amount = calculateRefundAmount(order, itemId);
 
       await walletService.addFunds(
-        userId,
+        order.user,
         amount,
         "CREDIT",
         order._id,
-        "Refund for Order return",
+        `Refund for Order return of ${item.name}`,
         session,
       );
 
@@ -857,11 +860,14 @@ export const approveReturn = async (
       }
 
       await walletService.addFunds(
-        userId,
+        order.user,
         refundSum,
         "CREDIT",
         order._id,
-        "Refund for Order return",
+        `Refund for Order return of ${order.orderItems
+          .filter((i) => i.status === "Return Approved")
+          .map((i) => i.name)
+          .join(", ")}`,
         session,
       );
     }

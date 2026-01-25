@@ -11,7 +11,7 @@ const CustomToast = ({
   return (
     <div
       onClick={onClick}
-      className={`flex items-center gap-4 w-full pr-2 relative overflow-hidden group hover:border-blue-300 transition-all pb-1 ${
+      className={`flex items-center gap-4 w-full pr-4 pl-3 relative overflow-hidden group hover:border-blue-500 transition-all ${
         onClick ? "cursor-pointer" : ""
       }`}
     >
@@ -25,11 +25,11 @@ const CustomToast = ({
       </style>
 
       {/* Custom SVG PC Animation */}
-      <div className="w-12 h-12 shrink-0 bg-blue-50/50 rounded-xl flex items-center justify-center relative overflow-hidden group-hover:scale-110 transition-all ">
+      <div className="w-12 h-12 shrink-0 bg-white rounded-xl flex items-center justify-center relative overflow-hidden group-hover:scale-110 transition-all border border-purple-100 shadow-sm">
         <svg
           viewBox="0 0 24 24"
           fill="none"
-          className="w-8 h-8 text-blue-600"
+          className="w-8 h-8 text-purple-600"
           xmlns="http://www.w3.org/2000/svg"
         >
           {/* PC Case Outline */}
@@ -82,33 +82,32 @@ const CustomToast = ({
             cy="18.5"
             r="1.5"
             fill="currentColor"
-            className="animate-pulse text-green-500"
+            className="animate-pulse text-purple-400"
           />
         </svg>
       </div>
 
-      {/* Content */}
-      <div className="flex flex-col flex-1">
-        <h4 className="text-sm font-semibold text-gray-900 tracking-tight mb-0.5">
+  
+      <div className="flex flex-col flex-1 py-3">
+        <h4 className="text-sm font-bold text-gray-900 tracking-tight mb-0.5">
           System Update
         </h4>
-        <p className="text-sm font-medium text-gray-600 leading-snug">
+        <p className="text-sm font-medium text-purple-900/70 leading-snug">
           {message}
         </p>
       </div>
-
 
       <button
         onClick={(e) => {
           e.stopPropagation();
           closeToast();
         }}
-        className="absolute top-0 right-0 text-gray-400 hover:text-gray-600 bg-transparent hover:bg-gray-100 rounded-full p-1 transition-colors"
+        className="absolute top-2 right-2 text-purple-300 hover:text-purple-600 bg-transparent hover:bg-purple-100/50 rounded-full p-1 transition-colors"
       >
         <X size={14} />
       </button>
 
-      {/* Progress Bar */}
+     
       <div
         className="absolute bottom-0 left-0 h-1 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full group-hover:[animation-play-state:paused!important]"
         style={{

@@ -42,11 +42,18 @@ const deductFunds = async (
   description,
   session,
 ) => {
-  const user = await User.findByIdAndUpdate(
-    userId,
+  const user = await User.findOneAndUpdate(
+    { _id: userId, walletBalance: { $gte: amount } },
     { $inc: { walletBalance: -amount } },
     { new: true, session },
   );
+
+  if (!user) {
+    throw new AppError(
+      MESSAGES.ORDER.WALLET_BALANCE_LOW,
+      HTTP_STATUS.BAD_REQUEST,
+    );
+  }
 
   const wallet = await WalletTransaction.create(
     [
@@ -80,6 +87,7 @@ const getWalletDetails = async (userId, page = 1, limit = 10) => {
     .limit(limit)
     .skip((page - 1) * limit);
 
+  console.log(transactions);
   return {
     balance: user.walletBalance,
     transactions,

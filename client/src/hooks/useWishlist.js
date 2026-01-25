@@ -18,10 +18,9 @@ export const useWishlist = () => {
       const res = await api.get("/wishlist");
       return res.data.data;
     },
-    staleTime: 1000 * 60 * 5, 
+    staleTime: 1000 * 60 * 5,
   });
 
-  
   const addToWishlistMutation = useMutation({
     mutationFn: async (productId) => {
       const res = await api.post("/wishlist/add", { productId });
@@ -36,7 +35,6 @@ export const useWishlist = () => {
     },
   });
 
- 
   const removeFromWishlistMutation = useMutation({
     mutationFn: async (productId) => {
       const res = await api.delete(`/wishlist/remove/${productId}`);
@@ -51,14 +49,12 @@ export const useWishlist = () => {
     },
   });
 
- 
   const moveToCartMutation = useMutation({
     mutationFn: async (productId) => {
       await api.post("/wishlist/move-to-cart", { productId });
       return productId;
     },
     onSuccess: (productId) => {
-      
       queryClient.setQueryData(["wishlist"], (oldData) => {
         if (!oldData) return oldData;
         return {
@@ -66,7 +62,7 @@ export const useWishlist = () => {
           items: oldData.items.filter((item) => item.product._id !== productId),
         };
       });
-    
+
       dispatch(fetchCart());
       toast.success("Moved to Cart");
     },
@@ -81,13 +77,13 @@ export const useWishlist = () => {
     loading: isLoading,
     error,
     addToWishlist:
-      addToWishlistMutation.mutateOnly || addToWishlistMutation.mutate, 
+      addToWishlistMutation.mutateOnly || addToWishlistMutation.mutate,
     removeFromWishlist: removeFromWishlistMutation.mutate,
     moveToCart: moveToCartMutation.mutate,
-  
+
     isAdding: addToWishlistMutation.isPending,
     isRemoving: removeFromWishlistMutation.isPending,
-    isMoving: moveToCartMutation.isPending, 
-    moveError:moveToCartMutation.error
+    isMoving: moveToCartMutation.isPending,
+    moveError: moveToCartMutation.error,
   };
 };

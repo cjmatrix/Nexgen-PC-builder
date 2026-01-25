@@ -175,7 +175,7 @@ const AddProductForm = () => {
   }, [dispatch, isEditMode, location.state]);
 
   useEffect(() => {
-    if (selected.cpu) {
+    if (selected.cpu && selected.cpu._id) {
       dispatch(
         fetchComponents({
           category: "motherboard",
@@ -191,11 +191,16 @@ const AddProductForm = () => {
           },
         }),
       );
+      const maxTier =
+        typeof selected.cpu.tier_level === "number"
+          ? selected.cpu.tier_level + 1
+          : undefined;
+
       dispatch(
         fetchComponents({
           category: "gpu",
           params: {
-            maxTier: selected.cpu.tier_level + 1,
+            maxTier,
             caseId: selected.case?._id,
           },
         }),
@@ -204,7 +209,7 @@ const AddProductForm = () => {
   }, [dispatch, selected.cpu, selected.case]);
 
   useEffect(() => {
-    if (selected.motherboard) {
+    if (selected.motherboard && selected.motherboard._id) {
       dispatch(
         fetchComponents({
           category: "ram",
@@ -300,7 +305,7 @@ const AddProductForm = () => {
 
     const productPayload = {
       ...data,
-      base_price: data.base_price ? Number(data.base_price) * 100 : totalPrice, // Convert to Paisa
+      base_price: data.base_price ? Number(data.base_price) * 100 : totalPrice, 
       default_config: {
         cpu: selected.cpu._id,
         motherboard: selected.motherboard._id,

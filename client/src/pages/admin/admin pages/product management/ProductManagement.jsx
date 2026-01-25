@@ -14,6 +14,8 @@ import {
   ToggleLeft,
   ToggleRight,
   RefreshCw,
+  Sparkles,
+  Wrench,
 } from "lucide-react";
 import CustomModal from "../../../../components/CustomModal";
 import Pagination from "../../../../components/Pagination";
@@ -61,7 +63,7 @@ const ProductManagement = () => {
       updateProduct({
         id,
         data: { is_featured_community_build: !currentStatus },
-      })
+      }),
     );
   };
 
@@ -188,25 +190,21 @@ const ProductManagement = () => {
                   </span>
                 </td>
                 <td className="px-6 py-4">
-                  <button
-                    onClick={() =>
-                      handleToggleFeature(
-                        product._id,
-                        product.is_featured_community_build
-                      )
-                    }
-                    className={`text-2xl ${
-                      product.is_featured_community_build
-                        ? "text-green-600"
-                        : "text-gray-300"
-                    }`}
-                  >
-                    {product.is_featured_community_build ? (
-                      <ToggleRight />
-                    ) : (
-                      <ToggleLeft />
-                    )}
-                  </button>
+                  {product.buildType === "ai_featured" && (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 border border-blue-200">
+                      <Sparkles size={12} />
+                      AI Featured
+                    </span>
+                  )}
+                  {product.buildType === "custom_featured" && (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-700 border border-purple-200">
+                      <Wrench size={12} />
+                      Custom Featured
+                    </span>
+                  )}
+                  {!product.buildType && (
+                    <span className="text-gray-400 text-xs">-</span>
+                  )}
                 </td>
                 <td className="px-6 py-4 text-right flex justify-end gap-3">
                   <Link

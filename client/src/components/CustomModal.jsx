@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from "react";
+import ReactDOM from "react-dom";
 import { X, AlertTriangle, CheckCircle, Info } from "lucide-react";
 
 const CustomModal = ({
@@ -57,9 +58,9 @@ const CustomModal = ({
     }
   };
 
-  return (
+  return ReactDOM.createPortal(
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm transition-opacity duration-300"
+      className="animate-fade-up fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm transition-opacity duration-300"
       onClick={handleBackdropClick}
     >
       <div
@@ -100,7 +101,8 @@ const CustomModal = ({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 };
 

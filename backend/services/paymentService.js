@@ -8,6 +8,7 @@ import {
 import AppError from "../utils/AppError.js";
 import { HTTP_STATUS } from "../constants/httpStatus.js";
 import { MESSAGES } from "../constants/responseMessages.js";
+import { getInrToUsdRate } from "./currencyService.js";
 
 const client = new Client({
   clientCredentialsAuthCredentials: {
@@ -27,6 +28,11 @@ const getPaypalConfig = () => {
   return { clientId: process.env.PAYPAL_CLIENT_ID };
 };
 
+const getCurrencyConfig = async () => {
+  const rate = await getInrToUsdRate();
+  return { rate, currency: "USD" };
+};
+
 const processPaymentVerification = async (paypalOrderId, dbOrderId) => {
   const { result } = await ordersController.getOrder({
     id: paypalOrderId,
@@ -43,12 +49,15 @@ const processPaymentVerification = async (paypalOrderId, dbOrderId) => {
       throw new AppError(MESSAGES.PAYMENT.NOT_FOUND, HTTP_STATUS.NOT_FOUND);
     }
 
-    const paidAmount = parseFloat(orderDetails.purchase_units[0].amount.value);
+    const paidAmount = parseFloat(orderDetails.purchaseUnits[0].amount.value);
     const orderTotal = parseFloat(order.totalPrice);
 
-    if (Math.abs(paidAmount - orderTotal) > 0.01) {
+    const usdRate = await getCurrencyConfig();
+    console.log(usdRate);
+
+    if (Math.abs(paidAmount - orderTotal * usdRate) > 0.01) {
       throw new AppError(
-        MESSAGES.PAYMENT.AMOUNT_MISMATCH(paidAmount, orderTotal),
+        MESSAGES.PAYMENT.AMOUNT_MISMATCH(paidAmount, orderTotal*usdRate),
         HTTP_STATUS.BAD_REQUEST,
       );
     }
@@ -76,4 +85,5 @@ const processPaymentVerification = async (paypalOrderId, dbOrderId) => {
 export default {
   getPaypalConfig,
   processPaymentVerification,
+  getCurrencyConfig,
 };

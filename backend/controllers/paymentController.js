@@ -1,5 +1,4 @@
 import paymentService from "../services/paymentService.js";
-import { getInrToUsdRate } from "../services/currencyService.js";
 import { HTTP_STATUS } from "../constants/httpStatus.js";
 export const getPaypalClientId = async (req, res, next) => {
   try {
@@ -24,9 +23,6 @@ export const verifyPayment = async (req, res, next) => {
 };
 
 export const getCurrencyConfig = async (req, res) => {
-  const rate = await getInrToUsdRate();
-  res.status(HTTP_STATUS.OK).json({
-    rate,
-    currency: "USD",
-  });
+  const config = await paymentService.getCurrencyConfig();
+  res.status(HTTP_STATUS.OK).json(config);
 };

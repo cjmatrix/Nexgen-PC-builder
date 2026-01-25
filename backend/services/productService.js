@@ -70,7 +70,16 @@ const getAdminProducts = async (page, limit, search, category, status) => {
   };
 };
 
-const getPublicProducts = async ({ page, limit, search, category, sort,hasDiscount }) => {
+const getPublicProducts = async ({
+  page,
+  limit,
+  search,
+  category,
+  sort,
+  hasDiscount,
+  isFeatured,
+  buildType,
+}) => {
   let sortLogic = { createdAt: -1 };
 
   const activeCategories = await Category.find({ isActive: true });
@@ -80,6 +89,14 @@ const getPublicProducts = async ({ page, limit, search, category, sort,hasDiscou
     isActive: true,
     category: { $in: activeCategoryIds },
   };
+
+  if (isFeatured) {
+    query.isFeaturedBuild = true;
+  }
+
+  if (buildType && buildType !== "All") {
+    query.buildType = buildType;
+  }
 
   if (category) {
     const requestedCategory = activeCategories.find(
@@ -123,19 +140,23 @@ const getPublicProducts = async ({ page, limit, search, category, sort,hasDiscou
   const total = await Product.countDocuments(query);
   const products = await Product.find(query)
     .select(
-      "name slug final_price base_price images category isActive discount description applied_offer default_config",
+      "name slug final_price base_price images category isActive discount description applied_offer default_config isFeaturedBuild buildType originalOrderId",
     )
     .populate("category", "name")
     .populate([
-      { path: "default_config.cpu", select: "stock isActive" },
-      { path: "default_config.gpu", select: "stock isActive" },
-      { path: "default_config.motherboard", select: "stock isActive" },
-      { path: "default_config.ram", select: "stock isActive" },
-      { path: "default_config.storage", select: "stock isActive" },
-      { path: "default_config.case", select: "stock isActive" },
-      { path: "default_config.psu", select: "stock isActive" },
-      { path: "default_config.cooler", select: "stock isActive" },
+      { path: "default_config.cpu", select: "name stock isActive" },
+      { path: "default_config.gpu", select: "name stock isActive" },
+      { path: "default_config.motherboard", select: "name stock isActive" },
+      { path: "default_config.ram", select: "name stock isActive" },
+      { path: "default_config.storage", select: "name stock isActive" },
+      { path: "default_config.case", select: "name stock isActive" },
+      { path: "default_config.psu", select: "name stock isActive" },
+      { path: "default_config.cooler", select: "name stock isActive" },
     ])
+    .populate({
+      path: "originalOrderId",
+      select: "userName",
+    })
     .sort(sortLogic)
     .limit(limit)
     .skip((page - 1) * limit);

@@ -12,7 +12,7 @@ export const showCustomToast = (message, options = {}) => {
       onClick={options.onClick}
     />,
     {
-      position: "top-right",
+      position: "bottom-right",
       autoClose: duration,
       hideProgressBar: true,
       closeOnClick: true,
@@ -21,6 +21,15 @@ export const showCustomToast = (message, options = {}) => {
       progress: undefined,
       closeButton: false,
       ...options,
-    }
+      style: {
+        background: "#FAF5FF", // purple-50
+        color: "#1e293b",
+        border: "1px solid #E9D5FF", // purple-200
+        borderRadius: "12px",
+        padding: "0px",
+        boxShadow:
+          "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+      },
+    },
   );
 };

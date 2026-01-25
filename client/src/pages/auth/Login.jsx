@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { login, reset } from "../../store/slices/authSlice";
 import { Cpu, Eye, EyeOff, Mail, Lock, Github, ArrowLeft } from "lucide-react";
@@ -11,6 +11,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const location = useLocation();
 
   const [modalConfig, setModalConfig] = useState({
     isOpen: false,
@@ -53,11 +54,13 @@ const Login = () => {
       if (user?.role === "admin") {
         navigate("/admin");
       } else {
-        navigate("/products");
+        const from = location.state?.from || "/products";
+        const savedPrompt = location.state?.savedPrompt;
+        navigate(from, { replace: true, state: { prompt: savedPrompt } });
       }
       dispatch(reset());
     }
-  }, [user, isError, isSuccess, message, navigate, dispatch]);
+  }, [user, isError, isSuccess, message, navigate, dispatch, location]);
 
   const onSubmit = async (data) => {
     const res = await dispatch(login(data)).unwrap();

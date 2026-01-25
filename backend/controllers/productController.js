@@ -27,7 +27,8 @@ const getAdminProducts = async (req, res) => {
 const getPublicProducts = async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
-  const { search, category, sort, hasDiscount } = req.query;
+  const { search, category, sort, hasDiscount, isFeatured, buildType } =
+    req.query;
 
   const result = await productService.getPublicProducts({
     page,
@@ -36,6 +37,8 @@ const getPublicProducts = async (req, res) => {
     category,
     sort,
     hasDiscount,
+    isFeatured,
+    buildType,
   });
 
   res.status(HTTP_STATUS.OK).json({ success: true, ...result });
