@@ -117,7 +117,7 @@ const LandingPage = () => {
           <div className="absolute top-40 -right-40 w-96 h-96 bg-blue-200/40 rounded-full blur-[128px]"></div>
 
           {/* Grid Pattern */}
-          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-40 mix-blend-soft-light"></div>
+          <div className="absolute inset-0 bg-[url('/assets/images/noise.svg')] opacity-40 mix-blend-soft-light"></div>
           <div
             className="absolute inset-0"
             style={{
@@ -465,19 +465,19 @@ const LandingPage = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <CategoryCard
               title="Pro Gamer"
-              image="https://images.unsplash.com/photo-1593640408182-31c70c8268f5?w=800&auto=format&fit=crop"
+              image="/assets/images/pro-gamer.jpg"
               icon={<Gamepad2 className="text-white" />}
               color="from-blue-500 to-cyan-500"
             />
             <CategoryCard
               title="Content Creator"
-              image="https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=2000&auto=format&fit=crop"
+              image="/assets/images/content-creator.jpg"
               icon={<PenTool className="text-white" />}
               color="from-purple-500 to-pink-500"
             />
             <CategoryCard
               title="Workstation"
-              image="https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=2000&auto=format&fit=crop"
+              image="/assets/images/workstation.jpg"
               icon={<Briefcase className="text-white" />}
               color="from-emerald-500 to-teal-500"
             />
