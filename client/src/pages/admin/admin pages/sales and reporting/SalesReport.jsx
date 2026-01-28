@@ -61,7 +61,7 @@ const StatsCard = ({ title, value, icon, color, delay }) => {
         <p className="text-gray-500 text-[clamp(0.65rem,1vw,0.85rem)] font-semibold uppercase tracking-wider truncate mb-0.5">
           {title}
         </p>
-        <h3 className="text-[clamp(1.1rem,2vw,1.75rem)] font-bold text-gray-800 break-words leading-tight">
+        <h3 className="text-[clamp(1.1rem,2vw,1.75rem)] font-bold text-gray-800 wrap-break-word leading-tight">
           {typeof value === "number" &&
           (title.includes("Revenue") ||
             title.includes("Discount") ||
@@ -131,8 +131,7 @@ const SalesReport = () => {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    const baseURL =
-      import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1";
+    const baseURL = import.meta.env.VITE_API_URL;
     const eventSource = new EventSource(`${baseURL}/admin/sales-updates`, {
       withCredentials: true,
     });
@@ -196,6 +195,28 @@ const SalesReport = () => {
       body: summaryData,
       theme: "plain",
       styles: { fontSize: 10, cellPadding: 2 },
+      columnStyles: { 0: { fontStyle: "bold", cellWidth: 50 } },
+    });
+
+    const refundY = doc.lastAutoTable.finalY + 10;
+    doc.setFontSize(12);
+    doc.setTextColor(220, 38, 38);
+    doc.text("Refunds & Returns", 14, refundY);
+
+    const refundData = [
+      [
+        "Total Refunded Amount",
+        `Rs. ${stats.totalRefundedAmount?.toLocaleString() || "0"}`,
+      ],
+      ["Total Refunded Orders", stats.totalRefundedOrders?.toString() || "0"],
+    ];
+
+    autoTable(doc, {
+      startY: refundY + 5,
+      head: [],
+      body: refundData,
+      theme: "plain",
+      styles: { fontSize: 10, cellPadding: 2, textColor: [220, 38, 38] },
       columnStyles: { 0: { fontStyle: "bold", cellWidth: 50 } },
     });
 
@@ -366,10 +387,10 @@ const SalesReport = () => {
   };
 
   return (
-    <div className="p-3 md:p-8 bg-gray-100 min-h-screen font-sans">
+    <div className="animate-fade-up font-sans">
       <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-6 md:mb-8 gap-4">
         <div>
-          <h1 className="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-gray-800 mb-1 md:mb-2">
+          <h1 className="text-3xl font-bold text-gray-900 mb-1 md:mb-2">
             Sales Intelligence
           </h1>
           <p className="text-gray-500 text-[clamp(0.75rem,1.5vw,1rem)]">

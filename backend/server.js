@@ -33,7 +33,7 @@ import paymentRoutes from "./routes/paymentRoutes.js";
 import walletRoutes from "./routes/walletRoutes.js";
 
 import errorMiddleware from "./middleware/errorMiddleware.js";
-import componentRoutes from "./routes/componentRoutes.js"
+import componentRoutes from "./routes/componentRoutes.js";
 
 import morgan from "morgan";
 
@@ -49,7 +49,7 @@ app.use((req, res, next) => {
   if (req.params) req.params = mongoSanitize.sanitize(req.params);
   if (req.query) {
     const sanitizedQuery = mongoSanitize.sanitize(req.query);
-   
+
     for (const key in req.query) {
       delete req.query[key];
     }
@@ -72,12 +72,9 @@ app.use(passport.initialize());
 
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "https://bdghml9c-5173.euw.devtunnels.ms",
-    ],
+    origin: [process.env.CLIENT_URL, "https://bdghml9c-5173.euw.devtunnels.ms"],
     credentials: true,
-  })
+  }),
 );
 app.use(morgan("dev"));
 
@@ -92,7 +89,7 @@ app.use("/api/v1/coupons", couponRoutes);
 app.use("/api/v1/referral", referralRoutes);
 app.use("/api/v1/blacklist", blacklistRoutes);
 app.use("/api/v1/category", categoryRoutes);
-app.use("/api/v1/componentspublic",componentRoutes)
+app.use("/api/v1/componentspublic", componentRoutes);
 
 app.use("/api/v1/wishlist", wishlistRoutes);
 app.use("/api/v1/payment", paymentRoutes);

@@ -1,6 +1,34 @@
+
 import React from "react";
 import { MapPin, CreditCard, Archive } from "lucide-react";
-import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
+import {
+  PayPalScriptProvider,
+  PayPalButtons,
+  usePayPalScriptReducer,
+} from "@paypal/react-paypal-js";
+
+const PayPalButtonWrapper = ({ createPaypalOrder, onApprove, onError }) => {
+  const [{ isPending }] = usePayPalScriptReducer();
+
+  return (
+    <>
+      {isPending && (
+        <div className="space-y-3 animate-pulse">
+          <div className="h-[45px] bg-gray-200 rounded-md w-full"></div>
+          <div className="h-[15px] bg-gray-100 rounded-md w-1/3 mx-auto"></div>
+        </div>
+      )}
+      <div className={isPending ? "hidden" : "block"}>
+        <PayPalButtons
+          createOrder={createPaypalOrder}
+          onApprove={onApprove}
+          onError={onError}
+          style={{ layout: "horizontal" }}
+        />
+      </div>
+    </>
+  );
+};
 
 const OrderSummary = ({
   items,
@@ -256,12 +284,11 @@ const OrderSummary = ({
                   <PayPalScriptProvider
                     options={{ "client-id": paypalClientId, currency: "USD" }}
                   >
-                    <PayPalButtons
-                      createOrder={createPaypalOrder}
+                    <PayPalButtonWrapper
+                      createPaypalOrder={createPaypalOrder}
                       onApprove={onApprove}
                       onError={(err) => {
                         console.error("PayPal Error:", err);
-
                         if (
                           paypalValidationFailedRef &&
                           !paypalValidationFailedRef.current
@@ -274,10 +301,9 @@ const OrderSummary = ({
                           });
                         }
                         if (paypalValidationFailedRef) {
-                          paypalValidationFailedRef.current = false; // Reset
+                          paypalValidationFailedRef.current = false;
                         }
                       }}
-                      style={{ layout: "horizontal" }}
                     />
                   </PayPalScriptProvider>
                 )}

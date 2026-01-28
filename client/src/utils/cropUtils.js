@@ -7,7 +7,11 @@ export const createImage = (url) =>
     image.src = url;
   });
 
-export default async function getCroppedImg(imageSrc, pixelCrop) {
+export default async function getCroppedImg(
+  imageSrc,
+  pixelCrop,
+  quality = 0.8,
+) {
   const image = await createImage(imageSrc);
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
@@ -16,10 +20,8 @@ export default async function getCroppedImg(imageSrc, pixelCrop) {
     return null;
   }
 
-
   canvas.width = pixelCrop.width;
   canvas.height = pixelCrop.height;
-
 
   ctx.drawImage(
     image,
@@ -30,18 +32,21 @@ export default async function getCroppedImg(imageSrc, pixelCrop) {
     0,
     0,
     pixelCrop.width,
-    pixelCrop.height
+    pixelCrop.height,
   );
 
-
   return new Promise((resolve, reject) => {
-    canvas.toBlob((blob) => {
-      if (!blob) {
-        reject(new Error("Canvas is empty"));
-        return;
-      }
-      blob.name = "cropped_image.jpeg";
-      resolve(blob);
-    }, "image/jpeg");
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) {
+          reject(new Error("Canvas is empty"));
+          return;
+        }
+        blob.name = "cropped_image.jpeg";
+        resolve(blob);
+      },
+      "image/jpeg",
+      quality,
+    );
   });
 }

@@ -16,8 +16,10 @@ const getAllCategories = async (queryParams, user) => {
     query.isActive = status === "Active" ? true : false;
   }
 
-  if (user.role === "customer") {
-    query.isActive = true;
+ query.isActive = true;
+ 
+  if (user?.role === "admin") {
+    delete query.isActive;
   }
 
   const categories = await Category.find(query)

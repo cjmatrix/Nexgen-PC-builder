@@ -56,7 +56,12 @@ const aiSlice = createSlice({
     },
     setAiPc: (state, action) => {
       localStorage.setItem("aiBuild", JSON.stringify(action.payload));
-      state.aiBuild = action.payload;
+      state.aiBuild = action.payload; 
+    },
+    setError:(state,action)=>{
+   
+      state.error=action.payload;
+      state.showPromptBar= true;
     },
     setShowPromptBar: (state, action) => {
       state.showPromptBar = action.payload;
@@ -82,5 +87,5 @@ const aiSlice = createSlice({
   },
 });
 
-export const { resetAIState, setAiPc, setShowPromptBar } = aiSlice.actions;
+export const { resetAIState, setAiPc, setShowPromptBar,setError } = aiSlice.actions;
 export default aiSlice.reducer;

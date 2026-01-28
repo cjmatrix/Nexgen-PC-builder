@@ -4,7 +4,12 @@ import CustomModal from "../../../../components/CustomModal";
 import ImageCropperModal from "../../../../components/ImageCropperModal";
 import { CATEGORY_SPECS } from "../../../../config/componentFields";
 import api from "../../../../api/axios";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import {
+  Link,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useForm } from "react-hook-form";
 import {
@@ -15,6 +20,8 @@ import {
 
 const ComponentForm = () => {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const urlCategory = searchParams.get("category");
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const isEditMode = !!id;
@@ -91,7 +98,7 @@ const ComponentForm = () => {
       name: "",
       price: "",
       stock: "",
-      category: "",
+      category: urlCategory || "",
       tier_level: "1",
       image: "",
       specs: {},
@@ -109,7 +116,7 @@ const ComponentForm = () => {
         .then((data) => {
           reset({
             name: data.name,
-            price: data.price / 100, 
+            price: data.price / 100,
             stock: data.stock,
             category: data.category,
             tier_level: String(data.tier_level),
@@ -138,7 +145,7 @@ const ComponentForm = () => {
       stock: Number(data.stock),
     };
 
-    console.log(data)
+    console.log(data);
 
     try {
       if (isEditMode) {
@@ -264,7 +271,7 @@ const ComponentForm = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8 flex justify-center">
+    <div className="animate-fade-up min-h-screen bg-gray-50 p-8 flex justify-center">
       <CustomModal
         isOpen={modal.isOpen}
         onClose={closeModal}
@@ -431,10 +438,17 @@ const ComponentForm = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* 1. Render Specific Fields based on Category */}
                 {CATEGORY_SPECS[category].map((field) => (
-                  <div key={field.name}>
-                    <label className="block text-sm font-medium text-gray-600 mb-1">
-                      {field.label}
-                    </label>
+                  <div
+                    key={field.name}
+                    className={
+                      field.type === "file" ? "col-span-1 md:col-span-2" : ""
+                    }
+                  >
+                    {field.type !== "file" && field.type !== "checkbox" && (
+                      <label className="block text-sm font-medium text-gray-600 mb-1">
+                        {field.label}
+                      </label>
+                    )}
                     {renderSpecField(field)}
                   </div>
                 ))}

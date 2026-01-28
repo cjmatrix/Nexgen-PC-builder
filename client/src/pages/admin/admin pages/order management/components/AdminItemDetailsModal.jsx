@@ -1,9 +1,16 @@
 import { useNavigate } from "react-router-dom";
+import { useRef } from "react";
 import { X, Package, CheckCircle, Wrench, Sparkles, Star } from "lucide-react";
-
+import { usePopupAnimation } from "../../../../../hooks/usePopupAnimation";
 const AdminItemDetailsModal = ({ isOpen, onClose, items }) => {
   const { components, item, order } = items;
   const navigate = useNavigate();
+
+  const containerRef = useRef(null);
+  const overlayRef = useRef(null);
+  const modalRef = useRef(null);
+
+  usePopupAnimation({ isOpen, containerRef, overlayRef, modalRef });
 
   if (!isOpen || !item) return null;
 
@@ -51,15 +58,20 @@ const AdminItemDetailsModal = ({ isOpen, onClose, items }) => {
 
   return (
     <div
+      ref={containerRef}
       className="fixed inset-0 z-[70] flex items-center justify-center p-4"
       onClick={(e) => e.stopPropagation()}
     >
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        ref={overlayRef}
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm opacity-0"
         onClick={onClose}
       ></div>
 
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col relative animate-in zoom-in-95 duration-200">
+      <div
+        ref={modalRef}
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col relative opacity-0 scale-[0.8] translate-y-5"
+      >
         {/* Header */}
         <div className="px-4 py-3 sm:px-6 sm:py-4 border-b border-gray-100 flex justify-between items-start sm:items-center bg-gray-50">
           <div className="flex items-center gap-4">

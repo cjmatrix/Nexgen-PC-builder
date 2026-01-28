@@ -70,7 +70,7 @@ const UserManagement = () => {
   };
 
   return (
-    <div className="p-8 bg-gray-100 min-h-screen font-sans">
+    <div className="animate-fade-up font-sans">
       <CustomModal
         isOpen={modal.isOpen}
         onClose={closeModal}
@@ -81,7 +81,7 @@ const UserManagement = () => {
         confirmText={modal.confirmText}
       />
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold text-gray-800">User Management</h1>
+        <h1 className="text-3xl font-bold text-gray-800">User Management</h1>
       </div>
 
       <div className="bg-white p-4 rounded-xl shadow-sm mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">

@@ -7,7 +7,7 @@ const redisConfig = {
   maxRetriesPerRequest: null, // REQUIRED for BullMQ
 };
 
-// Create a connection instance (for general caching if needed)
+
 const redisConnection = new Redis(redisConfig);
 
 redisConnection.on("connect", () => {

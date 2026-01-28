@@ -124,6 +124,7 @@ const ProfileSetting = () => {
   const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] =
     useState(false);
   const [pendingEmail, setPendingEmail] = useState("");
+  const [isProfileEditing, setIsProfileEditing] = useState(false);
   const [modal, setModal] = useState({
     isOpen: false,
     title: "",
@@ -186,6 +187,7 @@ const ProfileSetting = () => {
         console.log(data.user.email);
       } else {
         queryClient.invalidateQueries(["userProfile"]);
+        setIsProfileEditing(false);
         setModal({
           isOpen: true,
           title: "Success",
@@ -366,14 +368,19 @@ const ProfileSetting = () => {
                         <input
                           id="fullName"
                           type="text"
+                          disabled={!isProfileEditing}
                           {...register("fullName", {
                             required: "Full Name is required",
                           })}
-                          className={`w-full pl-11 pr-4 py-3.5 bg-gray-50 border ${
+                          className={`w-full pl-11 pr-4 py-3.5 border ${
                             errors.fullName
                               ? "border-red-300 focus:ring-red-100"
                               : "border-gray-200 focus:border-blue-500 focus:ring-blue-100"
-                          } rounded-xl outline-none focus:ring-4 transition-all font-medium text-gray-900`}
+                          } rounded-xl outline-none focus:ring-4 transition-all font-medium text-gray-900 ${
+                            !isProfileEditing
+                              ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+                              : "bg-gray-50"
+                          }`}
                           placeholder="Your Name"
                         />
                         <User className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
@@ -396,6 +403,7 @@ const ProfileSetting = () => {
                         <input
                           id="email"
                           type="email"
+                          disabled={!isProfileEditing}
                           {...register("email", {
                             required: "Email is required",
                             pattern: {
@@ -403,11 +411,15 @@ const ProfileSetting = () => {
                               message: "Invalid email address",
                             },
                           })}
-                          className={`w-full pl-11 pr-4 py-3.5 bg-gray-50 border ${
+                          className={`w-full pl-11 pr-4 py-3.5 border ${
                             errors.email
                               ? "border-red-300 focus:ring-red-100"
                               : "border-gray-200 focus:border-blue-500 focus:ring-blue-100"
-                          } rounded-xl outline-none focus:ring-4 transition-all font-medium text-gray-900`}
+                          } rounded-xl outline-none focus:ring-4 transition-all font-medium text-gray-900 ${
+                            !isProfileEditing
+                              ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+                              : "bg-gray-50"
+                          }`}
                           placeholder="name@example.com"
                         />
                         <Mail className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
@@ -420,16 +432,41 @@ const ProfileSetting = () => {
                     </div>
                   </div>
 
-                  <div className="flex justify-end pt-4">
-                    <button
-                      type="submit"
-                      disabled={updateProfileMutation.isPending}
-                      className="px-8 py-3 bg-gray-900 text-white font-bold rounded-xl hover:bg-black hover:shadow-lg hover:-translate-y-0.5 transition-all focus:ring-4 focus:ring-gray-200 disabled:opacity-70 disabled:hover:translate-y-0"
-                    >
-                      {updateProfileMutation.isPending
-                        ? "Saving..."
-                        : "Save Changes"}
-                    </button>
+                  <div className="flex justify-end pt-4 gap-3">
+                    {isProfileEditing ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsProfileEditing(false);
+                            reset({
+                              fullName: profile?.name,
+                              email: profile?.email,
+                            });
+                          }}
+                          className="px-6 py-3 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-all"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={updateProfileMutation.isPending}
+                          className="px-8 py-3 bg-gray-900 text-white font-bold rounded-xl hover:bg-black hover:shadow-lg hover:-translate-y-0.5 transition-all focus:ring-4 focus:ring-gray-200 disabled:opacity-70 disabled:hover:translate-y-0"
+                        >
+                          {updateProfileMutation.isPending
+                            ? "Saving..."
+                            : "Save Changes"}
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setIsProfileEditing(true)}
+                        className="px-8 py-3 bg-gray-900 text-white font-bold rounded-xl hover:bg-black hover:shadow-lg hover:-translate-y-0.5 transition-all focus:ring-4 focus:ring-gray-200"
+                      >
+                        Edit Profile
+                      </button>
+                    )}
                   </div>
                 </form>
               </div>

@@ -39,9 +39,8 @@ import {
 import {
   getOrderById,
   getOrderItemDetail,
+  cancelOrder,
 } from "../controllers/orderController.js";
-
-
 
 router.use(protectAdmin);
 
@@ -72,5 +71,6 @@ router.delete("/category/:id", deleteCategory);
 
 router.get("/orders/:id", getOrderById);
 router.get("/orders/:id/items/:itemId", getOrderItemDetail);
+router.put("/orders/:id/cancel", cancelOrder);
 
 export default router;

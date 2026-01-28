@@ -138,8 +138,7 @@ const AdminDashboardHome = () => {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    const baseURL =
-      import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1";
+    const baseURL = import.meta.env.VITE_API_URL;
     const eventSource = new EventSource(`${baseURL}/admin/sales-updates`, {
       withCredentials: true,
     });
@@ -186,10 +185,10 @@ const AdminDashboardHome = () => {
     data;
 
   return (
-    <div className="p-3 md:p-8 bg-gray-50 min-h-screen font-sans text-slate-800">
+    <div className="animate-fade-up font-sans text-slate-800">
       <div className="flex flex-col xl:flex-row justify-between items-start xl:items-end mb-6 md:mb-10 gap-4">
         <div>
-          <h1 className="text-[clamp(1.5rem,4vw,2.5rem)] font-black text-gray-900 tracking-tight mb-1 md:mb-2">
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight mb-1 md:mb-2">
             Dashboard <span className="text-indigo-600">.</span>
           </h1>
           <p className="text-gray-500 font-medium text-[clamp(0.75rem,1.5vw,1rem)]">

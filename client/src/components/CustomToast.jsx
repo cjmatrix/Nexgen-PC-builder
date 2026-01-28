@@ -87,7 +87,6 @@ const CustomToast = ({
         </svg>
       </div>
 
-  
       <div className="flex flex-col flex-1 py-3">
         <h4 className="text-sm font-bold text-gray-900 tracking-tight mb-0.5">
           System Update
@@ -107,7 +106,6 @@ const CustomToast = ({
         <X size={14} />
       </button>
 
-     
       <div
         className="absolute bottom-0 left-0 h-1 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full group-hover:[animation-play-state:paused!important]"
         style={{

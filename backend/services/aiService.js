@@ -6,6 +6,9 @@ import AppError from "../utils/AppError.js";
 export const generatePCBuild = async (prompt) => {
   const components = await Component.find({ isActive: true });
 
+
+
+
   const simplifiedComponents = components.map((c) => ({
     id: c._id,
     name: c.name,

@@ -1,306 +1,109 @@
-import React, { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import {
-  fetchAdminComponents,
-  deleteComponent,
-} from "../../../../store/slices/componentSlice";
+import React from "react";
 import { Link } from "react-router-dom";
 import {
-  Edit,
-  Trash2,
-  Plus,
-  Search,
-  ChevronDown,
-  RefreshCcw,
+  Cpu,
+  Monitor,
+  HardDrive,
+  CircuitBoard,
+  Box,
+  Zap,
+  Fan,
+  Server,
 } from "lucide-react";
-import CustomModal from "../../../../components/CustomModal";
 
-import Pagination from "../../../../components/Pagination";
+// Memory Stick icon fallback since lucide might not have 'MemoryStick' specific enough, using CircuitBoard or similar.
+// Actually Lucide has 'MemoryStick'. Let's check avail, if not fallback.
+// I'll use simple icons mapping.
 
-function tierList(tier) {
-  switch (tier) {
-    case 1:
-      return " Entry ";
-    case 2:
-      return " Budget ";
-    case 3:
-      return " Mid-Range ";
-    case 4:
-      return " High-end ";
-    case 5:
-      return " Ultra ";
-    default:
-      return " Unknown ";
-  }
-}
+const categories = [
+  {
+    id: "cpu",
+    title: "Processors (CPU)",
+    icon: <Cpu size={40} className="text-blue-500" />,
+    description: "Manage CPUs, cores, and clock speeds.",
+    color: "bg-blue-50 border-blue-200 hover:border-blue-400",
+  },
+  {
+    id: "gpu",
+    title: "Graphics Cards (GPU)",
+    icon: <Monitor size={40} className="text-purple-500" />, // Monitor usually represents display but often used for GPU context if no better icon. Or 'Cpu' again? Let's use 'Monitor' or 'Zap'.
+    description: "Manage GPUs, VRAM, and chipsets.",
+    color: "bg-purple-50 border-purple-200 hover:border-purple-400",
+  },
+  {
+    id: "motherboard",
+    title: "Motherboards",
+    icon: <CircuitBoard size={40} className="text-green-500" />,
+    description: "Manage sockets, chipsets, and form factors.",
+    color: "bg-green-50 border-green-200 hover:border-green-400",
+  },
+  {
+    id: "ram",
+    title: "Memory (RAM)",
+    icon: <Server size={40} className="text-indigo-500" />, // Server often looks like rack/ram slots
+    description: "Manage DDR4/DDR5 modules and speeds.",
+    color: "bg-indigo-50 border-indigo-200 hover:border-indigo-400",
+  },
+  {
+    id: "storage",
+    title: "Storage (SSD/HDD)",
+    icon: <HardDrive size={40} className="text-red-500" />,
+    description: "Manage NVMe, SATA SSDs and HDDs.",
+    color: "bg-red-50 border-red-200 hover:border-red-400",
+  },
+  {
+    id: "case",
+    title: "PC Cases",
+    icon: <Box size={40} className="text-slate-500" />,
+    description: "Manage sizing, airflow, and aesthetics.",
+    color: "bg-slate-50 border-slate-200 hover:border-slate-400",
+  },
+  {
+    id: "psu",
+    title: "Power Supplies",
+    icon: <Zap size={40} className="text-orange-500" />,
+    description: "Manage wattages and efficiency ratings.",
+    color: "bg-orange-50 border-orange-200 hover:border-orange-400",
+  },
+  {
+    id: "cooler",
+    title: "Cooling Systems",
+    icon: <Fan size={40} className="text-cyan-500" />,
+    description: "Manage AIOs, Air Coolers, and Fans.",
+    color: "bg-cyan-50 border-cyan-200 hover:border-cyan-400",
+  },
+];
 
 const ComponentManagement = () => {
-  const dispatch = useDispatch();
-
-  const { items, pagination, loading } = useSelector(
-    (state) => state.components
-  );
-
-  const [searchInput, setSearchInput] = useState("");
-  const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("");
-  const [page, setPage] = useState(1);
-  const [status, setStatus] = useState("");
-  const [sort, setSort] = useState("");
-
-  const [modal, setModal] = useState({
-    isOpen: false,
-    title: "",
-    message: "",
-    type: "info",
-    onConfirm: null,
-  });
-
-  const closeModal = () => {
-    setModal((prev) => ({ ...prev, isOpen: false }));
-  };
-
-  useEffect(() => {
-
-    dispatch(fetchAdminComponents({ page, search, category, status, sort }));
-  }, [dispatch, page, search, category, status, sort]);
-
-  useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      setSearch(searchInput);
-      setPage(1);
-    }, 500);
-
-    return () => clearTimeout(delayDebounceFn);
-  }, [searchInput]);
-
-  const handleToggleStatus = (id, currentStatus) => {
-    const action = currentStatus ? "deactivate" : "activate";
-    setModal({
-      isOpen: true,
-      title: "Confirm Action",
-      message: `Are you sure you want to ${action} this item?`,
-      type: "confirmation",
-      onConfirm: () => dispatch(deleteComponent(id)),
-    });
-  };
-
-  const getTierColor = (tier) => {
-    switch (tier) {
-      case 1:
-        return "bg-gray-100 text-gray-800";
-      case 2:
-        return "bg-green-100 text-green-800";
-      case 3:
-        return "bg-blue-100 text-blue-800";
-      case 4:
-        return "bg-purple-100 text-purple-800";
-      case 5:
-        return "bg-orange-100 text-orange-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
   return (
-    <div className="p-8 bg-gray-100 min-h-screen font-sans">
-      <CustomModal
-        isOpen={modal.isOpen}
-        onClose={closeModal}
-        onConfirm={modal.onConfirm}
-        title={modal.title}
-        message={modal.message}
-        type={modal.type}
-      />
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-        <h1 className="text-2xl font-bold text-gray-800">
-          Component Management
+    <div className="animate-fade-up font-sans">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          Component Inventory
         </h1>
-        <Link
-          to="/admin/components/create"
-          className="flex items-center gap-2 bg-[#0f172a] text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors shadow-sm"
-        >
-          <Plus className="w-4 h-4" />
-          Add New Component
-        </Link>
+        <p className="text-gray-600">
+          Select a category to manage its stock, pricing, and specifications.
+        </p>
       </div>
 
-      <div className="bg-white p-4 rounded-xl shadow-sm mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search Components..."
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-blue-100 focus:bg-white transition-all outline-none"
-          />
-        </div>
-
-        <div className="flex gap-3">
-          <div className="relative">
-            <select
-              value={category}
-              onChange={(e) => {setCategory(e.target.value);setPage(1);}}
-              className="appearance-none bg-white border border-gray-200 text-gray-700 py-2.5 pl-4 pr-10 rounded-lg text-sm focus:outline-none focus:border-blue-500 cursor-pointer"
-            >
-              <option value="">All Categories</option>
-              <option value="cpu">CPU</option>
-              <option value="gpu">GPU</option>
-              <option value="motherboard">Motherboard</option>
-              <option value="ram">RAM</option>
-              <option value="storage">Storage</option>
-              <option value="case">Case</option>
-              <option value="psu">PSU</option>
-              <option value="cooler">Cooler</option>
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-          </div>
-
-          <div className="relative">
-            <select
-              onChange={(e) => {setStatus(e.target.value);setPage(1);}}
-              className="appearance-none bg-white border border-gray-200 text-gray-700 py-2.5 pl-4 pr-10 rounded-lg text-sm focus:outline-none focus:border-blue-500 cursor-pointer"
-            >
-              <option value="">Status All</option>
-              <option value="available">Available</option>
-              <option value="unavailable">Unavailable</option>
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-          </div>
-
-          <div className="relative">
-            <select
-              value={sort}
-              onChange={(e) => {setSort(e.target.value);setPage(1);}}
-              className="appearance-none bg-white border border-gray-200 text-gray-700 py-2.5 pl-4 pr-10 rounded-lg text-sm focus:outline-none focus:border-blue-500 cursor-pointer"
-            >
-              <option value="">Sort By: Newest</option>
-              <option value="price_low">Price: Low to High</option>
-              <option value="price_high">Price: High to Low</option>
-              <option value="stock_low">Stock: Low to High</option>
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-gray-50/50 border-b border-gray-100 text-xs uppercase tracking-wider text-gray-500 font-semibold">
-                <th className="px-6 py-4">Image</th>
-                <th className="px-6 py-4">Name</th>
-                <th className="px-6 py-4">Category</th>
-                <th className="px-6 py-4">Price</th>
-                <th className="px-6 py-4">Stock</th>
-                <th className="px-6 py-4">Tier</th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {loading ? (
-                <tr>
-                  <td colSpan="8" className="p-8 text-center text-gray-500">
-                    Loading...
-                  </td>
-                </tr>
-              ) : items.length === 0 ? (
-                <tr>
-                  <td colSpan="8" className="p-8 text-center text-gray-500">
-                    No components found.
-                  </td>
-                </tr>
-              ) : (
-                items.map((item) => (
-                  <tr
-                    key={item._id}
-                    className="hover:bg-gray-50/80 transition-colors group"
-                  >
-                    <td className="px-6 py-4">
-                      <div className="w-10 h-10 rounded-lg overflow-hidden border border-gray-200 bg-white flex items-center justify-center">
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="font-medium text-gray-900 text-sm">
-                        {item.name}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-500 capitalize">
-                      {item.category}
-                    </td>
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                      ₹{(item.price/100).toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
-                      {item.stock}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${getTierColor(
-                          item.tier_level
-                        )}`}
-                      >
-                        Tier {item.tier_level} ({tierList(item.tier_level)})
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-                          item.isActive
-                            ? "bg-green-100 text-green-700"
-                            : "bg-red-100 text-red-700"
-                        }`}
-                      >
-                        {item.isActive ? "Available" : "Unavailable"}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex justify-end gap-3 opacity-60 group-hover:opacity-100 transition-opacity">
-                        <Link
-                          to={`/admin/components/edit/${item._id}`}
-                          className="text-gray-500 hover:text-blue-600 transition-colors"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Link>
-                        <button
-                          onClick={() =>
-                            handleToggleStatus(item._id, item.isActive)
-                          }
-                          className={`transition-colors ${
-                            item.isActive
-                              ? "text-gray-500 hover:text-red-600"
-                              : "text-gray-500 hover:text-green-600"
-                          }`}
-                          title={item.isActive ? "Deactivate" : "Activate"}
-                        >
-                          {item.isActive ? (
-                            <Trash2 className="w-4 h-4" />
-                          ) : (
-                            <RefreshCcw className="w-4 h-4" />
-                          )}
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        <Pagination
-          pagination={pagination}
-          page={page}
-          setPage={setPage}
-        ></Pagination>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {categories.map((cat) => (
+          <Link
+            to={`/admin/components/${cat.id}`}
+            key={cat.id}
+            className={`block p-6 rounded-2xl border transition-all duration-300 hover:shadow-lg hover:-translate-y-1 ${cat.color} bg-white`}
+          >
+            <div className="flex flex-col items-center text-center space-y-4">
+              <div className="p-4 bg-white rounded-full shadow-sm">
+                {cat.icon}
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">{cat.title}</h3>
+                <p className="text-sm text-gray-500 mt-1">{cat.description}</p>
+              </div>
+            </div>
+          </Link>
+        ))}
       </div>
     </div>
   );

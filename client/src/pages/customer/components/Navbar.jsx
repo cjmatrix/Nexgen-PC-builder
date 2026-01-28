@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import {
   Menu,
@@ -18,6 +18,7 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const location = useLocation();
   const { user } = useSelector((state) => state.auth);
   const { items } = useSelector((state) => state.cart);
 
@@ -93,7 +94,6 @@ const Navbar = () => {
               <Wrench className="h-4 w-4" />
               <span>Build PC</span>
             </NavLink>
-
             <div className="relative group">
               <NavLink
                 to="/ai-assistant"
@@ -113,9 +113,9 @@ const Navbar = () => {
               <div className="flex items-center space-x-3">
                 <NavLink
                   to="/user/profile"
-                  className={({ isActive }) =>
+                  className={() =>
                     `flex items-center justify-center h-10 w-10 rounded-full transition-all duration-300 ${
-                      isActive
+                      location.pathname.startsWith("/user")
                         ? "bg-gray-900 text-white shadow-md scale-105 ring-2 ring-gray-200"
                         : "bg-gray-100 text-gray-600 hover:bg-gray-200 hover:scale-110 active:scale-95"
                     }`

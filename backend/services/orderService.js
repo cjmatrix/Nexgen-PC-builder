@@ -13,8 +13,9 @@ import { PRICING } from "../constants/pricing.js";
 import { HTTP_STATUS } from "../constants/httpStatus.js";
 import { MESSAGES } from "../constants/responseMessages.js";
 import Redis from "ioredis";
+import { redisConfig } from "../config/redis.js";
 
-const redisPublisher = new Redis();
+const redisPublisher = new Redis(redisConfig);
 
 const calculateRefundAmount = (order, itemId) => {
   if (!itemId) {
@@ -483,16 +484,24 @@ export const updateOrderStatus = async (orderId, status) => {
   return updatedOrder;
 };
 
-export const cancelOrder = async (orderId, itemId, reason, userId) => {
+export const cancelOrder = async (orderId, itemId, reason, currentUser) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
-    const order = await Order.findOne({ _id: orderId, user: userId })
+    const order = await Order.findById(orderId)
       .populate("coupon")
       .session(session);
 
     if (!order) {
       throw new AppError(MESSAGES.ORDER.NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+    }
+
+   
+    if (
+      currentUser.role !== "admin" &&
+      order.user.toString() !== currentUser._id.toString()
+    ) {
+      throw new AppError(MESSAGES.ORDER.UNAUTHORIZED, HTTP_STATUS.FORBIDDEN);
     }
 
     if (
@@ -539,14 +548,20 @@ export const cancelOrder = async (orderId, itemId, reason, userId) => {
         );
       }
 
-      if (order.coupon && order.coupon.minOrderValue) {
+      if (
+        order.coupon &&
+        order.coupon.minOrderValue &&
+        order.orderItems.length > 1
+      ) {
         const itemEffectivePrice =
           item.price * (1 - (item.discount || 0) / 100);
         const itemTotal = itemEffectivePrice * item.qty;
-
-        // console.log(order.totalPrice,order.shippingPrice,order.taxPrice)
+        console.log(itemTotal);
         const currentBillableTotal =
           order.itemsPrice + order.shippingPrice + order.taxPrice;
+
+        console.log(currentBillableTotal);
+
         const remainingTotal = currentBillableTotal - itemTotal;
 
         if (remainingTotal < order.coupon.minOrderValue * 100) {
@@ -572,7 +587,7 @@ export const cancelOrder = async (orderId, itemId, reason, userId) => {
 
       if (order.isPaid) {
         await walletService.addFunds(
-          userId,
+          order.user,
           amount,
           "CREDIT",
           order._id,
@@ -615,7 +630,7 @@ export const cancelOrder = async (orderId, itemId, reason, userId) => {
 
       if (order.isPaid) {
         await walletService.addFunds(
-          userId,
+          order.user,
           refundSum,
           "CREDIT",
           order._id,
@@ -788,15 +803,33 @@ export const approveReturn = async (
         );
       }
 
+      
+
       if (addToBlacklist) {
+        const components = [
+         { type: "cpu", componentId: item.components.cpu.componentId },
+        { type: "gpu", componentId: item.components.gpu.componentId },
+        {
+          type: "motherboard",
+          componentId: item.components.motherboard.componentId,
+        },
+        { type: "ram", componentId: item.components.ram.componentId },
+        { type: "storage", componentId: item.components.storage.componentId },
+        { type: "case", componentId: item.components.case.componentId },
+        { type: "psu", componentId: item.components.psu.componentId },
+        { type: "cooler", componentId: item.components.cooler.componentId },
+      ];
+
         await Blacklist.create(
           [
             {
               productName: item.name,
               productId: item.product,
-              orderId: order.orderId,
+              orderId: order._id,
+              itemId:item._id,
+              quantity:item.qty,
               reason: item.returnReason || "Damaged/Defective",
-              components: item.components,
+              components,
             },
           ],
           { session },

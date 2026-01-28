@@ -20,27 +20,46 @@ import {
   getAdminProfile,
 } from "../controllers/authController.js";
 import { protect, protectAdmin } from "../middleware/authMiddleware.js";
+import { validate } from "../middleware/validate.js";
+import {
+  registerSchema,
+  loginSchema,
+  verifyOTPSchema,
+  resendOTPSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+  changePasswordSchema,
+} from "../validators/authValidators.js";
 
-router.post("/register", register);
-router.post("/login", login);
+router.post("/register", validate(registerSchema), register);
+router.post("/login", validate(loginSchema), login);
 router.post("/logout", logout);
 router.post("/refresh", refreshToken);
-router.post("/verify-otp", verifyOTP);
-router.post("/resend-otp", resendOTP);
-router.post("/forgot-password", forgotPassword);
-router.put("/reset-password/:resetToken", resetPassword);
-router.put("/change-password", protect, changePassword);
+router.post("/verify-otp", validate(verifyOTPSchema), verifyOTP);
+router.post("/resend-otp", validate(resendOTPSchema), resendOTP);
+router.post("/forgot-password", validate(forgotPasswordSchema), forgotPassword);
+router.put(
+  "/reset-password/:resetToken",
+  validate(resetPasswordSchema),
+  resetPassword,
+);
+router.put(
+  "/change-password",
+  protect,
+  validate(changePasswordSchema),
+  changePassword,
+);
 router.get("/profile", protect, getProfile);
- 
+
 // Admin Routes
-router.post("/admin/login", adminLogin);
+router.post("/admin/login", validate(loginSchema), adminLogin);
 router.post("/admin/logout", adminLogout);
 router.post("/admin/refresh", refreshAdminToken);
 router.get("/admin/profile", protectAdmin, getAdminProfile);
 
 router.get(
   "/google",
-  passport.authenticate("google", { scope: ["profile", "email"] })
+  passport.authenticate("google", { scope: ["profile", "email"] }),
 );
 
 router.get(
@@ -52,7 +71,7 @@ router.get(
   async (req, res) => {
     try {
       const { accessToken, refreshToken } = await authService.generateTokens(
-        req.user._id
+        req.user._id,
       );
 
       res.cookie("accessToken", accessToken, {
@@ -68,12 +87,12 @@ router.get(
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7d
       });
 
-      res.redirect("http://localhost:5173/products");
+      res.redirect(`${process.env.CLIENT_URL}/products`);
     } catch (error) {
       console.error("Google Auth Error:", error);
-      res.redirect("http://localhost:5173/login?error=google_auth_failed");
+      res.redirect(`${process.env.CLIENT_URL}/login?error=google_auth_failed`);
     }
-  }
+  },
 );
 
 export default router;

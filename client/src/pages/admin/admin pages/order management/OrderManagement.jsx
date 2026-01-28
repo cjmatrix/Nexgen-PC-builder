@@ -136,10 +136,10 @@ const OrderManagement = () => {
   };
 
   return (
-    <div className="p-6 max-w-[1600px] mx-auto">
+    <div className="animate-fade-up max-w-[1600px] mx-auto">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Order Management</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Order Management</h1>
         <p className="text-gray-500 mt-1">Manage and track customer orders</p>
       </div>
 
@@ -270,7 +270,7 @@ const OrderManagement = () => {
                       </span>
                     </td>
                     <td className="py-4 px-6 text-sm font-bold text-gray-900">
-                      ₹{order.totalPrice?.toLocaleString()}
+                      ₹{(order.totalPrice / 100)?.toLocaleString()}
                     </td>
                     <td className="py-4 px-6">
                       <span

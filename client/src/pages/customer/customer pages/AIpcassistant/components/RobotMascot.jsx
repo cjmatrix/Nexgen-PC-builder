@@ -13,7 +13,7 @@ const RobotMascot = ({ className = "" }) => {
     () => {
       // Idle Float (Inner Element)
       gsap.to(floaterRef.current, {
-        y: -5,
+        y: -20,
         duration: 1.5,
         yoyo: true,
         repeat: -1,
@@ -35,7 +35,6 @@ const RobotMascot = ({ className = "" }) => {
       };
       blink();
 
-   
       const tl = gsap.timeline({ repeat: -1, repeatDelay: 2 });
 
       // Start: Neutral (Visible at start)
@@ -50,7 +49,7 @@ const RobotMascot = ({ className = "" }) => {
           duration: 1.5, // Wait hidden
         })
         .to(containerRef.current, {
-          y: -5, // Peek up 
+          y: -20, // Peek up
           opacity: 1,
           duration: 0.8,
           ease: "back.out(1.7)",
@@ -69,7 +68,7 @@ const RobotMascot = ({ className = "" }) => {
           rotate: 5,
           duration: 0.2,
           yoyo: true,
-          repeat: 3, 
+          repeat: 3,
           keyframes: { rotate: [0, 5, -5, 5, 0] },
           ease: "power1.inOut",
         })
@@ -77,7 +76,6 @@ const RobotMascot = ({ className = "" }) => {
           duration: 2, // Stay visible
         })
         .to(containerRef.current, {
-       
           duration: 0,
         });
     },
@@ -88,7 +86,7 @@ const RobotMascot = ({ className = "" }) => {
     <div
       ref={containerRef}
       className={`absolute pointer-events-none select-none ${className}`}
-      style={{ width: 60, height: 60 }}
+      style={{ width: 90, height: 90 }}
     >
       <div ref={floaterRef} className="w-full h-full">
         <svg
@@ -97,7 +95,6 @@ const RobotMascot = ({ className = "" }) => {
           xmlns="http://www.w3.org/2000/svg"
           className="w-full h-full drop-shadow-lg"
         >
-        
           {/* Antenna */}
           <line
             x1="50"
@@ -131,7 +128,7 @@ const RobotMascot = ({ className = "" }) => {
           <rect x="28" y="30" width="44" height="24" rx="6" fill="#1e1b4b" />
 
           {/* Eyes (Grouped for blinking) */}
-          <g ref={eyesRef} transform-origin="50 42">
+          <g ref={eyesRef} transformOrigin="50 42">
             <circle cx="38" cy="42" r="4" fill="#38bdf8" />
             <circle cx="62" cy="42" r="4" fill="#38bdf8" />
           </g>

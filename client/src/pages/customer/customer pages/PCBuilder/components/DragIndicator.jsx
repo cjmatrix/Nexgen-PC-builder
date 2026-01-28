@@ -37,11 +37,11 @@ const DragIndicator = ({ isVisible }) => {
   return (
     <div
       ref={containerRef}
-      className="absolute inset-0 left-[30%] pointer-events-none z-40 hidden md:flex items-center justify-center"
+      className="absolute inset-0 left-[40%] pointer-events-none z-40 hidden md:flex items-center justify-center"
     >
       <div className="relative w-full h-full">
         <div className="absolute top-[40%] left-[38vw]-translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] flex items-center justify-center">
-          <div className="absolute top-[30%] left-[38vw] bg-white/90 backdrop-blur px-3 py-1.5 rounded-full shadow-lg border border-gray-100 text-xs font-bold text-blue-600 whitespace-nowrap animate-pulse">
+          <div className="absolute top-[30%] left-[25vw] bg-white/90 backdrop-blur px-3 py-1.5 rounded-full shadow-lg border border-gray-100 text-xs font-bold text-blue-600 whitespace-nowrap animate-pulse">
             Drag component here
           </div>
         </div>

@@ -60,6 +60,8 @@ const ProductList = () => {
   // Entrance Animations
   useGSAP(
     () => {
+      if (loading || items.length === 0) return;
+
       const tl = gsap.timeline();
 
       tl.to(
@@ -85,7 +87,7 @@ const ProductList = () => {
           "-=0.4",
         );
     },
-    { scope: containerRef, dependencies: [loading] },
+    { scope: containerRef, dependencies: [loading, items] },
   );
 
   const isInWishlist = (productId) => {

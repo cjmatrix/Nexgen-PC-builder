@@ -8,13 +8,11 @@ import {
   Monitor,
   Settings,
   PenTool,
-  Truck,
   Gamepad2,
   Briefcase,
   ChevronRight,
   Sparkles,
   Users,
-  Star,
 } from "lucide-react";
 import Navbar from "./customer/components/Navbar";
 import Footer from "../components/Footer";
@@ -32,38 +30,44 @@ const LandingPage = () => {
     () => {
       const tl = gsap.timeline();
 
-      tl.from(".hero-badge", {
-        y: -20,
-        opacity: 0,
+      // Hero Animations
+      tl.to(".hero-badge", {
+        y: 0,
+        opacity: 1,
         duration: 0.8,
         ease: "power3.out",
       })
-        .from(
+        .to(
           ".hero-title",
-          { y: 50, opacity: 0, duration: 1, ease: "power4.out" },
+          { y: 0, opacity: 1, duration: 1, ease: "power4.out" },
           "-=0.4",
         )
-        .from(
+        .to(
           ".hero-text",
-          { y: 30, opacity: 0, duration: 0.8, ease: "power3.out" },
+          { y: 0, opacity: 1, duration: 0.8, ease: "power3.out" },
           "-=0.6",
         )
-        .from(
+        .to(
           ".hero-btns",
-          { y: 20, opacity: 0, duration: 0.8, ease: "back.out(1.7)" },
+          { y: 0, opacity: 1, duration: 0.8, ease: "back.out(1.7)" },
           "-=0.6",
+        )
+        .to(
+          ".hero-visual",
+          { x: 0, opacity: 1, duration: 1, ease: "power4.out" },
+          "-=0.8",
         );
 
       // Features Scroll Trigger
       gsap.utils.toArray(".feature-card").forEach((card, i) => {
-        gsap.from(card, {
+        gsap.to(card, {
           scrollTrigger: {
             trigger: card,
             start: "top 85%",
             toggleActions: "play none none reverse",
           },
-          y: 50,
-          opacity: 0,
+          y: 0,
+          opacity: 1,
           duration: 0.8,
           delay: i * 0.1,
           ease: "power3.out",
@@ -71,24 +75,48 @@ const LandingPage = () => {
       });
 
       // AI Section Parallax
-      gsap.from(".ai-content", {
+      gsap.to(".ai-content", {
         scrollTrigger: {
           trigger: ".ai-section",
           start: "top 70%",
         },
-        x: -50,
-        opacity: 0,
+        x: 0,
+        opacity: 1,
         duration: 1,
         ease: "power3.out",
       });
 
-      gsap.from(".ai-visual", {
+      gsap.to(".ai-visual", {
         scrollTrigger: {
           trigger: ".ai-section",
           start: "top 70%",
         },
-        x: 50,
-        opacity: 0,
+        x: 0,
+        opacity: 1,
+        duration: 1,
+        ease: "power3.out",
+        delay: 0.2,
+      });
+
+      // Master Builder Section Animations
+      gsap.to(".builder-content", {
+        scrollTrigger: {
+          trigger: ".builder-section",
+          start: "top 70%",
+        },
+        x: 0,
+        opacity: 1,
+        duration: 1,
+        ease: "power3.out",
+      });
+
+      gsap.to(".builder-visual", {
+        scrollTrigger: {
+          trigger: ".builder-section",
+          start: "top 70%",
+        },
+        x: 0,
+        opacity: 1,
         duration: 1,
         ease: "power3.out",
         delay: 0.2,
@@ -128,47 +156,70 @@ const LandingPage = () => {
           ></div>
         </div>
 
-        <div className="container relative z-10 px-6 mx-auto text-center max-w-5xl">
-          <div className="hero-badge inline-flex items-center gap-2 px-4 py-2 mb-8 rounded-full bg-white border border-gray-100 shadow-sm">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-            </span>
-            <span className="text-gray-600 text-xs font-bold tracking-widest uppercase">
-              Nexgen 2.0 Live
-            </span>
-          </div>
+        <div className="container relative z-10 px-6 mx-auto">
+          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
+            {/* Left Content */}
+            <div className="w-full lg:w-1/2 text-left">
+              <div className="hero-badge inline-flex items-center gap-2 px-3 py-1.5 mb-8 rounded-full bg-blue-50 border border-blue-100 shadow-sm opacity-0 -translate-y-5">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                </span>
+                <span className="text-blue-600 text-[10px] md:text-xs font-bold tracking-widest uppercase">
+                  Nexgen 2.0 Live
+                </span>
+              </div>
 
-          <h1 className="hero-title text-6xl md:text-8xl font-black mb-8 leading-[1.05] tracking-tight text-gray-900">
-            BUILD YOUR <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600">
-              LEGEND
-            </span>
-          </h1>
+              <h1 className="hero-title text-5xl md:text-7xl lg:text-8xl font-black mb-6 leading-tight tracking-tighter text-gray-900 opacity-0 translate-y-[50px]">
+                ARCHITECT <br />
+                YOUR{" "}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">
+                  ULTIMATE
+                </span>{" "}
+                <br />
+                MACHINE.
+              </h1>
 
-          <p className="hero-text text-xl md:text-2xl text-gray-600 mb-12 max-w-2xl mx-auto leading-relaxed">
-            Experience the future of PC building. AI-driven configurations,
-            surgical precision, and performance that breaks boundaries.
-          </p>
+              <p className="hero-text text-lg md:text-xl text-gray-500 mb-10 max-w-xl leading-relaxed opacity-0 translate-y-[30px]">
+                Forget pre-builts. Design a rig that matches your exact DNA.
+                Powered by AI, assembled with surgical precision.
+              </p>
 
-          <div className="hero-btns flex flex-col sm:flex-row items-center justify-center gap-6">
-            <Link
-              to="/ai-assistant"
-              className="group relative px-8 py-4 bg-gray-900 text-white font-bold text-lg rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl hover:bg-black transition-all duration-300 w-full sm:w-auto"
-            >
-              <span className="relative z-10 flex items-center justify-center gap-2">
-                <Sparkles className="w-5 h-5 text-yellow-300" />
-                Ask AI Architect
-              </span>
-            </Link>
+              <div className="hero-btns flex flex-col sm:flex-row items-start gap-4 opacity-0 translate-y-[20px]">
+                <Link
+                  to="/ai-assistant"
+                  className="group relative px-8 py-4 bg-gray-900 text-white font-bold text-lg rounded-xl overflow-hidden shadow-2xl hover:bg-black transition-all duration-300 w-full sm:w-auto"
+                >
+                  <span className="relative z-10 flex items-center justify-center gap-2">
+                    <Sparkles className="w-5 h-5 text-yellow-300" />
+                    Ask AI Architect
+                  </span>
+                </Link>
 
-            <Link
-              to="/builder"
-              className="group px-8 py-4 bg-white border border-gray-200 text-gray-900 font-bold text-lg rounded-2xl hover:bg-gray-50 hover:border-gray-300 transition-all duration-300 flex items-center justify-center gap-2 w-full sm:w-auto shadow-sm"
-            >
-              Custom Build
-              <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </Link>
+                <Link
+                  to="/builder"
+                  className="group px-8 py-4 bg-white border-2 border-gray-100 text-gray-900 font-bold text-lg rounded-xl hover:border-gray-900 hover:bg-gray-50 transition-all duration-300 flex items-center justify-center gap-2 w-full sm:w-auto"
+                >
+                  Manual Build
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </Link>
+              </div>
+            </div>
+
+            {/* Right Visual (Abstract) */}
+            <div className="w-full lg:w-1/2 relative hero-visual opacity-0 translate-x-[50px]">
+              <div className="relative aspect-square max-w-lg mx-auto">
+                <div className="absolute inset-0 bg-gradient-to-tr from-blue-600/10 to-purple-600/10 rounded-full blur-[100px] animate-pulse"></div>
+                <div className="relative z-10 bg-white/50 backdrop-blur-xl border border-white/40 p-2 rounded-[2rem] shadow-2xl ring-1 ring-black/5 rotate-[-5deg] hover:rotate-0 transition-all duration-700">
+                  <img
+                    src="https://images.unsplash.com/photo-1587202372775-e229f172b9d7?q=80&w=1000&auto=format&fit=crop"
+                    alt="High End PC"
+                    className="w-full h-full object-cover rounded-[1.5rem]"
+                  />
+                </div>
+                
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -206,7 +257,7 @@ const LandingPage = () => {
       <section className="ai-section py-32 relative overflow-hidden bg-gray-50 border-y border-gray-200">
         <div className="container mx-auto px-6 relative z-10">
           <div className="flex flex-col lg:flex-row items-center gap-16">
-            <div className="ai-content lg:w-1/2">
+            <div className="ai-content lg:w-1/2 opacity-0 -translate-x-[50px]">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-purple-100 text-purple-600 text-xs font-bold uppercase tracking-wider mb-6 shadow-sm">
                 <Sparkles size={14} />
                 Gemini Powered
@@ -242,7 +293,7 @@ const LandingPage = () => {
               </Link>
             </div>
 
-            <div className="ai-visual lg:w-1/2 relative">
+            <div className="ai-visual lg:w-1/2 relative opacity-0 translate-x-[50px]">
               <div className="aspect-square rounded-full bg-gradient-to-tr from-purple-200 to-blue-200 blur-[80px] absolute inset-0 animate-pulse opacity-60"></div>
               <div className="relative bg-white border border-gray-100 rounded-3xl p-6 shadow-2xl backdrop-blur-xl ring-1 ring-black/5 flex flex-col gap-4">
                 {/* Header */}
@@ -322,7 +373,7 @@ const LandingPage = () => {
       <section className="builder-section py-32 relative overflow-hidden bg-white">
         <div className="container mx-auto px-6 relative z-10">
           <div className="flex flex-col lg:flex-row-reverse items-center gap-16">
-            <div className="builder-content lg:w-1/2">
+            <div className="builder-content lg:w-1/2 opacity-0 translate-x-[50px]">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-blue-600 text-xs font-bold uppercase tracking-wider mb-6 shadow-sm">
                 <Settings size={14} />
                 Master Builder
@@ -360,7 +411,7 @@ const LandingPage = () => {
               </Link>
             </div>
 
-            <div className="builder-visual lg:w-1/2 relative">
+            <div className="builder-visual lg:w-1/2 relative opacity-0 -translate-x-[50px]">
               <div className="aspect-square rounded-full bg-gradient-to-tl from-blue-200 to-cyan-200 blur-[80px] absolute inset-0 animate-pulse opacity-60"></div>
               <div className="relative bg-white border border-gray-100 rounded-3xl p-6 shadow-2xl backdrop-blur-xl ring-1 ring-black/5 flex flex-col gap-4">
                 <div className="flex items-center justify-between border-b border-gray-100 pb-4">
@@ -508,7 +559,7 @@ const CheckCircle = ({ className }) => (
 
 const FeatureCard = ({ icon, title, desc, gradient, border }) => (
   <div
-    className={`feature-card p-8 rounded-3xl bg-white ${border ? border : "border-gray-100"} border hover:border-blue-200 transition-all duration-300 shadow-xl shadow-gray-200/50 relative overflow-hidden group hover:-translate-y-1`}
+    className={`feature-card p-8 rounded-3xl bg-white ${border ? border : "border-gray-100"} border hover:border-blue-200 transition-all duration-300 shadow-xl shadow-gray-200/50 relative overflow-hidden group hover:-translate-y-1 translate-y-[50px] opacity-0`}
   >
     <div
       className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`}

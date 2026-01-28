@@ -7,7 +7,6 @@ import {
   Users,
   BarChart2,
   Ticket,
-  LogOut,
   Ban,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
@@ -110,13 +109,6 @@ const Sidebar = ({ isOpen, onClose }) => {
             })}
           </ul>
         </nav>
-
-        <div className="px-4 py-6 border-t border-gray-100">
-          <button className="w-full flex items-center px-4 py-3 text-sm font-medium text-gray-600 transition-colors rounded-lg hover:bg-gray-50 hover:text-gray-900 group">
-            <LogOut className="w-5 h-5 mr-3 text-gray-400 transition-colors group-hover:text-gray-600" />
-            Logout
-          </button>
-        </div>
       </aside>
     </>
   );

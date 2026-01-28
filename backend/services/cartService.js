@@ -180,8 +180,8 @@ export const getCart = async (userId) => {
       select:
         "name base_price final_price applied_offer images description isActive",
     })
-    .populate("coupon");
-
+    .populate("coupon").sort({createdAt:1});
+    console.log(cart)
   if (!cart) {
     cart = await Cart.create({ user: userId, items: [] });
   }

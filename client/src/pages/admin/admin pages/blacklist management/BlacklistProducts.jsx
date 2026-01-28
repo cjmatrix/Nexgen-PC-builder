@@ -1,15 +1,26 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, RotateCcw, Ban, Calendar, Package } from "lucide-react";
+import {
+  Search,
+  RotateCcw,
+  Ban,
+  Calendar,
+  Package,
+  ArrowRight,
+  CheckCircle,
+  AlertOctagon,
+} from "lucide-react";
 import api from "../../../../api/axios";
+import Pagination from "../../../../components/Pagination";
+import { useNavigate } from "react-router-dom";
 
 const BlacklistProducts = () => {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const navigate = useNavigate();
 
-  // Debounce search
-  React.useEffect(() => {
+  useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(search);
       setPage(1);
@@ -17,7 +28,6 @@ const BlacklistProducts = () => {
     return () => clearTimeout(timer);
   }, [search]);
 
-  // Fetch API
   const fetchBlacklist = async () => {
     const response = await api.get("/blacklist", {
       params: { page, limit: 10, search: debouncedSearch },
@@ -31,16 +41,21 @@ const BlacklistProducts = () => {
     keepPreviousData: true,
   });
 
-    console.log(data)
+  const handleComponentView = async (item) => {
+    navigate(`/admin/blacklist/${item._id}`, {
+      state: { blacklistData: item },
+    });
+  };
+
   return (
-    <div className="p-6 md:p-8 space-y-8 bg-white min-h-screen">
+    <div className="animate-fade-up font-sans space-y-8">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
             Blacklisted Items
           </h1>
           <p className="text-gray-500 mt-1">
-            View damaged or defective returns that were not restocked.
+            Manage returned items and restore salvaged components to inventory.
           </p>
         </div>
       </div>
@@ -67,105 +82,113 @@ const BlacklistProducts = () => {
               <tr className="bg-gray-50 border-b border-gray-100 text-xs uppercase text-gray-500 font-semibold tracking-wider">
                 <th className="px-6 py-4">Product Details</th>
                 <th className="px-6 py-4">Order Context</th>
-                <th className="px-6 py-4">Reason</th>
-                <th className="px-6 py-4">Blacklisted Date</th>
+                <th className="px-6 py-4">Return Reason</th>
+                <th className="px-6 py-4">Recovery Status</th>
+                <th className="px-6 py-4 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {isLoading ? (
                 <tr>
-                  <td colSpan="4" className="text-center py-12 text-gray-500">
-                    Loading records...
+                  <td colSpan="5" className="text-center py-12 text-gray-500">
+                    <div className="flex justify-center items-center gap-2">
+                      <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></span>{" "}
+                      Loading records...
+                    </div>
                   </td>
                 </tr>
               ) : data?.items?.length === 0 ? (
                 <tr>
-                  <td colSpan="4" className="text-center py-12 text-gray-500">
+                  <td colSpan="5" className="text-center py-12 text-gray-500">
                     No blacklisted items found.
                   </td>
                 </tr>
               ) : (
-                data?.items?.map((item) => (
-                  <tr
-                    key={item._id}
-                    className="group hover:bg-gray-50/50 transition-colors"
-                  >
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400">
-                          <Package className="w-5 h-5" />
+                data?.items?.map((item) => {
+                  const isFullyRestored = item.components?.length === 0;
+                  return (
+                    <tr
+                      key={item._id}
+                      className="group hover:bg-gray-50/50 transition-colors"
+                    >
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 border border-gray-200">
+                            <Package className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-gray-900">
+                              {item.productName}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-0.5 font-mono">
+                              PID: {item.productId?.slice(-6) || "N/A"}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-semibold text-gray-900">
-                            {item.productName}
-                          </p>
-                          <p className="text-xs text-gray-500 mt-0.5">
-                            ID: {item.productId || "N/A"}
-                          </p>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-sm font-medium text-gray-900">
+                            Order #{item.orderId?.slice(-6)}
+                          </span>
+                          <span className="text-xs text-gray-500 flex items-center gap-1">
+                            <Calendar className="w-3 h-3" />
+                            {new Date(item.blacklistedAt).toLocaleDateString(
+                              "en-US",
+                              { month: "short", day: "numeric" },
+                            )}
+                          </span>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-blue-50 text-blue-700 text-xs font-medium border border-blue-100">
-                        {item.orderId}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-start gap-2 max-w-xs">
-                        <Ban className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
-                        <span className="text-sm text-gray-700 font-medium">
-                          {item.reason}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-gray-500 text-sm">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-gray-400" />
-                        {new Date(item.blacklistedAt).toLocaleDateString(
-                          "en-US",
-                          {
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          }
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2 max-w-xs">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-red-50 text-red-700 text-xs font-medium border border-red-100">
+                            <Ban className="w-3 h-3" />
+                            {item.reason}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        {isFullyRestored ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-50 text-green-700 text-xs font-medium border border-green-100">
+                            <CheckCircle className="w-3.5 h-3.5" />
+                            Fully Restored
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 text-xs font-medium border border-amber-100">
+                            <AlertOctagon className="w-3.5 h-3.5" />
+                            {item.components?.length} Components Pending
+                          </span>
                         )}
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <button
+                          onClick={() => handleComponentView(item)}
+                          className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                            isFullyRestored
+                              ? "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                              : "bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700"
+                          }`}
+                        >
+                          {isFullyRestored ? "View History" : "Inspect Items"}
+                          <ArrowRight className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
         </div>
-
-        {/* Pagination */}
-        {data?.total > 0 && (
-          <div className="p-4 border-t border-gray-100 bg-gray-50/50 flex items-center justify-between">
-            <p className="text-sm text-gray-500">
-              Showing <span className="font-medium">{data.items.length}</span>{" "}
-              of <span className="font-medium">{data.total}</span> results
-            </p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                Previous
-              </button>
-              <button
-                onClick={() => setPage((p) => p + 1)}
-                disabled={page >= data?.pages}
-                className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                Next
-              </button>
-            </div>
-          </div>
-        )}
       </div>
+      {data?.total > 0 && (
+        <Pagination
+          pagination={{ page: data?.page, totalPages: data?.pages }}
+          page={page}
+          setPage={setPage}
+        />
+      )}
     </div>
   );
 };

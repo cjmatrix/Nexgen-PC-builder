@@ -1,243 +1,337 @@
-import { useEffect } from "react";
+import { useEffect, Suspense, lazy } from "react";
 import { useDispatch } from "react-redux";
 import { fetchUserProfile } from "./store/slices/authSlice";
 import { fetchAdminProfile } from "./store/slices/adminSlice";
-import {
-  createBrowserRouter,
-  RouterProvider,
-  Navigate,
-} from "react-router-dom";
-import LandingPage from "./pages/LandingPage";
-import Login from "./pages/auth/Login";
-import Signup from "./pages/auth/Signup";
-import AdminLogin from "./pages/auth/AdminLogin";
-import ForgotPassword from "./pages/auth/ForgotPassword";
-import ResetPassword from "./pages/auth/ResetPassword";
-import Wishlist from "./pages/customer/customer pages/user profile/wishlist/Wishlist";
-import AdminDashboard from "./pages/admin/layout/AdminDashboard";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
-import AdminDashboardHome from "./pages/admin/admin pages/admin dashboard/AdminDashboardHome";
-import SalesReport from "./pages/admin/admin pages/sales and reporting/SalesReport";
-import BlacklistProducts from "./pages/admin/admin pages/blacklist management/BlacklistProducts";
-import UserManagement from "./pages/admin/admin pages/user management/UserManagement";
-import CreateComponent from "./pages/admin/admin pages/component management/componentForm";
-import ComponentManagement from "./pages/admin/admin pages/component management/ComponentManagement";
-import CategoryManagement from "./pages/admin/admin pages/category management/CategoryManagement";
-import CategoryForm from "./pages/admin/admin pages/category management/CategoryForm";
-import CouponManagement from "./pages/admin/admin pages/coupon management/CouponManagement";
-import CouponForm from "./pages/admin/admin pages/coupon management/CouponForm";
-import PCBuilder from "./pages/customer/customer pages/PCBuilder/PCBuilder";
-import ProductManagement from "./pages/admin/admin pages/product management/ProductManagement";
-import OrderManagement from "./pages/admin/admin pages/order management/OrderManagement";
-import AddProductForm from "./pages/admin/admin pages/product management/ProductForm";
-import ProductList from "./pages/customer/customer pages/product list/ProductList";
-import ProductDetail from "./pages/customer/customer pages/product detail/ProductDetail";
-import AIPCAssistant from "./pages/customer/customer pages/AIpcassistant/AIPCAssistant";
-import Deals from "./pages/customer/customer pages/deals/Deals";
-import Cart from "./pages/customer/customer pages/cart/Cart";
-import Checkout from "./pages/customer/customer pages/checkout/Checkout";
-import AdminRoutes from "./protectedroutes/AdminRoute";
-import PaymentRetry from "./pages/customer/customer pages/checkout/components/PaymentRetry";
+// Lazy Component Imports
+const LandingPage = lazy(() => import("./pages/LandingPage"));
+const Login = lazy(() => import("./pages/auth/Login"));
+const Signup = lazy(() => import("./pages/auth/Signup"));
+const AdminLogin = lazy(() => import("./pages/auth/AdminLogin"));
+const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
+import BlacklistComponents from "./pages/admin/admin pages/blacklist management/BlacklistComponents";
+const Wishlist = lazy(
+  () =>
+    import("./pages/customer/customer pages/user profile/wishlist/Wishlist"),
+);
+const AdminDashboard = lazy(
+  () => import("./pages/admin/layout/AdminDashboard"),
+);
 
-import UserDashboard from "./pages/customer/customer pages/user profile/layout/UserDashboard";
+const AdminDashboardHome = lazy(
+  () => import("./pages/admin/admin pages/admin dashboard/AdminDashboardHome"),
+);
+const SalesReport = lazy(
+  () => import("./pages/admin/admin pages/sales and reporting/SalesReport"),
+);
+const BlacklistProducts = lazy(
+  () =>
+    import("./pages/admin/admin pages/blacklist management/BlacklistProducts"),
+);
+const UserManagement = lazy(
+  () => import("./pages/admin/admin pages/user management/UserManagement"),
+);
+const CreateComponent = lazy(
+  () => import("./pages/admin/admin pages/component management/componentForm"),
+);
+const ComponentManagement = lazy(
+  () =>
+    import("./pages/admin/admin pages/component management/ComponentManagement"),
+);
+const ComponentList = lazy(
+  () => import("./pages/admin/admin pages/component management/ComponentList"),
+);
+const CategoryManagement = lazy(
+  () =>
+    import("./pages/admin/admin pages/category management/CategoryManagement"),
+);
+const CategoryForm = lazy(
+  () => import("./pages/admin/admin pages/category management/CategoryForm"),
+);
+const CouponManagement = lazy(
+  () => import("./pages/admin/admin pages/coupon management/CouponManagement"),
+);
+const CouponForm = lazy(
+  () => import("./pages/admin/admin pages/coupon management/CouponForm"),
+);
+const PCBuilder = lazy(
+  () => import("./pages/customer/customer pages/PCBuilder/PCBuilder"),
+);
+const ProductManagement = lazy(
+  () =>
+    import("./pages/admin/admin pages/product management/ProductManagement"),
+);
+const OrderManagement = lazy(
+  () => import("./pages/admin/admin pages/order management/OrderManagement"),
+);
+const AddProductForm = lazy(
+  () => import("./pages/admin/admin pages/product management/ProductForm"),
+);
+const ProductList = lazy(
+  () => import("./pages/customer/customer pages/product list/ProductList"),
+);
+const ProductDetail = lazy(
+  () => import("./pages/customer/customer pages/product detail/ProductDetail"),
+);
+const AIPCAssistant = lazy(
+  () => import("./pages/customer/customer pages/AIpcassistant/AIPCAssistant"),
+);
+const Deals = lazy(() => import("./pages/customer/customer pages/deals/Deals"));
+const Cart = lazy(() => import("./pages/customer/customer pages/cart/Cart"));
+const Checkout = lazy(
+  () => import("./pages/customer/customer pages/checkout/Checkout"),
+);
+const AdminRoutes = lazy(() => import("./protectedroutes/AdminRoute"));
+const PaymentRetry = lazy(
+  () =>
+    import("./pages/customer/customer pages/checkout/components/PaymentRetry"),
+);
 
-import ProfileSetting from "./pages/customer/customer pages/user profile/profile/ProfileSetting";
-import OrderHistory from "./pages/customer/customer pages/user profile/order history/OrderHistory";
-import Referral from "./pages/customer/customer pages/user profile/referal/Referral";
-import Wallet from "./pages/customer/customer pages/user profile/wallet/Wallet";
-import CommunityBuilds from "./pages/customer/customer pages/community/CommunityBuilds";
-import NotFound from "./pages/NotFound";
+const UserDashboard = lazy(
+  () =>
+    import("./pages/customer/customer pages/user profile/layout/UserDashboard"),
+);
 
-import CustomerPage from "./pages/customer/layout/CustomerPage";
+const ProfileSetting = lazy(
+  () =>
+    import("./pages/customer/customer pages/user profile/profile/ProfileSetting"),
+);
+const OrderHistory = lazy(
+  () =>
+    import("./pages/customer/customer pages/user profile/order history/OrderHistory"),
+);
+const Referral = lazy(
+  () => import("./pages/customer/customer pages/user profile/referal/Referral"),
+);
+const Wallet = lazy(
+  () => import("./pages/customer/customer pages/user profile/wallet/Wallet"),
+);
+const CommunityBuilds = lazy(
+  () => import("./pages/customer/customer pages/community/CommunityBuilds"),
+);
+const NotFound = lazy(() => import("./pages/NotFound"));
 
-import ProtectedRoute from "./protectedroutes/ProtectedRoute";
+const CustomerPage = lazy(() => import("./pages/customer/layout/CustomerPage"));
+
+const ProtectedRoute = lazy(() => import("./protectedroutes/ProtectedRoute"));
+
+// Loading Fallback
+const LoadingSpinner = () => (
+  <div className="flex h-screen w-full items-center justify-center bg-white">
+    <div className="flex flex-col items-center gap-4">
+      <div className="h-12 w-12 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
+      <div className="text-sm font-medium text-blue-600 animate-pulse">
+        Loading...
+      </div>
+    </div>
+  </div>
+);
+
+// Helper to wrap components in Suspense
+const Load = (Component) => (
+  <Suspense fallback={<LoadingSpinner />}>
+    <Component />
+  </Suspense>
+);
 
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <LandingPage />,
+    element: Load(LandingPage),
   },
   {
     path: "/login",
-    element: <Login />,
+    element: Load(Login),
   },
   {
     path: "/signup",
-    element: <Signup />,
+    element: Load(Signup),
   },
   {
     path: "/admin/login",
-    element: <AdminLogin />,
+    element: Load(AdminLogin),
   },
   {
     path: "/forgot-password",
-    element: <ForgotPassword />,
+    element: Load(ForgotPassword),
   },
   {
     path: "/reset-password/:resetToken",
-    element: <ResetPassword />,
+    element: Load(ResetPassword),
   },
   {
     path: "/",
-    element: <CustomerPage></CustomerPage>,
+    element: Load(CustomerPage),
     children: [
       {
         path: "/products",
-        element: <ProductList />,
+        element: Load(ProductList),
       },
       {
         path: "/products/:id",
-        element: <ProductDetail />,
+        element: Load(ProductDetail),
       },
       {
         path: "/products/customization/:id",
-        element: <PCBuilder />,
+        element: Load(PCBuilder),
       },
       {
         path: "/builder",
-        element: <PCBuilder />,
+        element: Load(PCBuilder),
       },
       {
         path: "/deals",
-        element: <Deals />,
+        element: Load(Deals),
       },
       {
         path: "/community-builds",
-        element: <CommunityBuilds />,
+        element: Load(CommunityBuilds),
       },
       {
         path: "/ai-assistant",
-        element: <AIPCAssistant />,
+        element: Load(AIPCAssistant),
       },
     ],
   },
 
   {
-    element: <AdminRoutes />,
+    element: Load(AdminRoutes),
     children: [
       {
         path: "/admin",
-        element: <AdminDashboard />,
+        element: Load(AdminDashboard),
         children: [
           {
             index: true,
-            element: <AdminDashboardHome />,
+            element: Load(AdminDashboardHome),
           },
           {
             path: "/admin/users",
-            element: <UserManagement />,
+            element: Load(UserManagement),
           },
           {
             path: "/admin/components/create",
-            element: <CreateComponent />,
+            element: Load(CreateComponent),
           },
           {
             path: "/admin/components/edit/:id",
-            element: <CreateComponent />,
+            element: Load(CreateComponent),
           },
           {
             path: "/admin/components",
-            element: <ComponentManagement />,
+            element: Load(ComponentManagement),
+          },
+          {
+            path: "/admin/components/:category",
+            element: Load(ComponentList),
           },
           {
             path: "/admin/categories",
-            element: <CategoryManagement />,
+            element: Load(CategoryManagement),
           },
           {
             path: "/admin/categories/create",
-            element: <CategoryForm />,
+            element: Load(CategoryForm),
           },
           {
             path: "/admin/categories/edit/:id",
-            element: <CategoryForm />,
+            element: Load(CategoryForm),
           },
           {
             path: "/admin/coupons",
-            element: <CouponManagement />,
+            element: Load(CouponManagement),
           },
           {
             path: "/admin/coupons/create",
-            element: <CouponForm />,
+            element: Load(CouponForm),
           },
           {
             path: "/admin/coupons/edit/:id",
-            element: <CouponForm />,
+            element: Load(CouponForm),
           },
           {
             path: "/admin/products",
-            element: <ProductManagement />,
+            element: Load(ProductManagement),
           },
           {
             path: "/admin/orders",
-            element: <OrderManagement />,
+            element: Load(OrderManagement),
           },
           {
             path: "/admin/sales-report",
-            element: <SalesReport />,
+            element: Load(SalesReport),
           },
           {
             path: "/admin/products/bui",
-            element: <PCBuilder />,
+            element: Load(PCBuilder),
           },
           {
             path: "/admin/products/create",
-            element: <AddProductForm />,
+            element: Load(AddProductForm),
           },
           {
             path: "/admin/products/edit/:id",
-            element: <AddProductForm />,
+            element: Load(AddProductForm),
           },
           {
             path: "/admin/blacklist",
-            element: <BlacklistProducts />,
+            element: Load(BlacklistProducts),
+          },
+          {
+            path: "/admin/blacklist/:id",
+            element: Load(BlacklistComponents),
           },
         ],
       },
     ],
   },
   {
-    element: <ProtectedRoute />,
+    element: Load(ProtectedRoute),
     children: [
       {
         path: "/",
-        element: <CustomerPage></CustomerPage>,
+        element: Load(CustomerPage),
         children: [
           {
             path: "/cart",
-            element: <Cart />,
+            element: Load(Cart),
           },
           {
             path: "/checkout",
-            element: <Checkout />,
+            element: Load(Checkout),
           },
           {
             path: "/payment/retry/:orderId",
-            element: <PaymentRetry></PaymentRetry>,
+            element: Load(PaymentRetry),
           },
           {
             path: "/user",
-            element: <UserDashboard></UserDashboard>,
+            element: Load(UserDashboard),
 
             children: [
               {
                 path: "/user/profile",
-                element: <ProfileSetting></ProfileSetting>,
+                element: Load(ProfileSetting),
               },
               {
                 path: "/user/orders",
-                element: <OrderHistory />,
+                element: Load(OrderHistory),
               },
               {
                 path: "/user/referral",
-                element: <Referral />,
+                element: Load(Referral),
               },
               {
                 path: "/user/wallet",
-                element: <Wallet />,
+                element: Load(Wallet),
               },
               {
                 path: "/user/wishlist",
-                element: <Wishlist />,
+                element: Load(Wishlist),
               },
             ],
           },
@@ -247,16 +341,13 @@ const router = createBrowserRouter([
   },
   {
     path: "*",
-    element: <NotFound />,
+    element: Load(NotFound),
   },
 ]);
 
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-
 function App() {
   const dispatch = useDispatch();
-  console.log("heyy");
+
   useEffect(() => {
     if (window.location.pathname.includes("/admin")) {
       dispatch(fetchAdminProfile());

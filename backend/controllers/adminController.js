@@ -4,8 +4,9 @@ import { generateResponse } from "../config/gemini.js";
 import { HTTP_STATUS } from "../constants/httpStatus.js";
 import { MESSAGES } from "../constants/responseMessages.js";
 import Redis from "ioredis";
+import { redisConfig } from "../config/redis.js";
 
-const redisSubscriber = new Redis();
+const redisSubscriber = new Redis(redisConfig);
 const localSalesClients = new Set();
 
 redisSubscriber.subscribe("sales_updates");
@@ -91,35 +92,33 @@ const getSalesReport = async (req, res) => {
 
     const totalSales = await Order.aggregate([
       { $match: dateFilter },
+      { $unwind: "$orderItems" },
+      {
+        $match: {
+          "orderItems.status": {
+            $nin: ["Cancelled", "Returned", "Return Approved"],
+          },
+        },
+      },
       {
         $group: {
           _id: null,
-          totalRevenue: { $sum: "$totalPrice" },
-          totalOrders: { $sum: 1 },
-          avgOrderValue: { $avg: "$totalPrice" },
-          totalCouponDiscount: { $sum: "$couponDiscount" },
+          totalRevenue: {
+            $sum: { $multiply: ["$orderItems.price", "$orderItems.qty"] },
+          },
+
+          ordersSet: { $addToSet: "$_id" },
           totalProductDiscount: {
             $sum: {
-              $reduce: {
-                input: "$orderItems",
-                initialValue: 0,
-                in: {
-                  $add: [
-                    "$$value",
-                    {
-                      $multiply: [
-                        {
-                          $multiply: [
-                            "$$this.price",
-                            { $divide: ["$$this.discount", 100] },
-                          ],
-                        },
-                        "$$this.qty",
-                      ],
-                    },
+              $multiply: [
+                {
+                  $multiply: [
+                    "$orderItems.price",
+                    { $divide: ["$orderItems.discount", 100] },
                   ],
                 },
-              },
+                "$orderItems.qty",
+              ],
             },
           },
         },
@@ -128,14 +127,21 @@ const getSalesReport = async (req, res) => {
         $project: {
           _id: 1,
           totalRevenue: { $divide: ["$totalRevenue", 100] },
-          totalOrders: 1,
-          avgOrderValue: { $divide: ["$avgOrderValue", 100] },
-          totalDiscount: {
-            $divide: [
-              { $add: ["$totalCouponDiscount", "$totalProductDiscount"] },
-              100,
+          totalOrders: { $size: "$ordersSet" },
+
+          avgOrderValue: {
+            $cond: [
+              { $eq: [{ $size: "$ordersSet" }, 0] },
+              0,
+              {
+                $divide: [
+                  { $divide: ["$totalRevenue", 100] },
+                  { $size: "$ordersSet" },
+                ],
+              },
             ],
           },
+          totalDiscount: { $divide: ["$totalProductDiscount", 100] },
         },
       },
     ]);
@@ -147,16 +153,29 @@ const getSalesReport = async (req, res) => {
 
     const salesOverTime = await Order.aggregate([
       { $match: dateFilter },
+      { $unwind: "$orderItems" },
       {
-        $group: {
-          _id: { $dateToString: { format: format, date: "$createdAt" } },
-          dailyRevenue: { $sum: "$totalPrice" },
-          dailyOrders: { $sum: 1 },
+        $match: {
+          "orderItems.status": {
+            $nin: ["Cancelled", "Returned", "Return Approved"],
+          },
         },
       },
       {
-        $addFields: {
+        $group: {
+          _id: { $dateToString: { format: format, date: "$createdAt" } },
+          dailyRevenue: {
+            $sum: { $multiply: ["$orderItems.price", "$orderItems.qty"] },
+          },
+
+          dailyOrdersSet: { $addToSet: "$_id" },
+        },
+      },
+      {
+        $project: {
+          _id: 1,
           dailyRevenue: { $divide: ["$dailyRevenue", 100] },
+          dailyOrders: { $size: "$dailyOrdersSet" },
         },
       },
       { $sort: { _id: 1 } },
@@ -165,6 +184,13 @@ const getSalesReport = async (req, res) => {
     const topProducts = await Order.aggregate([
       { $match: dateFilter },
       { $unwind: "$orderItems" },
+      {
+        $match: {
+          "orderItems.status": {
+            $nin: ["Cancelled", "Returned", "Return Approved"],
+          },
+        },
+      },
       {
         $group: {
           _id: "$orderItems.product",
@@ -187,6 +213,13 @@ const getSalesReport = async (req, res) => {
     const topCategories = await Order.aggregate([
       { $match: dateFilter },
       { $unwind: "$orderItems" },
+      {
+        $match: {
+          "orderItems.status": {
+            $nin: ["Cancelled", "Returned", "Return Approved"],
+          },
+        },
+      },
       {
         $lookup: {
           from: "products",
@@ -227,6 +260,13 @@ const getSalesReport = async (req, res) => {
       { $match: dateFilter },
       { $unwind: "$orderItems" },
       {
+        $match: {
+          "orderItems.status": {
+            $nin: ["Cancelled", "Returned", "Return Approved"],
+          },
+        },
+      },
+      {
         $project: {
           components: { $objectToArray: "$orderItems.components" },
           orderQty: "$orderItems.qty",
@@ -261,13 +301,57 @@ const getSalesReport = async (req, res) => {
       },
     ]);
 
+   
+    const refundFilter = { ...dateFilter };
+    delete refundFilter.status;
+
+    const refundStats = await Order.aggregate([
+      { $match: refundFilter },
+      { $unwind: "$orderItems" },
+      {
+        $match: {
+          "orderItems.status": { $in: ["Returned", "Return Approved"] },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalRefundedAmount: {
+            $sum: {
+              $multiply: [
+                "$orderItems.price",
+                "$orderItems.qty",
+                { $subtract: [1, { $divide: ["$orderItems.discount", 100] }] },
+              ],
+            },
+          },
+          totalRefundedOrders: { $addToSet: "$_id" },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          totalRefundedAmount: { $divide: ["$totalRefundedAmount", 100] },
+          totalRefundedOrders: { $size: "$totalRefundedOrders" },
+        },
+      },
+    ]);
+
+    const refunds = refundStats[0] || {
+      totalRefundedAmount: 0,
+      totalRefundedOrders: 0,
+    };
+
     res.status(HTTP_STATUS.OK).json({
       success: true,
-      stats: totalSales[0] || {
-        totalRevenue: 0,
-        totalOrders: 0,
-        avgOrderValue: 0,
-        totalDiscount: 0,
+      stats: {
+        ...(totalSales[0] || {
+          totalRevenue: 0,
+          totalOrders: 0,
+          avgOrderValue: 0,
+          totalDiscount: 0,
+        }),
+        ...refunds,
       },
       salesOverTime,
       topProducts,

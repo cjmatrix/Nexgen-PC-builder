@@ -1,6 +1,11 @@
 import React, { useEffect, useRef } from "react";
 import ReactDOM from "react-dom";
 import { X, AlertTriangle, CheckCircle, Info } from "lucide-react";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
+import { usePopupAnimation } from "../hooks/usePopupAnimation";
+
+gsap.registerPlugin(useGSAP);
 
 const CustomModal = ({
   isOpen,
@@ -14,7 +19,11 @@ const CustomModal = ({
   showCancel = false,
 }) => {
   const modalRef = useRef(null);
+  const overlayRef = useRef(null);
+  const containerRef = useRef(null);
 
+
+  usePopupAnimation({ isOpen, containerRef, overlayRef, modalRef });
   useEffect(() => {
     const handleEscape = (e) => {
       if (e.key === "Escape" && isOpen) {
@@ -59,45 +68,48 @@ const CustomModal = ({
   };
 
   return ReactDOM.createPortal(
-    <div
-      className="animate-fade-up fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm transition-opacity duration-300"
-      onClick={handleBackdropClick}
-    >
+    <div ref={containerRef}>
       <div
-        ref={modalRef}
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-md transform transition-all duration-300 scale-100 overflow-hidden"
-        role="dialog"
-        aria-modal="true"
+        ref={overlayRef}
+        className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm opacity-0"
+        onClick={handleBackdropClick}
       >
-        <div className="p-6 text-center">
-          <div
-            className={`mx-auto flex items-center justify-center w-20 h-20 rounded-full mb-6 ${iconBg}`}
-          >
-            {icon}
-          </div>
-
-          <h3 className="text-2xl font-bold text-gray-900 mb-2">{title}</h3>
-          <p className="text-gray-500 mb-8 leading-relaxed">{message}</p>
-
-          <div className="flex gap-3 justify-center">
-            {(type === "confirmation" || showCancel) && (
-              <button
-                onClick={onClose}
-                className="px-6 py-2.5 bg-white text-gray-700 font-semibold border border-gray-300 rounded-xl hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-2 transition-all duration-200"
-              >
-                {cancelText}
-              </button>
-            )}
-
-            <button
-              onClick={() => {
-                if (onConfirm) onConfirm();
-                onClose();
-              }}
-              className={`px-8 py-2.5 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${buttonColor}`}
+        <div
+          ref={modalRef}
+          className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden opacity-0 scale-[0.8] translate-y-5"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="p-6 text-center">
+            <div
+              className={`mx-auto flex items-center justify-center w-20 h-20 rounded-full mb-6 ${iconBg}`}
             >
-              {confirmText}
-            </button>
+              {icon}
+            </div>
+
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">{title}</h3>
+            <p className="text-gray-500 mb-8 leading-relaxed">{message}</p>
+
+            <div className="flex gap-3 justify-center">
+              {(type === "confirmation" || showCancel) && (
+                <button
+                  onClick={onClose}
+                  className="px-6 py-2.5 bg-white text-gray-700 font-semibold border border-gray-300 rounded-xl hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-2 transition-all duration-200"
+                >
+                  {cancelText}
+                </button>
+              )}
+
+              <button
+                onClick={() => {
+                  if (onConfirm) onConfirm();
+                  onClose();
+                }}
+                className={`px-8 py-2.5 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${buttonColor}`}
+              >
+                {confirmText}
+              </button>
+            </div>
           </div>
         </div>
       </div>

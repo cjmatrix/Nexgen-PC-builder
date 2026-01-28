@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   generatePCBuild,
   resetAIState,
+  setError,
   setShowPromptBar,
 } from "../../../../store/slices/aiSlice";
 import { FaMicrochip } from "react-icons/fa";
@@ -13,12 +14,13 @@ import api from "../../../../api/axios";
 import CustomModal from "../../../../components/CustomModal";
 import { showCustomToast } from "../../../../utils/toastUtils";
 import AIBuildLoader from "./components/AIBuildLoader";
-import RobotMascot from "../../../../components/RobotMascot";
+import RobotMascot from "./components/RobotMascot";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { ArrowRight, Sparkles, RefreshCcw, ShoppingCart } from "lucide-react";
 import { resetBuild } from "../../../../store/slices/builderSlice";
 import getComponentIcon from "../../../../utils/getComponentIcons";
+import { addToCart } from "../../../../store/slices/cartSlice";
 
 gsap.registerPlugin(useGSAP);
 
@@ -28,7 +30,7 @@ const AIPCAssistant = () => {
   const navigate = useNavigate();
   const containerRef = useRef(null);
   const resultRef = useRef(null);
-    const location = useLocation();
+  const location = useLocation();
 
   useEffect(() => {
     if (location.state?.prompt) {
@@ -53,6 +55,9 @@ const AIPCAssistant = () => {
     onCloseAction: null,
   });
 
+  useEffect(()=>{
+    dispatch(setError(null))
+  },[])
   const handleCloseModal = () => {
     if (modalState.onCloseAction) {
       modalState.onCloseAction();
@@ -87,8 +92,6 @@ const AIPCAssistant = () => {
       );
     }
   }, [aiBuild]);
-
-
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -136,10 +139,9 @@ const AIPCAssistant = () => {
     };
 
     try {
-      await api.post("/cart/add", {
-        quantity: 1,
-        customBuild: customBuildPayload,
-      });
+      await dispatch(
+        addToCart({ quantity: 1, customBuild: customBuildPayload }),
+      ).unwrap();
 
       setModalState({
         isOpen: true,
@@ -157,12 +159,12 @@ const AIPCAssistant = () => {
         },
       });
     } catch (error) {
-      console.error("Add to cart failed", error);
+     
       setModalState({
         isOpen: true,
         type: "error",
         title: "Oops...",
-        message: error.response?.data?.message || "Failed to add to cart",
+        message: error || "Failed to add to cart",
         showCancel: false,
         confirmText: "OK",
         onConfirm: null,
@@ -171,6 +173,7 @@ const AIPCAssistant = () => {
     }
   };
 
+  
   return (
     <div
       ref={containerRef}
@@ -265,7 +268,7 @@ const AIPCAssistant = () => {
           </div>
         )}
 
-        {!aiBuild && !showPromptBar && <AIBuildLoader />}
+        {!aiBuild && !showPromptBar && !error&& <AIBuildLoader />}
 
         {aiBuild && (
           <div

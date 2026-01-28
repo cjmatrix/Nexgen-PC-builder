@@ -9,13 +9,11 @@ export const fetchComponents = createAsyncThunk(
         params: { category, ...params, limit: 100 },
       });
 
-     
-     
       return { category, data: response.data.components };
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Fetch failed");
     }
-  }
+  },
 );
 
 const initialState = {
@@ -25,7 +23,7 @@ const initialState = {
     ram: null,
     gpu: null,
     storage: null,
-    case: null, 
+    case: null,
     psu: null,
     cooler: null,
   },
@@ -50,7 +48,6 @@ const builderSlice = createSlice({
   initialState,
   reducers: {
     selectPart: (state, action) => {
-      
       const { category, component } = action.payload;
       state.selected[category] = component;
 
@@ -68,10 +65,13 @@ const builderSlice = createSlice({
 
       let price = 0;
       let wattage = 0;
-      Object.values(state.selected).forEach((part) => {
+      Object.entries(state.selected).forEach(([key, part]) => {
         if (part) {
           price += part.price;
-          if (part.specs?.wattage) wattage += part.specs.wattage;
+          
+          if (part.specs?.wattage && key !== "psu") {
+            wattage += part.specs.wattage;
+          }
         }
       });
       state.totalPrice = price;
@@ -79,9 +79,9 @@ const builderSlice = createSlice({
     },
     resetBuild: () => initialState,
     setSelected: (state, action) => {
-      console.log(action.payload)
+      console.log(action.payload);
       state.selected = action.payload;
-      console.log(state.selected)
+      console.log(state.selected);
       let price = 0;
       let wattage = 0;
       Object.values(state.selected).forEach((part) => {
@@ -91,7 +91,7 @@ const builderSlice = createSlice({
         }
       });
       state.totalPrice = price;
-      console.log(state.totalPrice)
+      console.log(state.totalPrice);
       state.estimatedWattage = wattage;
     },
   },

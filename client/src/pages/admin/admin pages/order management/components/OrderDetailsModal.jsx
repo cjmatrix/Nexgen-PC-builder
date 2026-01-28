@@ -13,11 +13,15 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../../../../../api/axios";
 import CustomModal from "../../../../../components/CustomModal";
 import AdminItemDetailsModal from "./AdminItemDetailsModal";
-
+import { usePopupAnimation } from "../../../../../hooks/usePopupAnimation";
 const OrderDetailsModal = ({ isOpen, onClose, order }) => {
   const queryClient = useQueryClient();
+  const containerRef = useRef(null);
+  const overlayRef = useRef(null);
   const modalRef = useRef(null);
   const [currentStatus, setCurrentStatus] = useState("");
+
+  usePopupAnimation({ isOpen, containerRef, overlayRef, modalRef });
 
   const [viewDetailItem, setViewDetailItem] = useState({});
   const [isItemDetailsOpen, setIsItemDetailsOpen] = useState(false);
@@ -41,11 +45,11 @@ const OrderDetailsModal = ({ isOpen, onClose, order }) => {
     setModal((prev) => ({ ...prev, isOpen: false }));
   };
 
-  const handleBackdropClick = (e) => {
-    if (modalRef.current && !modalRef.current.contains(e.target)) {
-      onClose();
-    }
-  };
+  // const handleBackdropClick = (e) => {
+  //   if (modalRef.current && !modalRef.current.contains(e.target)) {
+  //     onClose();
+  //   }
+  // };
 
   const handleViewDetailItem = async (item) => {
     try {
@@ -103,7 +107,7 @@ const OrderDetailsModal = ({ isOpen, onClose, order }) => {
 
   const cancelItemOrderMuation = useMutation({
     mutationFn: async ({ itemId = undefined }) => {
-      const response = await api.put(`/orders/${order._id}/cancel`, {
+      const response = await api.put(`/admin/orders/${order._id}/cancel`, {
         itemId,
         reason: "admin cancelled it",
       });
@@ -255,9 +259,14 @@ const OrderDetailsModal = ({ isOpen, onClose, order }) => {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200"
-      onClick={handleBackdropClick}
+      ref={containerRef}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
     >
+      <div
+        ref={overlayRef}
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm opacity-0"
+        onClick={onClose}
+      ></div>
       <CustomModal
         isOpen={modal.isOpen}
         onClose={closeModal}
@@ -338,7 +347,7 @@ const OrderDetailsModal = ({ isOpen, onClose, order }) => {
 
       <div
         ref={modalRef}
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-200"
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col relative opacity-0 scale-[0.8] translate-y-5"
       >
         <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
           <div>
@@ -390,7 +399,7 @@ const OrderDetailsModal = ({ isOpen, onClose, order }) => {
                 Total Amount
               </p>
               <p className="font-bold text-gray-900 mt-1 text-xl">
-                ₹{order.totalPrice?.toLocaleString()}
+                ₹{(order.totalPrice / 100)?.toLocaleString()}
               </p>
             </div>
           </div>
@@ -569,7 +578,8 @@ const OrderDetailsModal = ({ isOpen, onClose, order }) => {
               disabled={
                 order.status === "Cancelled" ||
                 order.status === "Delivered" ||
-                order.status === "Return Approved"
+                order.status === "Return Approved" ||
+                order.status === "Return Requested"
               }
               className="px-6 py-2.5 rounded-lg border border-red-200 text-red-600 font-medium hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
@@ -584,7 +594,8 @@ const OrderDetailsModal = ({ isOpen, onClose, order }) => {
           <div className="flex gap-3">
             {order.status !== "Delivered" &&
               order.status !== "Cancelled" &&
-              order.status !== "Return Approved" && (
+              order.status !== "Return Approved" &&
+              order.status !== "Return Requested" && (
                 <button
                   onClick={() => {
                     const flow = [

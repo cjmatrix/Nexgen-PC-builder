@@ -204,6 +204,25 @@ const PCBuilder = () => {
     (state) => state.builder,
   );
 
+  const isFirstRender = useRef(true);
+
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+
+    const currentStepId = STEPS[currentStep].id;
+    
+    if (selected[currentStepId] && currentStep < STEPS.length - 1) {
+    
+      const timer = setTimeout(() => {
+        setCurrentStep((prev) => prev + 1);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [selected]);
+
   const [visible, setVisibile] = useState(true);
 
   // Modal State

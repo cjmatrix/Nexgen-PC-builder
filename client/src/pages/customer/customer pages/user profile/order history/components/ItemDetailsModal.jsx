@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef } from "react";
 import {
   X,
   Calendar,
@@ -9,9 +9,16 @@ import {
   Wrench,
   Sparkles,
 } from "lucide-react";
+import { usePopupAnimation } from "../../../../../../hooks/usePopupAnimation";
 
 const ItemDetailsModal = ({ isOpen, onClose, items, order }) => {
   const { components, item } = items;
+  const containerRef = useRef(null);
+  const overlayRef = useRef(null);
+  const modalRef = useRef(null);
+
+  usePopupAnimation({ isOpen, containerRef, overlayRef, modalRef });
+
   if (!isOpen || Object.values(components).length === 0 || !order) return null;
 
   const formatPrice = (price) =>
@@ -40,13 +47,20 @@ const ItemDetailsModal = ({ isOpen, onClose, items, order }) => {
     : [];
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+    <div
+      ref={containerRef}
+      className="fixed inset-0 z-[70] flex items-center justify-center p-4"
+    >
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        ref={overlayRef}
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm opacity-0"
         onClick={onClose}
       ></div>
 
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col relative animate-in zoom-in-95 duration-200">
+      <div
+        ref={modalRef}
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col relative opacity-0 scale-[0.8] translate-y-5"
+      >
         <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
           <div className="flex items-center gap-4">
             <div className="h-12 w-12 bg-white rounded-lg border border-gray-200 p-1">

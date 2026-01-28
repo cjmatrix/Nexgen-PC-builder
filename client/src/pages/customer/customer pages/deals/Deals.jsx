@@ -5,15 +5,17 @@ import { useGSAP } from "@gsap/react";
 import { Timer, Zap, Tag, ShoppingCart, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import api from "../../../../api/axios";
+import Pagination from "../../../../components/Pagination";
 
 const Deals = () => {
   const containerRef = useRef(null);
+  const [page, setPage] = useState(1);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["deals-products"],
+    queryKey: ["deals-products", page],
     queryFn: async () => {
       const response = await api.get("/products", {
-        params: { limit: 12, sort: "price_desc", hasDiscount: true },
+        params: { limit: 12, sort: "price_desc", hasDiscount: true, page },
       });
       return response.data;
     },
@@ -91,73 +93,85 @@ const Deals = () => {
             <div className="w-12 h-12 border-4 border-violet-600 border-t-transparent rounded-full animate-spin"></div>
           </div>
         ) : (
-          <div className="deals-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {data?.products?.map((product, index) => (
-              <Link
-                key={product._id}
-                to={`/products/${product._id}`}
-                className="deal-card translate-y-[50px] opacity-0 group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 flex flex-col"
-              >
-                {/* Image Container */}
-                <div className="relative aspect-[4/3] bg-gray-100 overflow-hidden">
-                  {product.applied_offer > 0 && (
-                    <div className="absolute top-3 left-3 z-10 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
-                      -{product.applied_offer}% OFF
-                    </div>
-                  )}
-
-                  <img
-                    src={product.images[0]}
-                    alt={product.name}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
-
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300" />
-                </div>
-
-                {/* Content */}
-                <div className="p-5 flex-1 flex flex-col">
-                  <div className="text-xs font-medium text-violet-600 mb-2 uppercase tracking-wide">
-                    {product.brand}
-                  </div>
-                  <h3 className="font-bold text-gray-900 mb-1 line-clamp-1 group-hover:text-violet-600 transition-colors">
-                    {product.name}
-                  </h3>
-
-                  {/* Rating Mock */}
-                  <div className="flex items-center gap-1 mb-4">
-                    {[...Array(5)].map((_, i) => (
-                      <svg
-                        key={i}
-                        className={`w-3 h-3 ${i < 4 ? "text-yellow-400" : "text-gray-300"}`}
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                    ))}
-                    <span className="text-xs text-gray-400 ml-1">(42)</span>
-                  </div>
-
-                  <div className="mt-auto flex items-center justify-between">
-                    <div>
-                      {product.applied_offer > 0 && (
-                        <div className="text-sm text-gray-400 line-through">
-                          ₹{product.base_price?.toLocaleString()}
-                        </div>
-                      )}
-                      <div className="text-lg font-bold text-gray-900">
-                        ₹{product.final_price?.toLocaleString()}
+          <>
+            <div className="deals-grid grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
+              {data?.products?.map((product, index) => (
+                <Link
+                  key={product._id}
+                  to={`/products/${product._id}`}
+                  className="deal-card translate-y-[50px] opacity-0 group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 flex flex-col"
+                >
+                  {/* Image Container */}
+                  <div className="relative aspect-[4/3] bg-gray-100 overflow-hidden">
+                    {product.applied_offer > 0 && (
+                      <div className="absolute top-3 left-3 z-10 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+                        -{product.applied_offer}% OFF
                       </div>
-                    </div>
-                    <button className="p-2 bg-gray-100 rounded-full text-gray-600 group-hover:bg-violet-600 group-hover:text-white transition-all duration-300 hover:scale-105 shadow-sm">
-                      <ShoppingCart className="w-5 h-5" />
-                    </button>
+                    )}
+
+                    <img
+                      src={product.images[0]}
+                      alt={product.name}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300" />
                   </div>
-                </div>
-              </Link>
-            ))}
-          </div>
+
+                  {/* Content */}
+                  <div className="p-5 flex-1 flex flex-col">
+                    <div className="text-xs font-medium text-violet-600 mb-2 uppercase tracking-wide">
+                      {product.brand}
+                    </div>
+                    <h3 className="font-bold text-gray-900 mb-1 line-clamp-1 group-hover:text-violet-600 transition-colors">
+                      {product.name}
+                    </h3>
+
+                    {/* Rating Mock */}
+                    <div className="flex items-center gap-1 mb-4">
+                      {[...Array(5)].map((_, i) => (
+                        <svg
+                          key={i}
+                          className={`w-3 h-3 ${i < 4 ? "text-yellow-400" : "text-gray-300"}`}
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                      ))}
+                      <span className="text-xs text-gray-400 ml-1">(42)</span>
+                    </div>
+
+                    <div className="mt-auto flex items-center justify-between">
+                      <div>
+                        {product.applied_offer > 0 && (
+                          <div className="text-sm text-gray-400 line-through">
+                            ₹{product.base_price?.toLocaleString()}
+                          </div>
+                        )}
+                        <div className="text-lg font-bold text-gray-900">
+                          ₹{product.final_price?.toLocaleString()}
+                        </div>
+                      </div>
+                      <button className="p-2 bg-gray-100 rounded-full text-gray-600 group-hover:bg-violet-600 group-hover:text-white transition-all duration-300 hover:scale-105 shadow-sm">
+                        <ShoppingCart className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+            <div className="mt-12">
+              <Pagination
+                pagination={{
+                  page: data?.currentPage,
+                  totalPages: data?.totalPages,
+                }}
+                page={page}
+                setPage={setPage}
+              />
+            </div>
+          </>
         )}
       </div>
     </div>

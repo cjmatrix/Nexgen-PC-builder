@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { setAiPc } from "../store/slices/aiSlice";
 import { showCustomToast } from "../utils/toastUtils";
+import { setError } from "../store/slices/aiSlice";
 
 import { useNavigate } from "react-router-dom";
 
@@ -22,6 +23,11 @@ const NotificationListener = () => {
       const data = JSON.parse(event.data);
       console.log("recived", data);
       if (data.type === "connected") return;
+
+      if(data.type==="error"){
+        dispatch(setError(data.message))
+        return;
+      }
 
       if (data.aiProduct) {
         dispatch(setAiPc(data.aiProduct));

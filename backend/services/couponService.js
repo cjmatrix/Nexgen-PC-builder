@@ -24,7 +24,10 @@ const createCoupon = async (data) => {
     discountType === "fixed" &&
     Number(discountValue) >= Number(minOrderValue)
   ) {
-    throw new AppError("Fixed discount must be less than Minimum Order Value", HTTP_STATUS.BAD_REQUEST);
+    throw new AppError(
+      "Fixed discount must be less than Minimum Order Value",
+      HTTP_STATUS.BAD_REQUEST,
+    );
   }
 
   const coupon = await Coupon.create({
@@ -60,11 +63,15 @@ const getAllCoupons = async ({ page = 1, limit = 10, search, status }) => {
     .limit(limit * 1)
     .skip((page - 1) * limit);
 
+  const totalPages = Math.ceil(count / limit);
+
+  console.log(totalPages, "Inside serv");
+
   return {
     coupons,
     total: count,
-    page: Number(page),
-    pages: Math.ceil(count / limit),
+    page,
+    totalPages,
   };
 };
 
@@ -108,7 +115,6 @@ const updateCoupon = async (id, updateData) => {
 
   Object.assign(coupon, updateData);
 
-  
   if (
     coupon.discountType === "fixed" &&
     Number(coupon.discountValue) >= Number(coupon.minOrderValue)

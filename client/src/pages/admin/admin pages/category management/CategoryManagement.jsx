@@ -34,7 +34,7 @@ const CategoryManagement = () => {
         params: {
           search: searchInput,
           page,
-          limit: 3,
+          limit: 10,
           status,
         },
       });
@@ -84,7 +84,7 @@ const CategoryManagement = () => {
   //   );
 
   return (
-    <div className="p-8 bg-gray-100 min-h-screen font-sans">
+    <div className="animate-fade-up font-sans">
       <CustomModal
         isOpen={modal.isOpen}
         onClose={closeModal}
@@ -94,7 +94,7 @@ const CategoryManagement = () => {
         type={modal.type}
       />
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-        <h1 className="text-2xl font-bold text-gray-800">
+        <h1 className="text-3xl font-bold text-gray-900">
           Category Management
         </h1>
         <Link

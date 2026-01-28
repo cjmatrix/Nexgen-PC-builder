@@ -23,7 +23,7 @@ export const addToCart = createAsyncThunk(
       const response = await api.post("/cart/add", { productId, quantity ,customBuild});
       return response.data;
     } catch (error) {
-      console.log(error.response.data)
+      console.log(error.response.data.message)
       return rejectWithValue(
         error.response?.data?.message || "Failed to add to cart"
       );

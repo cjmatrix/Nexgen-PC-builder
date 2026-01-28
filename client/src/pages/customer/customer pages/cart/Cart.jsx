@@ -305,12 +305,12 @@ const Cart = () => {
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Coupon</span>
-                      <span className="font-medium text-green-600">
-                        -₹{summary.couponDiscount.toLocaleString()}
+                      <span className="font-medium text-red-600">
+                        ₹{summary.couponDiscount.toLocaleString()}
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Discount</span>
+                      <span className="text-gray-600">Total Discount</span>
                       <span className="font-medium text-green-600">
                         -₹{summary.discount.toLocaleString()}
                       </span>

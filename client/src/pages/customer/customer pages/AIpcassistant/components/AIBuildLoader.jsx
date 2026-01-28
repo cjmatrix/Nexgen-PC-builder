@@ -5,7 +5,6 @@ import { BrainCircuit, Cpu, Database, Zap, Search, Cog } from "lucide-react";
 
 gsap.registerPlugin(useGSAP);
 
-// Move steps outside to keep reference stable
 const STEPS = [
   {
     text: "Analyzing detailed requirements...",
@@ -48,7 +47,6 @@ const AIBuildLoader = () => {
     () => {
       const tl = gsap.timeline({ repeat: -1 });
 
-     
       gsap.to(".ring-1", {
         rotation: 360,
         duration: 20,
@@ -68,7 +66,6 @@ const AIBuildLoader = () => {
         repeat: -1,
       });
 
-     
       gsap.to(".core-glow", {
         scale: 1.5,
         opacity: 0,
@@ -79,7 +76,6 @@ const AIBuildLoader = () => {
     },
     { scope: containerRef },
   );
-
 
   useGSAP(
     () => {
@@ -123,13 +119,11 @@ const AIBuildLoader = () => {
         </div>
       </div>
 
-  
       <div className="w-full max-w-md space-y-6 text-center z-10">
         <h3 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600">
           Constructing Neural Build
         </h3>
 
-      
         <div className="h-16 flex flex-col items-center justify-center relative">
           <div className="step-text flex items-center gap-3 text-lg font-medium text-gray-600 bg-white/50 backdrop-blur-sm px-6 py-2 rounded-full border border-gray-200 shadow-sm">
             {STEPS[currentStep].icon}
@@ -137,7 +131,6 @@ const AIBuildLoader = () => {
           </div>
         </div>
 
-       
         <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden relative">
           <div
             className="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 transition-all duration-1000 ease-out"
@@ -146,6 +139,10 @@ const AIBuildLoader = () => {
             <div className="absolute inset-0 bg-white/30 w-full animate-[shimmer_1s_infinite]"></div>
           </div>
         </div>
+
+        <p className="text-sm text-gray-500 mt-2 font-medium">
+          You can browse other products, we will notify you when it's done.
+        </p>
       </div>
 
       <style>{`

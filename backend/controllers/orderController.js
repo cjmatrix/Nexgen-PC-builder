@@ -61,7 +61,7 @@ export const cancelOrder = async (req, res) => {
     req.params.id,
     itemId,
     reason,
-    req.user._id,
+    req.user,
   );
   res.status(HTTP_STATUS.OK).json(updatedOrder);
 };

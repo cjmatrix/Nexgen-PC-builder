@@ -305,7 +305,7 @@ const AddProductForm = () => {
 
     const productPayload = {
       ...data,
-      base_price: data.base_price ? Number(data.base_price) * 100 : totalPrice, 
+      base_price: data.base_price ? Number(data.base_price) * 100 : totalPrice,
       default_config: {
         cpu: selected.cpu._id,
         motherboard: selected.motherboard._id,
@@ -398,7 +398,7 @@ const AddProductForm = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-10 pb-12 px-4 sm:px-6 lg:px-8 font-sans">
+    <div className="animate-fade-up min-h-screen bg-gray-50 pt-10 pb-12 px-4 sm:px-6 lg:px-8 font-sans">
       <CustomModal
         isOpen={modal.isOpen}
         onClose={closeModal}

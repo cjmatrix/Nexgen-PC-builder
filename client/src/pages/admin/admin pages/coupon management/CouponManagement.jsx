@@ -93,7 +93,7 @@ const CouponManagement = () => {
   };
 
   return (
-    <div className="p-8 bg-gray-100 min-h-screen font-sans">
+    <div className="animate-fade-up font-sans">
       <CustomModal
         isOpen={modal.isOpen}
         onClose={closeModal}
@@ -103,7 +103,7 @@ const CouponManagement = () => {
         type={modal.type}
       />
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-        <h1 className="text-2xl font-bold text-gray-800">Coupon Management</h1>
+        <h1 className="text-3xl font-bold text-gray-800">Coupon Management</h1>
         <Link
           to="/admin/coupons/create"
           className="flex items-center gap-2 bg-[#0f172a] text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors shadow-sm"
@@ -231,7 +231,11 @@ const CouponManagement = () => {
           </table>
         </div>
       </div>
-      <Pagination pagination={data?.pagination} page={page} setPage={setPage} />
+      <Pagination
+        pagination={{ page: data?.page, totalPages: data?.totalPages }}
+        page={page}
+        setPage={setPage}
+      />
     </div>
   );
 };

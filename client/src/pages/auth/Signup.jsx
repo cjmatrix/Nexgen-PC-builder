@@ -19,8 +19,7 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import CustomModal from "../../components/CustomModal";
-import { toast } from "react-toastify";
-import CustomToast from "../../components/CustomToast";
+import { showCustomToast } from "../../utils/toastUtils";
 
 const Signup = () => {
   const [step, setStep] = useState(1);
@@ -119,26 +118,7 @@ const Signup = () => {
         setTimer(60);
         setCanResend(false);
         dispatch(reset());
-        toast(<CustomToast message={"email sent"} />, {
-          position: "top-right",
-          autoClose: false,
-          hideProgressBar: true,
-          closeOnClick: false,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-          style: {
-            background: "transparent",
-            boxShadow: "none",
-            padding: 0,
-            minHeight: "unset",
-          },
-          bodyStyle: {
-            padding: 0,
-            margin: 0,
-          },
-          closeButton: false,
-        });
+        showCustomToast("Verification code sent to your email");
       })
       .catch((error) => {
         setModalConfig({
@@ -443,7 +423,7 @@ const Signup = () => {
 
               <div>
                 <a
-                  href="http://localhost:5000/api/v1/auth/google"
+                  href={`${import.meta.env.VITE_API_URL}/auth/google`}
                   className="w-full flex items-center justify-center px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 transition-all"
                 >
                   <svg

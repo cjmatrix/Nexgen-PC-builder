@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: nexgen-backend-dev
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - MONGO_URI=mongodb://mongodb:27017/nexgen_pc_builder
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CLIENT_URL=http://localhost:5173
+      - NODE_ENV=development
+     
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - nexgen-network
+    volumes:
+      - ./backend:/app
+      - /app/node_modules 
+    command: npm run dev
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile.dev
+    container_name: nexgen-client-dev
+    ports:
+      - "5173:5173"
+    environment:
+      - CHOKIDAR_USEPOLLING=true 
+    depends_on:
+      - backend
+    networks:
+      - nexgen-network
+    volumes:
+      - ./client:/app
+      - /app/node_modules
