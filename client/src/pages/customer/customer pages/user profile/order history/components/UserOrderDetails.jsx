@@ -9,6 +9,7 @@ import {
   Wrench,
   Sparkles,
 } from "lucide-react";
+import { Transition } from "react-transition-group";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../../../../../../api/axios";
 import ItemDetailsModal from "./ItemDetailsModal";
@@ -17,6 +18,7 @@ import { useRef } from "react";
 import ReactDOM from "react-dom";
 import { usePopupAnimation } from "../../../../../../hooks/usePopupAnimation";
 const UserOrderDetails = ({ isOpen, onClose, order }) => {
+  
   const queryClient = useQueryClient();
   const [reason, setReason] = useState("");
   const [isActionModalOpen, setIsActionModalOpen] = useState(false);
@@ -35,7 +37,17 @@ const UserOrderDetails = ({ isOpen, onClose, order }) => {
     alt: "",
   });
 
-  usePopupAnimation({ isOpen, containerRef, overlayRef, modalRef });
+  const { closePopup } = usePopupAnimation({
+     isOpen,
+     containerRef,
+     overlayRef,
+     modalRef,
+   });
+
+   const onExit=()=>{
+    closePopup();
+   }
+
   const closeImageModal = () => {
     setImageModal((prev) => ({ ...prev, isOpen: false }));
   };
@@ -105,7 +117,7 @@ const UserOrderDetails = ({ isOpen, onClose, order }) => {
     },
   });
 
-  if (!isOpen || !order) return null;
+  if (!order) return null;
 
   const handleActionClick = (type, item = null) => {
     setActionType(type);
@@ -229,6 +241,13 @@ const UserOrderDetails = ({ isOpen, onClose, order }) => {
   };
 
   return ReactDOM.createPortal(
+     <Transition
+      in={isOpen}
+      timeout={1000}
+      onExit={onExit}
+      nodeRef={containerRef}
+      unmountOnExit
+    >
     <div ref={containerRef}>
       <div
         ref={overlayRef}
@@ -505,7 +524,8 @@ const UserOrderDetails = ({ isOpen, onClose, order }) => {
           order={order}
         />
       </div>
-    </div>,
+    </div>
+    </Transition>,
     document.body,
   );
 };

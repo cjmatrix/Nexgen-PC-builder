@@ -153,16 +153,23 @@ const OrderHistory = () => {
   };
 
   const StatusBadge = ({ status }) => {
-    let color = "bg-gray-100 text-gray-800";
-    if (status === "Processing") color = "bg-blue-100 text-blue-800";
-    if (status === "Shipped") color = "bg-purple-100 text-purple-800";
-    if (status === "Delivered") color = "bg-green-100 text-green-800";
-    if (status === "Cancelled") color = "bg-red-100 text-red-800";
-    if (status === "Returned") color = "bg-orange-100 text-orange-800";
+    let color = "bg-gray-50 text-gray-700 border-gray-200";
+    if (status === "Processing")
+      color = "bg-amber-50 text-amber-700 border-amber-200";
+    if (status === "Shipped")
+      color = "bg-indigo-50 text-indigo-700 border-indigo-200";
+    if (status === "Delivered")
+      color = "bg-emerald-50 text-emerald-700 border-emerald-200";
+    if (status === "Cancelled")
+      color = "bg-rose-50 text-rose-700 border-rose-200";
+    if (status === "Returned" || status === "Return Approved")
+      color = "bg-slate-50 text-slate-700 border-slate-200";
+    if (status === "Return Requested")
+      color = "bg-orange-50 text-orange-700 border-orange-200";
 
     return (
       <span
-        className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${color}`}
+        className={`px-3 py-1 rounded-full text-xs font-medium border ${color} shadow-xs capitalize`}
       >
         {status}
       </span>
@@ -223,23 +230,27 @@ const OrderHistory = () => {
               {data.orders.map((order) => (
                 <div
                   key={order._id}
-                  className="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-md transition-shadow flex flex-col justify-between h-auto"
+                  className="bg-white border border-gray-100 rounded-2xl p-5 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-auto group"
                 >
                   {/* Card Header */}
-                  <div className="flex justify-between items-start mb-4">
+                  <div className="flex justify-between items-start mb-5 pb-4 border-b border-gray-50">
                     <div>
-                      <p className="text-xs text-gray-500 uppercase font-semibold">
-                        Order ID
+                      <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-1">
+                        Order #{order.orderId}
                       </p>
-                      <p className="text-sm font-bold text-gray-900 break-all">
-                        {order.orderId}
+                      <p className="text-xs font-medium text-gray-500">
+                        {new Date(order.createdAt).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        })}
                       </p>
                     </div>
                     <StatusBadge status={order.status} />
                   </div>
 
                   {/* Order Images Stack */}
-                  <div className="flex items-center mb-4 pl-2">
+                  <div className="flex items-center mb-6 pl-2 min-h-[48px]">
                     {order.orderItems.slice(0, 4).map((item, index) => {
                       const image =
                         item.isCustomBuild && !item.isAiBuild
@@ -248,7 +259,7 @@ const OrderHistory = () => {
                       return (
                         <div
                           key={item._id || index}
-                          className="relative w-20 h-20 md:w-16 md:h-16 rounded-full border-2 border-white -ml-4 md:-ml-3 hover:scale-110 transition-transform cursor-pointer bg-white"
+                          className="relative w-14 h-14 rounded-full border-[3px] border-white -ml-3 shadow-md hover:scale-110 hover:z-20 transition-all cursor-pointer bg-white overflow-hidden"
                           title={item.name}
                           style={{ zIndex: 10 - index }}
                         >
@@ -258,13 +269,13 @@ const OrderHistory = () => {
                             className="w-full h-full object-cover rounded-full"
                           />
                           {item.isCustomBuild && !item.isAiBuild && (
-                            <div className="absolute -bottom-1 -right-1 bg-purple-100 p-1 rounded-full border border-white shadow-sm z-20">
-                              <Wrench className="w-3 h-3 text-purple-600" />
+                            <div className="absolute inset-0 bg-purple-500/10 flex items-center justify-center">
+                              <Wrench className="w-4 h-4 text-purple-600" />
                             </div>
                           )}
                           {item.isAiBuild && (
-                            <div className="absolute -bottom-1 -right-1 bg-indigo-100 p-1 rounded-full border border-white shadow-sm z-20">
-                              <Sparkles className="w-3 h-3 text-indigo-600" />
+                            <div className="absolute inset-0 bg-indigo-500/10 flex items-center justify-center">
+                              <Sparkles className="w-4 h-4 text-indigo-600" />
                             </div>
                           )}
                         </div>
@@ -272,7 +283,7 @@ const OrderHistory = () => {
                     })}
                     {order.orderItems.length > 4 && (
                       <div
-                        className="relative w-12 h-12 md:w-10 md:h-10 rounded-full border-2 border-white -ml-4 md:-ml-3 bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-600 z-0"
+                        className="relative w-10 h-10 rounded-full border-[3px] border-white -ml-3 bg-gray-50 shadow-sm flex items-center justify-center text-xs font-bold text-gray-500 z-0"
                         title={`${order.orderItems.length - 4} more items`}
                       >
                         +{order.orderItems.length - 4}
@@ -281,29 +292,25 @@ const OrderHistory = () => {
                   </div>
 
                   {/* Card Body */}
-                  <div className="space-y-3 mb-6">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Date</span>
-                      <span className="text-gray-900 font-medium">
-                        {new Date(order.createdAt).toLocaleDateString()}
+                  <div className="space-y-4 mb-6">
+                    <div className="flex justify-between items-baseline">
+                      <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        Total Amount
                       </span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Total Amount</span>
-                      <span className="text-gray-900 font-bold">
+                      <span className="text-lg font-bold text-gray-900">
                         ₹{(order.totalPrice / 100).toLocaleString()}
                       </span>
                     </div>
                   </div>
 
                   {/* Card Actions */}
-                  <div className="flex items-center justify-between pt-4 border-t border-gray-100 mt-auto">
+                  <div className="flex items-center gap-3 pt-2 mt-auto">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         generateInvoice(order);
                       }}
-                      className="flex items-center gap-2 text-xs font-medium text-gray-600 hover:text-gray-900 transition-colors px-2 py-1.5 rounded hover:bg-gray-100"
+                      className="flex-1 flex items-center justify-center gap-2 text-xs font-semibold text-gray-700 bg-gray-50 hover:bg-gray-100 hover:text-gray-900 transition-colors py-2.5 rounded-lg border border-gray-200"
                       title="Download Invoice"
                     >
                       <FileText className="w-4 h-4" />
@@ -312,12 +319,15 @@ const OrderHistory = () => {
                     <button
                       onClick={() => handleViewDetails(order._id)}
                       disabled={detailsLoadingId === order._id}
-                      className="flex items-center gap-1 text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors disabled:opacity-50"
+                      className="flex-1 flex items-center justify-center gap-1 text-xs font-bold text-white bg-gray-900 hover:bg-black transition-all py-2.5 rounded-lg shadow-gray-200 hover:shadow-lg disabled:opacity-50 disabled:shadow-none"
                     >
-                      {detailsLoadingId === order._id
-                        ? "Loading..."
-                        : "View Details"}
-                      <ChevronRight className="w-4 h-4" />
+                      {detailsLoadingId === order._id ? (
+                        "Loading..."
+                      ) : (
+                        <>
+                          View Details <ChevronRight className="w-3 h-3" />
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>

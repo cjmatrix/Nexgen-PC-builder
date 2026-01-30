@@ -1,8 +1,10 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useWishlist } from "../../../../../hooks/useWishlist";
 import { ShoppingCart, Trash2, Heart, ArrowRight } from "lucide-react";
 import CustomModal from "../../../../../components/CustomModal";
+import TransitionWrapper from "../../../../../components/TransitionWrapper";
+import { TransitionGroup } from "react-transition-group";
 
 const Wishlist = () => {
   const navigate = useNavigate();
@@ -10,7 +12,7 @@ const Wishlist = () => {
     useWishlist();
 
   const [showErrorModal, setShowErrorModal] = React.useState(false);
-
+  const [exitModes, setExitModes] = useState({});
   useEffect(() => {
     if (moveError) {
       setShowErrorModal(true);
@@ -18,10 +20,12 @@ const Wishlist = () => {
   }, [moveError]);
 
   const handleMoveToCart = async (productId) => {
+    setExitModes((prev) => ({ ...prev, [productId]: "move" }));
     moveToCart(productId);
   };
 
   const handleRemove = async (productId) => {
+    setExitModes((prev) => ({ ...prev, [productId]: "delete" }));
     removeFromWishlist(productId);
   };
   console.log(moveError?.response?.data.message);
@@ -45,31 +49,18 @@ const Wishlist = () => {
         <p className="text-gray-500 font-medium text-lg mb-8 ml-11 md:ml-14">
           Save your favorite items for later
         </p>
-        {items.length === 0 ? (
-          <div className="text-center py-20 bg-white rounded-2xl shadow-sm border border-gray-100">
-            <div className="bg-gray-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Heart className="h-10 w-10 text-gray-300" />
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Your wishlist is empty
-            </h2>
-            <p className="text-gray-500 mb-8 max-w-md mx-auto">
-              Save items you love so you can come back to them later.
-            </p>
-            <Link
-              to="/products"
-              className="inline-flex items-center gap-2 bg-gray-900 text-white px-8 py-3 rounded-lg font-bold hover:bg-gray-800 transition-all"
-            >
-              Start Shopping <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {items.map((item) => {
-              const product = item.product;
-              if (!product) return null;
+        
 
-              return (
+        <TransitionGroup className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {items.map((item) => {
+            const product = item.product;
+            if (!product) return null;
+
+            return (
+              <TransitionWrapper
+                key={product._id}
+                mode={exitModes[product._id]}
+              >
                 <div
                   key={product._id}
                   className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col group hover:shadow-md transition-shadow"
@@ -127,8 +118,32 @@ const Wishlist = () => {
                     </div>
                   </div>
                 </div>
-              );
-            })}
+              </TransitionWrapper>
+            );
+          })}
+        </TransitionGroup>
+
+        {items.length === 0 && (
+          <div className="text-center py-20 bg-white rounded-2xl shadow-sm border border-gray-100 opacity-0 animate-fade-up"
+            style={{
+              animationDelay:"500ms"
+            }}
+          >
+            <div className="bg-gray-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Heart className="h-10 w-10 text-gray-300" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              Your wishlist is empty
+            </h2>
+            <p className="text-gray-500 mb-8 max-w-md mx-auto">
+              Save items you love so you can come back to them later.
+            </p>
+            <Link
+              to="/products"
+              className="inline-flex items-center gap-2 bg-gray-900 text-white px-8 py-3 rounded-lg font-bold hover:bg-gray-800 transition-all"
+            >
+              Start Shopping <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
         )}
       </div>

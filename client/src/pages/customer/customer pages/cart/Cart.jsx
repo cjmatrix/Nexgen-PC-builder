@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { Minus, Plus, Trash2, ArrowRight, Tag, X } from "lucide-react";
+import { TransitionGroup } from "react-transition-group";
+import TransitionWrapper from "../../../../components/TransitionWrapper";
 import CustomModal from "../../../../components/CustomModal";
 import api from "../../../../api/axios";
 import { useQuery } from "@tanstack/react-query";
@@ -132,165 +134,154 @@ const Cart = () => {
             Your Cart
           </h1>
 
-          {items.length === 0 ? (
-            <div className="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-100">
-              <h2 className="text-xl font-medium text-gray-900 mb-4">
-                Your cart is empty
-              </h2>
-              <Link
-                to="/products"
-                className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium"
-              >
-                Continue Shopping <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </div>
-          ) : (
+         
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2 space-y-6">
-                {items.map((item) => {
-                  const isCustom = item.isCustomBuild;
-                  const name = isCustom
-                    ? item.customBuild.name
-                    : item.product?.name;
-                  const image =
-                    isCustom && !item.isAiBuild
-                      ? "/custom-pc.png"
-                      : isCustom && item.isAiBuild
-                        ? item.customBuild.aiImages || "/custom-pc.png"
-                        : item.product?.images?.[0] ||
-                          "https://placehold.co/400";
+                <TransitionGroup component={null}>
+                  {items.map((item) => {
+                    const isCustom = item.isCustomBuild;
+                    const name = isCustom
+                      ? item.customBuild.name
+                      : item.product?.name;
+                    const image =
+                      isCustom && !item.isAiBuild
+                        ? "/custom-pc.png"
+                        : isCustom && item.isAiBuild
+                          ? item.customBuild.aiImages || "/custom-pc.png"
+                          : item.product?.images?.[0] ||
+                            "https://placehold.co/400";
 
-                  let description = item.product?.description;
-                  if (isCustom && item.customBuild?.components) {
-                    const comps = item.customBuild.components;
-                    const cpu = comps.cpu?.name || "";
-                    const gpu = comps.gpu?.name || "";
-                    description = [cpu, gpu].filter(Boolean).join(" • ");
-                  }
+                    let description = item.product?.description;
+                    if (isCustom && item.customBuild?.components) {
+                      const comps = item.customBuild.components;
+                      const cpu = comps.cpu?.name || "";
+                      const gpu = comps.gpu?.name || "";
+                      description = [cpu, gpu].filter(Boolean).join(" • ");
+                    }
 
-                  const basePrice = isCustom
-                    ? item.customBuild.totalPrice
-                    : item.product?.base_price;
-                  const finalPrice = isCustom
-                    ? item.customBuild.totalPrice
-                    : item.product?.final_price;
-                  const appliedOffer = isCustom
-                    ? 0
-                    : item.product?.applied_offer;
+                    const basePrice = isCustom
+                      ? item.customBuild.totalPrice
+                      : item.product?.base_price;
+                    const finalPrice = isCustom
+                      ? item.customBuild.totalPrice
+                      : item.product?.final_price;
+                    const appliedOffer = isCustom
+                      ? 0
+                      : item.product?.applied_offer;
 
-                  const removeId = isCustom ? item._id : item.product?._id;
+                    const removeId = isCustom ? item._id : item.product?._id;
 
-                  return (
-                    <div
-                      key={item._id}
-                      className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col sm:flex-row gap-6"
-                    >
-                      {/* Image */}
-                      <div className="w-full sm:w-40 h-40 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                        <img
-                          src={image}
-                          alt={name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-
-                      <div className="flex-1 flex flex-col justify-between">
-                        <div>
-                          <div className="flex justify-between items-start mb-2">
-                            <h3 className="text-xl font-bold text-gray-900">
-                              {name}
-                            </h3>
+                    return (
+                      <TransitionWrapper key={item._id} mode="delete">
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col sm:flex-row gap-6">
+                          {/* Image */}
+                          <div className="w-full sm:w-40 h-40 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                            <img
+                              src={image}
+                              alt={name}
+                              className="w-full h-full object-cover"
+                            />
                           </div>
 
-                          <p className="text-sm text-gray-500 line-clamp-2 mb-4">
-                            {description}
-                          </p>
-
-                          <button
-                            onClick={() =>
-                              handleRemove(
-                                isCustom ? item._id : item.product?._id,
-                              )
-                            }
-                            className="inline-flex items-center text-sm text-gray-400 hover:text-red-500 transition-colors bg-gray-50 hover:bg-red-50 px-3 py-1.5 rounded-lg"
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Remove
-                          </button>
-                        </div>
-
-                        <div className="flex justify-between items-end mt-4 sm:mt-0">
-                          <div>
-                            {appliedOffer > 0 ? (
-                              <div className="flex flex-col items-start bg-gray-50 p-2 rounded-lg">
-                                <span className="text-xs text-gray-400 line-through">
-                                  ₹{(basePrice / 100).toLocaleString()}
-                                </span>
-                                <span className="text-lg font-bold text-gray-900">
-                                  ₹ {(finalPrice / 100).toLocaleString()}
-                                </span>
-                                <span className="text-[10px] text-green-600 font-bold bg-green-100 px-1.5 py-0.5 rounded-full mt-0.5">
-                                  {appliedOffer}% OFF
-                                </span>
+                          <div className="flex-1 flex flex-col justify-between">
+                            <div>
+                              <div className="flex justify-between items-start mb-2">
+                                <h3 className="text-xl font-bold text-gray-900">
+                                  {name}
+                                </h3>
                               </div>
-                            ) : (
-                              <div className="text-lg font-bold text-gray-900">
-                                ₹ {(basePrice / 100).toLocaleString()}
-                              </div>
-                            )}
-                          </div>
 
-                          <div className="flex flex-col items-end gap-1">
-                            <div className="flex items-center gap-3 bg-gray-50 rounded-lg p-1">
+                              <p className="text-sm text-gray-500 line-clamp-2 mb-4">
+                                {description}
+                              </p>
+
                               <button
                                 onClick={() =>
-                                  handleUpdateQuantity(
+                                  handleRemove(
                                     isCustom ? item._id : item.product?._id,
-                                    item.quantity - 1,
                                   )
                                 }
-                                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-white rounded-md transition-all shadow-sm disabled:opacity-50"
-                                disabled={item.quantity <= 1}
+                                className="inline-flex items-center text-sm text-gray-400 hover:text-red-500 transition-colors bg-gray-50 hover:bg-red-50 px-3 py-1.5 rounded-lg"
                               >
-                                <Minus className="h-4 w-4" />
-                              </button>
-                              <span className="text-sm font-semibold w-8 text-center">
-                                {item.quantity}
-                              </span>
-                              <button
-                                onClick={() =>
-                                  handleUpdateQuantity(
-                                    isCustom ? item._id : item.product?._id,
-                                    item.quantity + 1,
-                                  )
-                                }
-                                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-white rounded-md transition-all shadow-sm"
-                              >
-                                <Plus className="h-4 w-4" />
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Remove
                               </button>
                             </div>
 
-                            {errors[
-                              isCustom ? item._id : item.product?._id
-                            ] && (
-                              <p className="text-red-500 text-xs font-medium">
-                                {
-                                  errors[
-                                    isCustom ? item._id : item.product?._id
-                                  ]
-                                }
-                              </p>
-                            )}
+                            <div className="flex justify-between items-end mt-4 sm:mt-0">
+                              <div>
+                                {appliedOffer > 0 ? (
+                                  <div className="flex flex-col items-start bg-gray-50 p-2 rounded-lg">
+                                    <span className="text-xs text-gray-400 line-through">
+                                      ₹{(basePrice / 100).toLocaleString()}
+                                    </span>
+                                    <span className="text-lg font-bold text-gray-900">
+                                      ₹ {(finalPrice / 100).toLocaleString()}
+                                    </span>
+                                    <span className="text-[10px] text-green-600 font-bold bg-green-100 px-1.5 py-0.5 rounded-full mt-0.5">
+                                      {appliedOffer}% OFF
+                                    </span>
+                                  </div>
+                                ) : (
+                                  <div className="text-lg font-bold text-gray-900">
+                                    ₹ {(basePrice / 100).toLocaleString()}
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="flex flex-col items-end gap-1">
+                                <div className="flex items-center gap-3 bg-gray-50 rounded-lg p-1">
+                                  <button
+                                    onClick={() =>
+                                      handleUpdateQuantity(
+                                        isCustom ? item._id : item.product?._id,
+                                        item.quantity - 1,
+                                      )
+                                    }
+                                    className="p-2 text-gray-600 hover:text-gray-900 hover:bg-white rounded-md transition-all shadow-sm disabled:opacity-50"
+                                    disabled={item.quantity <= 1}
+                                  >
+                                    <Minus className="h-4 w-4" />
+                                  </button>
+                                  <span className="text-sm font-semibold w-8 text-center">
+                                    {item.quantity}
+                                  </span>
+                                  <button
+                                    onClick={() =>
+                                      handleUpdateQuantity(
+                                        isCustom ? item._id : item.product?._id,
+                                        item.quantity + 1,
+                                      )
+                                    }
+                                    className="p-2 text-gray-600 hover:text-gray-900 hover:bg-white rounded-md transition-all shadow-sm"
+                                  >
+                                    <Plus className="h-4 w-4" />
+                                  </button>
+                                </div>
+
+                                {errors[
+                                  isCustom ? item._id : item.product?._id
+                                ] && (
+                                  <p className="text-red-500 text-xs font-medium">
+                                    {
+                                      errors[
+                                        isCustom ? item._id : item.product?._id
+                                      ]
+                                    }
+                                  </p>
+                                )}
+                              </div>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </div>
-                  );
-                })}
+                      </TransitionWrapper>
+                    );
+                  })}
+                </TransitionGroup>
               </div>
 
               {/* Order Summary */}
-              <div className="lg:col-span-1">
+              {items.length!==0 && <div className="lg:col-span-1">
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 sticky top-24">
                   <h2 className="text-lg font-bold text-gray-900 mb-6">
                     Order Summary
@@ -407,8 +398,28 @@ const Cart = () => {
                   </div>
                 </div>
               </div>
+              }
             </div>
-          )}
+
+             {items.length === 0 && (
+            <div className="animate-fade-up text-center py-12 bg-white rounded-xl shadow-sm border border-gray-100 opacity-0"
+              style={{
+                animationDelay:"500ms"
+              }}
+            >
+              <h2 className="text-xl font-medium text-gray-900 mb-4">
+                Your cart is empty
+              </h2>
+              <Link
+                to="/products"
+                className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium"
+              >
+                Continue Shopping <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </div>
+          ) 
+        }
+         
         </div>
       </div>
 

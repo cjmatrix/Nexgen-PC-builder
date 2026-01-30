@@ -1,16 +1,19 @@
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 
-export const usePopupAnimation = ({ isOpen, containerRef, overlayRef, modalRef }) => {
+export const usePopupAnimation = ({
+  isOpen,
+  containerRef,
+  overlayRef,
+  modalRef,
+}) => {
   useGSAP(
     () => {
-     
       if (isOpen) {
         const tl = gsap.timeline();
 
-        
         if (overlayRef?.current) {
-           tl.to(overlayRef.current, {
+          tl.to(overlayRef.current, {
             opacity: 1,
             duration: 0.3,
             ease: "power2.out",
@@ -27,11 +30,38 @@ export const usePopupAnimation = ({ isOpen, containerRef, overlayRef, modalRef }
               duration: 0.4,
               ease: "back.out(1.5)",
             },
-            "-=0.2" 
+            "-=0.2",
           );
         }
       }
     },
-    { scope: containerRef, dependencies: [isOpen] }
+    { scope: containerRef, dependencies: [isOpen] },
   );
+
+  const closePopup = () => {
+    const tl = gsap.timeline();
+
+    if (modalRef?.current) {
+      tl.to(modalRef.current, {
+        scale: 0.5,
+        opacity: 0,
+        y: 20,
+        duration: 0.3,
+        ease: "power2.in",
+      });
+    }
+
+    if (overlayRef?.current) {
+      tl.to(
+        overlayRef.current,
+        {
+          opacity: 0,
+          duration: 0.3,
+        },
+        "<",
+      );
+    }
+  };
+
+  return { closePopup };
 };
