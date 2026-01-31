@@ -67,7 +67,7 @@ const updateUserProfile = async (userId, updateData) => {
 
     await user.save();
 
-    console.log("sending email to ", user.email);
+  
 
     try {
       await sendEmail({

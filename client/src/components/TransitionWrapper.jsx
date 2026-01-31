@@ -7,7 +7,7 @@ gsap.registerPlugin(Flip);
 
 const TransitionWrapper = ({ children, mode = "move", ...props }) => {
   const nodeRef = useRef(null);
-  console.log(props)
+
   const onExit = () => {
     if (nodeRef.current) {
       let config;
@@ -26,8 +26,8 @@ const TransitionWrapper = ({ children, mode = "move", ...props }) => {
           opacity: 0,
           y: -100,
           x: 100,
-          scale: 0.2,
-          duration: 0.5,
+          scale: 0.5,
+          duration: 0.3,
           ease: "power3.in",
         };
       }
@@ -39,7 +39,7 @@ const TransitionWrapper = ({ children, mode = "move", ...props }) => {
   const onExited = (node) => {
     const parent = nodeRef.current?.parentElement;
     if (parent) {
-      console.log(parent.children);
+     
       const siblings = [...parent.children].filter((child) => child !== node);
       const state = Flip.getState(siblings);
 
@@ -47,7 +47,7 @@ const TransitionWrapper = ({ children, mode = "move", ...props }) => {
 
       requestAnimationFrame(() => {
         Flip.from(state, {
-          duration: 0.5,
+          duration: 0.3,
           ease: "power2.inOut",
           scale: true,
           absolute: true,
@@ -68,7 +68,7 @@ const TransitionWrapper = ({ children, mode = "move", ...props }) => {
 
   return (
     <Transition
-      timeout={500}
+      timeout={300}
       onExit={onExit}
       {...props}
       onExited={onExited} //onexted like bell that need ring by manager(wrapoprer) to the boss(transitionGrouup)

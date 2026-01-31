@@ -9,7 +9,7 @@ export const getUsers = createAsyncThunk(
       const response = await api.get(
         `/admin/users?page=${page}&limit=${limit}&search=${search}&status=${status}&sort=${sort}`
       );
-      console.log(response.data);
+     
       return response.data;
     } catch (error) {
       const message =
@@ -29,7 +29,7 @@ export const blockUser = createAsyncThunk(
     try {
       const response = await api.patch(`/admin/users/${id}/block`);
 
-      console.log(response.data);
+     
       return response.data;
     } catch (error) {
       const message =
@@ -48,7 +48,7 @@ export const updateUser = createAsyncThunk(
   async ({ id, updateObj }) => {
     try {
       const response = await api.put(`/admin/users/${id}/update`, updateObj);
-      console.log(response.data);
+     
 
       return response.data;
     } catch (error) {
@@ -119,7 +119,7 @@ const userSlice = createSlice({
         );
         state.users[index] = action.payload.user;
 
-        console.log("heyy");
+       
       });
   },
 });

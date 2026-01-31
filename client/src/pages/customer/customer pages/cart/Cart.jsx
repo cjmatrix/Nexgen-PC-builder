@@ -34,7 +34,7 @@ const Cart = () => {
   const closeModal = () => {
     setModalConfig((prev) => ({ ...prev, isOpen: false }));
   };
-  console.log(items);
+
   const { data: availableCoupons, isLoading: couponsLoading } = useQuery({
     queryKey: ["adminCoupons"],
     queryFn: async () => {
@@ -92,12 +92,12 @@ const Cart = () => {
       ).unwrap();
       setErrors((prev) => ({ ...prev, [productId]: null }));
     } catch (error) {
-      console.log(error);
+     
       setErrors((prev) => ({ ...prev, [productId]: error }));
     }
   };
 
-  console.log(items);
+
 
   const handleRemove = (productId) => {
     dispatch(removeFromCart(productId));

@@ -92,7 +92,7 @@ const componentSlice = createSlice({
       })
       .addCase(fetchAdminComponents.fulfilled, (state, action) => {
         state.loading = false;
-        console.log(action.payload);
+       
         state.items = action.payload.components;
         state.pagination = {
           total: action.payload.total,

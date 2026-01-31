@@ -65,7 +65,7 @@ const OrderDetailsModal = ({ isOpen, onClose, order }) => {
         setIsItemDetailsOpen(true);
       }
     } catch (error) {
-      console.log(error);
+     
       setModal({
         isOpen: true,
         title: "Error",

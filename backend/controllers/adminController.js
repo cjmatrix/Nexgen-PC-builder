@@ -370,7 +370,7 @@ const getSalesInsights = async (req, res) => {
   try {
     const { stats, topProducts, salesOverTime } = req.body;
 
-    console.log(req.body);
+  
 
     const productNames = topProducts
       .slice(0, 5)

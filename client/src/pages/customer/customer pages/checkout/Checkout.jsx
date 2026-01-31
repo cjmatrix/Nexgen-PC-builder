@@ -178,7 +178,7 @@ const Checkout = () => {
       { ...orderData, paymentMethod: paymentMethod },
       {
         onSuccess: (data) => {
-          console.log(data);
+       
           setLastOrder(data);
           setStep(3);
           dispatch(fetchCart());

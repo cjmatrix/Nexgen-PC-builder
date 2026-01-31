@@ -32,7 +32,7 @@ export const getAllCoupons = async (req, res, next) => {
   try {
     const { coupons, total, page, totalPages } =
       await couponService.getAllCoupons(req.query);
-    console.log(totalPages, "hereeeeee");
+   
     res.status(HTTP_STATUS.OK).json({
       success: true,
       coupons,

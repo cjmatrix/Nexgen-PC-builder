@@ -29,7 +29,7 @@ const AdminLogin = () => {
     (state) => state.admin
   );
 
-  console.log(adminUser)
+ 
   const [showPassword, setShowPassword] = useState(false);
   const [modalConfig, setModalConfig] = useState({
     isOpen: false,

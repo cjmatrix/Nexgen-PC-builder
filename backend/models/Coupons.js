@@ -35,7 +35,7 @@ const couponSchema = new mongoose.Schema(
 
 
 couponSchema.pre('validate', function() {
-  console.log(this.minOrderValue,this.discountValue,"im hereeeeeeeee");
+ 
 
   if (this.discountType === 'fixed' && this.discountValue >= this.minOrderValue) {
      this.invalidate('discountValue', 'Fixed discount value cannot exceed or equal minimum order value');

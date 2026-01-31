@@ -54,7 +54,7 @@ export default function BlacklistComponents() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries(["blacklist", id]);
-      console.log(data)
+     
       queryClient.invalidateQueries(["blacklist"]);
       setModal({
         isOpen: true,

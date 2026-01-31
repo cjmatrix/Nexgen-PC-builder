@@ -106,7 +106,7 @@ const registerUser = async (userData) => {
         usageLimit: 1,
         allowedUsers: [user._id],
       });
-      console.log("Referral rewards distributed successfully");
+     
     } catch (err) {
       console.error("Failed to distribute referral rewards:", err);
     }
@@ -137,7 +137,7 @@ const verifyOTP = async (email, otp) => {
     throw new AppError(MESSAGES.AUTH.USER_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
   }
 
-  console.log(user);
+
   if (!user.otp || !user.otpExpires) {
     throw new AppError(MESSAGES.AUTH.NO_OTP, HTTP_STATUS.NOT_FOUND);
   }
@@ -167,9 +167,9 @@ const resendOTP = async (email) => {
     throw new AppError(MESSAGES.AUTH.USER_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
   }
 
-  console.log(email, "this wone");
+ 
 
-  console.log(user, "this");
+ 
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   const otpExpires = Date.now() + 10 * 60 * 1000;
 

@@ -116,7 +116,7 @@ const adminSlice = createSlice({
         state.adminUser = action.payload;
       })
       .addCase(fetchAdminProfile.rejected, (state, action) => {
-        console.log("here is error")
+       
         state.isLoading = false;
        
       

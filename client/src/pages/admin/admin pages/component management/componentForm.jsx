@@ -145,7 +145,7 @@ const ComponentForm = () => {
       stock: Number(data.stock),
     };
 
-    console.log(data);
+ 
 
     try {
       if (isEditMode) {

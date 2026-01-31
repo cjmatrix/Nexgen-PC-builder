@@ -23,7 +23,7 @@ export const addToCart = createAsyncThunk(
       const response = await api.post("/cart/add", { productId, quantity ,customBuild});
       return response.data;
     } catch (error) {
-      console.log(error.response.data.message)
+     
       return rejectWithValue(
         error.response?.data?.message || "Failed to add to cart"
       );
@@ -138,7 +138,7 @@ const cartSlice = createSlice({
       .addCase(updateQuantity.fulfilled, (state, action) => {
         state.items = action.payload.cart.items;
         state.summary = action.payload.summary;
-        console.log(state.summary);
+       
       })
 
       // Apply Coupon

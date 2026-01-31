@@ -19,7 +19,7 @@ const createCoupon = async (data) => {
   if (existingCoupon) {
     throw new AppError(MESSAGES.COUPON.ALREADY_EXISTS, HTTP_STATUS.BAD_REQUEST);
   }
-  console.log(discountType, discountValue, minOrderValue);
+ 
   if (
     discountType === "fixed" &&
     Number(discountValue) >= Number(minOrderValue)
@@ -65,7 +65,7 @@ const getAllCoupons = async ({ page = 1, limit = 10, search, status }) => {
 
   const totalPages = Math.ceil(count / limit);
 
-  console.log(totalPages, "Inside serv");
+ 
 
   return {
     coupons,

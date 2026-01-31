@@ -184,7 +184,7 @@ const ProfileSetting = () => {
       if (data.emailChanged) {
         setPendingEmail(data.pendingMail || data.user.email);
         setIsOTPModalOpen(true);
-        console.log(data.user.email);
+       
       } else {
         queryClient.invalidateQueries(["userProfile"]);
         setIsProfileEditing(false);

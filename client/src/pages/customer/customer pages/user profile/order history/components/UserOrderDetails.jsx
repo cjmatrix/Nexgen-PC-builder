@@ -231,12 +231,12 @@ const UserOrderDetails = ({ isOpen, onClose, order }) => {
           },
           staleTime: 1000 * 60 * 5,
         });
-        console.log(data);
+     
         setViewDetailItem({ components: data, item });
         setIsItemDetailsOpen(true);
       }
     } catch (error) {
-      console.log(error);
+    
     }
   };
 

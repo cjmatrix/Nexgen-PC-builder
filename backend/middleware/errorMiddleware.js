@@ -23,7 +23,7 @@ const errorMiddleware = (err, req, res, next) => {
     err.statusCode = 400;
   }
 
-  console.log(err.stack)
+ 
  
   if (process.env.NODE_ENV === "development") {
     res.status(err.statusCode).json({

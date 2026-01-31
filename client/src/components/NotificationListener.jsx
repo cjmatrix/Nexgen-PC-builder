@@ -21,7 +21,7 @@ const NotificationListener = () => {
 
     eventSource.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      console.log("recived", data);
+     
       if (data.type === "connected") return;
 
       if(data.type==="error"){

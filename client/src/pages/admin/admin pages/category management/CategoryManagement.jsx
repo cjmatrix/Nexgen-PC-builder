@@ -26,7 +26,7 @@ const CategoryManagement = () => {
 
   const [searchInput, setSearchInput] = useState("");
 
-  console.log(status);
+ 
   const { data, isLoading, error } = useQuery({
     queryKey: ["adminCategory", searchInput, page, status],
     queryFn: async () => {
@@ -38,7 +38,7 @@ const CategoryManagement = () => {
           status,
         },
       });
-      console.log(response.data);
+     
       return response.data;
     },
   });

@@ -34,7 +34,7 @@ const ProductManagement = () => {
     queryKey: ["adminCategory"],
     queryFn: async () => {
       const response = await api.get("/admin/category");
-      console.log(response.data);
+    
       return response.data;
     },
   });

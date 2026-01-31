@@ -128,7 +128,7 @@ const AddProductForm = () => {
     }
   };
 
-  console.log(selected);
+ 
 
   useEffect(() => {
     if (isEditMode && !location.state) {

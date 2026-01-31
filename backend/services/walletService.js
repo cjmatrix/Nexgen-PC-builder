@@ -87,7 +87,7 @@ const getWalletDetails = async (userId, page = 1, limit = 10) => {
     .limit(limit)
     .skip((page - 1) * limit);
 
-  console.log(transactions);
+
   return {
     balance: user.walletBalance,
     transactions,

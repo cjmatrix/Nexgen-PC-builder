@@ -6,14 +6,14 @@ export const generatePCBuild = createAsyncThunk(
   async (prompt, { rejectWithValue }) => {
     try {
       const response = await axios.post("/ai/generate-pc", { prompt });
-      console.log(response.data);
+    
       // localStorage.setItem("aiBuild", JSON.stringify(response.data.product));
       return response.data;
     } catch (error) {
       let errorMessage = error.message;
       if (error.response?.data) {
         if (typeof error.response.data.message === "object") {
-          console.log(error.response.data);
+          
           errorMessage =
             error.response.data.error?.message ||
             error.response.data.message ||
@@ -29,7 +29,7 @@ export const generatePCBuild = createAsyncThunk(
           }
         }
       }
-      console.log(errorMessage);
+ 
       return rejectWithValue(errorMessage);
     }
   }

@@ -51,11 +51,11 @@ api.interceptors.response.use(
           });
       }
 
-      console.log(originalRequest);
+     
       originalRequest._retry = true;
       isRefreshing = true;
       const isAdmin = originalRequest.url?.includes("/admin");
-      console.log(isAdmin);
+     
 
       try {
         if (isAdmin) {

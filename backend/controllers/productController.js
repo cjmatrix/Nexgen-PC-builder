@@ -4,7 +4,7 @@ import { HTTP_STATUS } from "../constants/httpStatus.js";
 import { MESSAGES } from "../constants/responseMessages.js";
 
 const createProduct = async (req, res) => {
-  console.log(req.body, "hereeeeeeeeeee");
+ 
   const product = await productService.createProduct(req.body);
   res.status(HTTP_STATUS.CREATED).json({ success: true, data: product });
 };

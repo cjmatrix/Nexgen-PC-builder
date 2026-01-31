@@ -16,7 +16,7 @@ const AdminItemDetailsModal = ({ isOpen, onClose, items }) => {
 
   const modifiedComponents = Object.fromEntries(
     Object.entries(components).map(([key, value]) => {
-      console.log(value);
+    
       const { componentId, ...rest } = value;
       return [key, { _id: componentId, ...rest }];
     }),

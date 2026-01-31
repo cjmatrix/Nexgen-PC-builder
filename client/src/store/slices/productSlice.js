@@ -64,7 +64,7 @@ export const deleteProduct = createAsyncThunk(
   async (id, { rejectWithValue }) => {
     try {
       const response = await api.patch(`/admin/products/${id}`);
-      console.log("success");
+     
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Delete failed");

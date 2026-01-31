@@ -225,7 +225,7 @@ const updateProduct = async (id, updateData) => {
 
   if (updateData.category) {
     category = await Category.findById(updateData.category);
-    console.log(category);
+ 
     if (!category)
       throw new AppError(
         MESSAGES.PRODUCT.CATEGORY_NOT_FOUND(updateData.category),

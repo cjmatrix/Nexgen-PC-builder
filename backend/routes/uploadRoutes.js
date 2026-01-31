@@ -10,7 +10,7 @@ router.post("/", upload.single("image"), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ message: "No file uploaded" });
   }
-  console.log("hereeeeeee")
+ 
   const uploadStream = cloudinary.uploader.upload_stream(
     {
       folder: "nexgen-pc-parts",

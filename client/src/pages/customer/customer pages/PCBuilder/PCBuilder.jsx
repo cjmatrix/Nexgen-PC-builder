@@ -196,7 +196,7 @@ const PCBuilder = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [draggedItem, setDraggedItem] = useState({});
 
-  console.log(draggedItem);
+
 
   const { user } = useSelector((state) => state.auth);
 
@@ -245,7 +245,7 @@ const PCBuilder = () => {
     setModalState((prev) => ({ ...prev, isOpen: false }));
   };
 
-  console.log(selected);
+
   useEffect(() => {
     if (draggedItem?.part && visible) {
       setVisibile(false);

@@ -93,7 +93,7 @@ const AddAddressModal = ({
       onClose();
     },
     onError: (error) => {
-      console.log("failed to save address", error);
+      
     },
   });
 

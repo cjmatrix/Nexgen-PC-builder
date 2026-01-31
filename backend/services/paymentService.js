@@ -53,7 +53,7 @@ const processPaymentVerification = async (paypalOrderId, dbOrderId) => {
     const orderTotal = parseFloat(order.totalPrice);
 
     const usdRate = await getCurrencyConfig();
-    console.log(usdRate);
+   
 
     if (Math.abs(paidAmount - orderTotal * usdRate) > 0.01) {
       throw new AppError(

@@ -28,7 +28,7 @@ const Wishlist = () => {
     setExitModes((prev) => ({ ...prev, [productId]: "delete" }));
     removeFromWishlist(productId);
   };
-  console.log(moveError?.response?.data.message);
+ 
   if (loading) {
     return (
       <div className="flex justify-center items-center py-20">
@@ -49,7 +49,6 @@ const Wishlist = () => {
         <p className="text-gray-500 font-medium text-lg mb-8 ml-11 md:ml-14">
           Save your favorite items for later
         </p>
-        
 
         <TransitionGroup className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {items.map((item) => {
@@ -124,9 +123,10 @@ const Wishlist = () => {
         </TransitionGroup>
 
         {items.length === 0 && (
-          <div className="text-center py-20 bg-white rounded-2xl shadow-sm border border-gray-100 opacity-0 animate-fade-up"
+          <div
+            className="text-center py-20 bg-white rounded-2xl shadow-sm border border-gray-100 opacity-0 animate-fade-up"
             style={{
-              animationDelay:"500ms"
+              animationDelay: "500ms",
             }}
           >
             <div className="bg-gray-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">

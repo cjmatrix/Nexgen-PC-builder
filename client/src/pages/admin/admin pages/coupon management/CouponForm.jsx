@@ -118,7 +118,7 @@ const CouponForm = () => {
       const changedData = Object.fromEntries(
         Object.keys(dirtyFields).map((key) => [key, formData[key]]),
       );
-      console.log(changedData.length);
+   
       if (Object.keys(changedData).length === 0) {
         return setModal({
           isOpen: true,

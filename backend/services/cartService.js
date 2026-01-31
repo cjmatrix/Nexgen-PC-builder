@@ -181,7 +181,7 @@ export const getCart = async (userId) => {
         "name base_price final_price applied_offer images description isActive",
     })
     .populate("coupon").sort({createdAt:1});
-    console.log(cart)
+  
   if (!cart) {
     cart = await Cart.create({ user: userId, items: [] });
   }
@@ -265,7 +265,7 @@ export const addToCart = async (
       }
       currentCart.items[itemIndex].quantity += quantity;
     } else {
-      currentCart.items.push({ product: product, quantity });
+      currentCart.items.unshift({ product: product, quantity });
     }
   }
 

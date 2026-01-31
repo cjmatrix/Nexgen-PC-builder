@@ -367,7 +367,7 @@ export const getOrderById = async (orderId, user) => {
 };
 
 export const getOrderItemDetail = async (orderId, itemId, user) => {
-  console.log(orderId);
+
   const order = await Order.findById(orderId).select(
     "orderItems._id orderItems.components user",
   );
@@ -556,11 +556,11 @@ export const cancelOrder = async (orderId, itemId, reason, currentUser) => {
         const itemEffectivePrice =
           item.price * (1 - (item.discount || 0) / 100);
         const itemTotal = itemEffectivePrice * item.qty;
-        console.log(itemTotal);
+       
         const currentBillableTotal =
           order.itemsPrice + order.shippingPrice + order.taxPrice;
 
-        console.log(currentBillableTotal);
+      
 
         const remainingTotal = currentBillableTotal - itemTotal;
 
@@ -750,7 +750,7 @@ export const approveReturn = async (
   session.startTransaction();
   try {
     const order = await Order.findById(orderId).session(session);
-    console.log(order);
+
     if (!order) {
       throw new AppError(MESSAGES.ORDER.NOT_FOUND, HTTP_STATUS.NOT_FOUND);
     }

@@ -106,7 +106,7 @@ const AIPCAssistant = () => {
         dispatch(setShowPromptBar(false));
         showCustomToast(data?.message);
       } catch (err) {
-        console.log(err);
+      
       }
     }
   };
