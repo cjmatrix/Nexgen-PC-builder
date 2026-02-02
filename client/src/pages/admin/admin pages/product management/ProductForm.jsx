@@ -68,14 +68,15 @@ const AddProductForm = () => {
       images: [],
     },
   });
-
+  
   const images = watch("images");
   const basePrice = watch("base_price");
 
   const [isCropOpen, setIsCropOpen] = useState(false);
   const [imageSrc, setImageSrc] = useState(null);
+  const [compImage,setCompImage]=useState("")
   const [currentImageIndex, setCurrentImageIndex] = useState(null);
-
+  console.log(compImage)
   const [modal, setModal] = useState({
     isOpen: false,
     title: "",
@@ -128,6 +129,9 @@ const AddProductForm = () => {
     }
   };
 
+  useEffect(()=>{
+   isEditMode && selected?.case && setCompImage(selected?.case?.image)
+  },[selected?.case])
  
 
   useEffect(() => {
@@ -275,6 +279,8 @@ const AddProductForm = () => {
   }, [selected.case, selected.gpu, selected.motherboard, dispatch]);
 
   const handleSelect = (category, component) => {
+    console.log(component)
+    setCompImage(component?.image)
     dispatch(selectPart({ category, component }));
   };
 
@@ -647,6 +653,7 @@ const AddProductForm = () => {
                 options={options.cpu}
                 selected={selected.cpu}
                 onSelect={handleSelect}
+                setCompImage={setCompImage}
               />
               <PartSelector
                 category="motherboard"
@@ -656,6 +663,7 @@ const AddProductForm = () => {
                 selected={selected.motherboard}
                 onSelect={handleSelect}
                 disabled={!selected.cpu}
+                setCompImage={setCompImage}
               />
               <PartSelector
                 category="ram"
@@ -665,6 +673,7 @@ const AddProductForm = () => {
                 selected={selected.ram}
                 onSelect={handleSelect}
                 disabled={!selected.motherboard}
+                setCompImage={setCompImage}
               />
               <PartSelector
                 category="gpu"
@@ -674,6 +683,7 @@ const AddProductForm = () => {
                 selected={selected.gpu}
                 onSelect={handleSelect}
                 disabled={!selected.cpu}
+                setCompImage={setCompImage}
               />
               <PartSelector
                 category="storage"
@@ -682,6 +692,7 @@ const AddProductForm = () => {
                 options={options.storage}
                 selected={selected.storage}
                 onSelect={handleSelect}
+                setCompImage={setCompImage}
               />
               <PartSelector
                 category="case"
@@ -691,6 +702,7 @@ const AddProductForm = () => {
                 selected={selected.case}
                 onSelect={handleSelect}
                 disabled={!selected.motherboard}
+                setCompImage={setCompImage}
               />
               <PartSelector
                 category="cooler"
@@ -700,6 +712,7 @@ const AddProductForm = () => {
                 selected={selected.cooler}
                 onSelect={handleSelect}
                 disabled={!selected.cpu}
+                setCompImage={setCompImage}
               />
               <PartSelector
                 category="psu"
@@ -709,6 +722,7 @@ const AddProductForm = () => {
                 selected={selected.psu}
                 onSelect={handleSelect}
                 disabled={!selected.gpu}
+                setCompImage={setCompImage}
               />
             </div>
           </div>
@@ -736,14 +750,12 @@ const AddProductForm = () => {
               </div>
 
               <div className="aspect-video bg-gray-100 rounded-lg mb-6 flex items-center justify-center overflow-hidden">
-                {selected.case ? (
+                {compImage? (
                   <img
                     src={
-                      selected?.cooler?.specs.coolerType === "Liquid"
-                        ? selected.case.specs.image_liquid_cooler
-                        : selected.case.specs.image_air_cooler
+                     compImage
                     }
-                    alt="Case Preview"
+                    alt="Preview"
                     className="w-full h-full object-cover"
                   />
                 ) : (

@@ -6,6 +6,7 @@ import { Timer, Zap, Tag, ShoppingCart, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import api from "../../../../api/axios";
 import Pagination from "../../../../components/Pagination";
+import ScrollToTop from "../../../../components/ScrollToTop";
 
 const Deals = () => {
   const containerRef = useRef(null);
@@ -51,8 +52,9 @@ const Deals = () => {
       ref={containerRef}
       className="min-h-screen bg-gray-50 pt-20 pb-12 font-sans"
     >
+      <ScrollToTop page={page}></ScrollToTop>
       {/* Hero Section */}
-      <div className="relative overflow-hidden bg-gray-900 rounded-3xl mx-4 md:mx-8 mb-12 p-8 md:p-16 text-center text-white shadow-2xl">
+     {page===1 && <div className="relative overflow-hidden bg-gray-900 rounded-3xl mx-4 md:mx-8 mb-12 p-8 md:p-16 text-center text-white shadow-2xl">
         {/* Background Gradient Blob */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-4xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-indigo-600 opacity-20 blur-[100px] pointer-events-none" />
 
@@ -71,6 +73,7 @@ const Deals = () => {
           </p>
         </div>
       </div>
+    }
 
       {/* Deals Grid */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

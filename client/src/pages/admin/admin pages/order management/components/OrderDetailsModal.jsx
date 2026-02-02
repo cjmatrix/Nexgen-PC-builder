@@ -9,6 +9,7 @@ import {
   Sparkles,
   Wrench,
 } from "lucide-react";
+import ReactDOM from 'react-dom'
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../../../../../api/axios";
 import CustomModal from "../../../../../components/CustomModal";
@@ -258,7 +259,7 @@ const OrderDetailsModal = ({ isOpen, onClose, order }) => {
     );
   };
 
-  return (
+  return ReactDOM.createPortal(
     <div
       ref={containerRef}
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -633,7 +634,8 @@ const OrderDetailsModal = ({ isOpen, onClose, order }) => {
         onClose={() => setIsItemDetailsOpen(false)}
         items={viewDetailItem}
       />
-    </div>
+    </div>,
+    document.body
   );
 };
 

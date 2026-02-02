@@ -15,7 +15,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import Pagination from "../../../../../components/Pagination";
 import { useEffect } from "react";
-
+import ScrollToTop from "../../../../../components/ScrollToTop";
 const OrderHistory = () => {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
@@ -154,23 +154,39 @@ const OrderHistory = () => {
 
   const StatusBadge = ({ status }) => {
     let color = "bg-gray-50 text-gray-700 border-gray-200";
-    if (status === "Processing")
-      color = "bg-amber-50 text-amber-700 border-amber-200";
-    if (status === "Shipped")
+    let dotColor = "bg-gray-500";
+
+    // Professional SaaS-style color mapping
+    if (status === "Processing") {
+      color = "bg-blue-50 text-blue-700 border-blue-200";
+      dotColor = "bg-blue-500";
+    }
+    if (status === "Shipped") {
       color = "bg-indigo-50 text-indigo-700 border-indigo-200";
-    if (status === "Delivered")
+      dotColor = "bg-indigo-500";
+    }
+    if (status === "Delivered") {
       color = "bg-emerald-50 text-emerald-700 border-emerald-200";
-    if (status === "Cancelled")
-      color = "bg-rose-50 text-rose-700 border-rose-200";
-    if (status === "Returned" || status === "Return Approved")
+      dotColor = "bg-emerald-500";
+    }
+    if (status === "Cancelled") {
+      color = "bg-red-50 text-red-700 border-red-200";
+      dotColor = "bg-red-500";
+    }
+    if (status === "Returned" || status === "Return Approved") {
       color = "bg-slate-50 text-slate-700 border-slate-200";
-    if (status === "Return Requested")
+      dotColor = "bg-slate-500";
+    }
+    if (status === "Return Requested") {
       color = "bg-orange-50 text-orange-700 border-orange-200";
+      dotColor = "bg-orange-500";
+    }
 
     return (
       <span
-        className={`px-3 py-1 rounded-full text-xs font-medium border ${color} shadow-xs capitalize`}
+        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border ${color} shadow-sm capitalize`}
       >
+        <span className={`w-1.5 h-1.5 rounded-full ${dotColor}`}></span>
         {status}
       </span>
     );
@@ -178,6 +194,7 @@ const OrderHistory = () => {
 
   return (
     <div className="animate-fade-up bg-gray-50/50 min-h-screen p-4 md:p-8 font-sans pb-24 md:pb-8">
+      <ScrollToTop page={page}></ScrollToTop>
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight mb-2">

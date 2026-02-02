@@ -16,6 +16,7 @@ import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import api from "../../../../api/axios";
 import Pagination from "../../../../components/Pagination";
+import ScrollToTop from "../../../../components/ScrollToTop";
 
 gsap.registerPlugin(useGSAP);
 
@@ -98,6 +99,7 @@ const CommunityBuilds = () => {
 
   return (
     <div ref={containerRef} className="min-h-screen bg-gray-50 font-sans pb-20">
+      <ScrollToTop page={page}></ScrollToTop>
       {/* Banner */}
       <div className="relative h-[400px] flex items-center justify-center overflow-hidden bg-gray-900 text-white">
         <div className="absolute inset-0">

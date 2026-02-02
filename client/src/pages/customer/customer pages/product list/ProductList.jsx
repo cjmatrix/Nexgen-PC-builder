@@ -27,7 +27,7 @@ import ScrollToTop from "../../../../components/ScrollToTop";
 gsap.registerPlugin(useGSAP);
 
 const ProductList = () => {
-  const initialRef=useRef(true);
+  const initialRef = useRef(true);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const containerRef = useRef(null);
@@ -84,17 +84,20 @@ const ProductList = () => {
 
   useGSAP(
     () => {
-      if(initialRef.current)
-      gsap.to(gridRef.current?.querySelectorAll(".product-card"), {
-        y: 0,
-        opacity: 1,
-        duration: 0.6,
-        stagger: 0.1,
-        ease: "back.out(1.2)",
-        onComplete: () =>{ initialRef.current=false;console.log("heyy")},
-      });
+      if (initialRef.current)
+        gsap.to(gridRef.current?.querySelectorAll(".product-card"), {
+          y: 0,
+          opacity: 1,
+          duration: 0.6,
+          stagger: 0.1,
+          ease: "back.out(1.2)",
+          onComplete: () => {
+            initialRef.current = false;
+            console.log("heyy");
+          },
+        });
     },
-    { scope: containerRef, dependencies: [loading,items] },
+    { scope: containerRef, dependencies: [loading, items] },
   );
 
   const isInWishlist = (productId) => {
@@ -123,7 +126,7 @@ const ProductList = () => {
     <div
       ref={containerRef}
       className="min-h-screen w-full bg-gray-50 font-sans text-gray-900"
-    > 
+    >
       <ScrollToTop page={page}></ScrollToTop>
       {page === 1 && (
         <div className="animate-showcase -translate-y-[50px] opacity-0">
@@ -236,7 +239,7 @@ const ProductList = () => {
                     <div
                       key={product._id}
                       onClick={() => navigate(`/products/${product._id}`)}
-                      className="product-card opacity-0 translate-y-[20px]  group bg-white rounded-2xl shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 border border-gray-100 overflow-hidden flex flex-col cursor-pointer"
+                      className="product-card opacity-0 translate-y-[50px]  group bg-white rounded-2xl shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 border border-gray-100 overflow-hidden flex flex-col cursor-pointer"
                     >
                       <div className="relative aspect-[4/3] bg-gray-100 overflow-hidden">
                         {isOutOfStock && (

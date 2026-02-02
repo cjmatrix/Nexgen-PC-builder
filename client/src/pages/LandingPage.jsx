@@ -63,12 +63,12 @@ const LandingPage = () => {
         gsap.to(card, {
           scrollTrigger: {
             trigger: card,
-            start: "top 85%",
+            start: "top 95%",
             toggleActions: "play none none reverse",
           },
           y: 0,
           opacity: 1,
-          duration: 0.8,
+          duration: 0.5,
           delay: i * 0.1,
           ease: "power3.out",
         });
@@ -212,12 +212,11 @@ const LandingPage = () => {
                 <div className="absolute inset-0 bg-gradient-to-tr from-blue-600/10 to-purple-600/10 rounded-full blur-[100px] animate-pulse"></div>
                 <div className="relative z-10 bg-white/50 backdrop-blur-xl border border-white/40 p-2 rounded-[2rem] shadow-2xl ring-1 ring-black/5 rotate-[-5deg] hover:rotate-0 transition-all duration-700">
                   <img
-                    src="https://images.unsplash.com/photo-1587202372775-e229f172b9d7?q=80&w=1000&auto=format&fit=crop"
+                    src="/assets/images/hero-pc.png"
                     alt="High End PC"
                     className="w-full h-full object-cover rounded-[1.5rem]"
                   />
                 </div>
-                
               </div>
             </div>
           </div>

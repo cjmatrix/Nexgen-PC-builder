@@ -152,7 +152,8 @@ const Wallet = () => {
 
         {!isLoading && data?.pagination && (
           <Pagination
-            pagination={data.pagination}
+            pagination={{page:data?.pagination.currentPage,
+            totalPages: data?.pagination.totalPages}}
             page={page}
             setPage={setPage}
           />

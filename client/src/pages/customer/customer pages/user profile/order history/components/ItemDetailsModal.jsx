@@ -70,7 +70,7 @@ const ItemDetailsModal = ({ isOpen, onClose, items, order }) => {
       >
         <div
           ref={overlayRef}
-          className="absolute inset-0 bg-black/60 backdrop-blur-sm opacity-0"
+          className="absolute inset-0 backdrop-blur-sm opacity-0"
           onClick={onClose}
         ></div>
 

@@ -13,7 +13,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "ISC",                                                                                                                                                                                                                 
   "dependencies": {
     "concurrently": "^9.2.1",
     "react-hot-toast": "^2.6.0"

@@ -126,7 +126,7 @@ const Wishlist = () => {
           <div
             className="text-center py-20 bg-white rounded-2xl shadow-sm border border-gray-100 opacity-0 animate-fade-up"
             style={{
-              animationDelay: "500ms",
+              animationDelay: "300ms",
             }}
           >
             <div className="bg-gray-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
