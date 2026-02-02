@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: nexgen-mongo
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
+    ports:
+      - "27018:27017" 
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - nexgen-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "rs.initiate()"]
+      interval: 10s
+      start_period: 5s
+
+  redis:
+    image: redis:latest
+    container_name: nexgen-redis
+    ports:
+      - "6380:6379" 
+    volumes:
+      - redis-data:/data
+    command: ["redis-server", "--appendonly", "yes"]
+    networks:
+      - nexgen-network
+
+volumes:
+  mongo-data:
+  redis-data:
+  backend-node-modules:
+
+networks:
+  nexgen-network:
+    driver: bridge

@@ -1,0 +1,51 @@
+import jwt from "jsonwebtoken";
+import User from "../models/User.js";
+
+const generateTokens = async (res, userId) => {
+  const accessToken = jwt.sign(
+    { id: userId },
+    process.env.ACCESS_TOKEN_SECRET,
+    { expiresIn: 10 }
+  );
+
+  const refreshToken = jwt.sign(
+    { id: userId },
+    process.env.REFRESH_TOKEN_SECRET,
+    {
+      expiresIn: "7d",
+    }
+  );
+
+  const user = await User.findById(userId).select("+refreshTokens");
+  
+  if (user.refreshTokens.length >= 10) {
+    user.refreshTokens = user.refreshTokens.slice(-9);
+  }
+
+  user.refreshTokens.push(refreshToken);
+
+  await user.save();
+
+  res.cookie("accessToken", accessToken, {
+    httpOnly: true,
+    secure: false,
+    sameSite: "strict",
+    maxAge: 10000,
+  });
+
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    secure: false,
+    sameSite: "strict",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+
+ 
+};
+
+const clearTokens = (res) => {
+  res.cookie("accessToken", "", { httpOnly: true, expires: new Date(0) });
+  res.cookie("refreshToken", "", { httpOnly: true, expires: new Date(0) });
+};
+
+export { generateTokens, clearTokens };

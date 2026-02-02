@@ -1,36 +1,64 @@
-const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+import jwt from "jsonwebtoken";
+import User from "../models/User.js";
 
 const protect = async (req, res, next) => {
   let token;
 
-  token = req.cookies.jwt;
+  token = req.cookies.accessToken;
 
   if (token) {
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
 
-      req.user = await User.findById(decoded.id)
+      req.user = await User.findById(decoded.id);
 
-      if (!req.user || !req.user.status==='active') {
-         return res.status(401).json({ message: 'Not authorized, user not found' });
+      if (!req.user || req.user.status !== "active") {
+        return res
+          .status(401)
+          .json({ message: "Not authorized, user not found" });
       }
       next();
     } catch (error) {
       console.error(error);
-      res.status(401).json({ message: 'Not authorized, token failed' });
+      res.status(401).json({ message: "Not authorized, token failed" });
     }
   } else {
-    res.status(401).json({ message: 'Not authorized, no token' });
+    res.status(401).json({ message: "Not authorized, no token" });
   }
 };
 
-const admin = (req, res, next) => {
-  if (req.user && req.user.role === 'admin') {
-    next();
+// const admin = (req, res, next) => {
+//   if (req.user && req.user.role === "admin") {
+//     console.log(req.user.name);
+//     next();
+//   } else {
+//     res.status(403).json({ message: "Not authorized as an admin" });
+//   }
+// };
+
+const protectAdmin = async (req, res, next) => {
+  let token;
+
+  token = req.cookies.adminAccessToken;
+
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+
+      req.user = await User.findById(decoded.id);
+
+      if (!req.user || req.user.role !== "admin") {
+        return res.status(401).json({ message: "Not authorized as admin" });
+      }
+
+      next();
+    } catch (error) {
+      console.error(error);
+      res.status(401).json({ message: "Not authorized, token failed" });
+    }
   } else {
-    res.status(403).json({ message: 'Not authorized as an admin' });
+    res.status(401).json({ message: "Not authorized, no admin token" });
   }
 };
 
-module.exports = { protect, admin };
+export { protect, protectAdmin };

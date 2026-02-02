@@ -1,127 +1,225 @@
-const User = require('../models/User');
-const jwt = require('jsonwebtoken');
+import * as authService from "../services/authService.js";
+import AppError from "../utils/AppError.js";
+import { HTTP_STATUS } from "../constants/httpStatus.js";
+import { MESSAGES } from "../constants/responseMessages.js";
 
-// @desc    Login User/Admin
-// @route   POST /api/auth/login
-// @access  Public
-const login = async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    // Check for user
-    // We need to select password because it's set to select: false in schema
-    const user = await User.findOne({ email, isDeleted: false }).select('+password');
-
-    if (!user) {
-      return res.status(401).json({ message: 'Invalid credentials' });
-    }
-
-    // Check if blocked/suspended/banned
-    if (user.status === 'suspended' || user.status === 'banned') {
-      return res.status(403).json({ message: 'Your account has been suspended or banned. Please contact support.' });
-    }
-
-    // Check password using model method
-    const isMatch = await user.matchPassword(password);
-
-    if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid credentials' });
-    }
-
-    // Update last login
-    user.lastLogin = Date.now();
-    await user.save();
-
-    // Generate Token
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
-      expiresIn: '1d',
-    });
-
-    // Send Cookie
-    res.cookie('jwt', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 24 * 60 * 60 * 1000, // 1 day
-    });
-
-    res.status(200).json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-    });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-// @desc    Register new user
-// @route   POST /api/auth/register
-// @access  Public
-const register = async (req, res) => {
-  try {
-    const { name, email, password } = req.body;
-
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: 'Please add all fields' });
-    }
-
-    // Check if user exists
-    const userExists = await User.findOne({ email });
-
-    if (userExists) {
-      return res.status(400).json({ message: 'User already exists' });
-    }
-
-    // Create user
-    const user = await User.create({
-      name,
-      email,
-      password,
-    });
-
-    if (user) {
-      // Generate Token
-      const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
-        expiresIn: '1d',
-      });
-
-      // Send Cookie
-      res.cookie('jwt', token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 24 * 60 * 60 * 1000, // 1 day
-      });
-
-      res.status(201).json({
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      });
-    } else {
-      res.status(400).json({ message: 'Invalid user data' });
-    }
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-// @desc    Logout User
-// @route   POST /api/auth/logout
-// @access  Public
-const logout = (req, res) => {
-  res.cookie('jwt', '', {
+const setCookies = (res, accessToken, refreshToken) => {
+  res.cookie("accessToken", accessToken, {
     httpOnly: true,
-    expires: new Date(0),
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: 15 * 60 * 1000,
   });
-  res.status(200).json({ message: 'Logged out successfully' });
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
 };
 
-module.exports = {
+const register = async (req, res) => {
+  const result = await authService.registerUser(req.body);
+  res.status(HTTP_STATUS.OK).json(result);
+};
+
+const verifyOTP = async (req, res) => {
+  const { email, otp } = req.body;
+  const { user } = await authService.verifyOTP(email, otp);
+
+  res.status(HTTP_STATUS.OK).json({
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+  });
+};
+
+const resendOTP = async (req, res) => {
+  const { email } = req.body;
+  const result = await authService.resendOTP(email);
+  res.status(HTTP_STATUS.OK).json(result);
+};
+
+const login = async (req, res) => {
+  const { email, password } = req.body;
+  const { user, accessToken, refreshToken } = await authService.loginUser(
+    email,
+    password
+  );
+
+  setCookies(res, accessToken, refreshToken);
+
+  res.status(HTTP_STATUS.OK).json({
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+  });
+};
+
+const logout = async (req, res) => {
+  const { refreshToken } = req.cookies;
+  await authService.logoutUser(refreshToken);
+  
+  res.cookie("accessToken", "", { httpOnly: true, expires: new Date(0) });
+  res.cookie("refreshToken", "", { httpOnly: true, expires: new Date(0) });
+ 
+  res.status(HTTP_STATUS.OK).json({ message: MESSAGES.AUTH.LOGOUT_SUCCESS });
+};
+
+const refreshToken = async (req, res) => {
+  try {
+    const { refreshToken } = req.cookies;
+    const { newAccessToken, newRefreshToken } =
+      await authService.refreshAccessToken(refreshToken);
+
+    setCookies(res, newAccessToken, newRefreshToken);
+
+    res.status(HTTP_STATUS.OK).json({ message: MESSAGES.AUTH.REFRESH_SUCCESS });
+  } catch (error) {
+    res.cookie("accessToken", "", { httpOnly: true, expires: new Date(0) });
+    res.cookie("refreshToken", "", { httpOnly: true, expires: new Date(0) });
+    throw error;
+  }
+};
+
+const getProfile = async (req, res) => {
+  const user = {
+    _id: req.user._id,
+    name: req.user.name,
+    email: req.user.email,
+    role: req.user.role,
+  };
+  res.status(HTTP_STATUS.OK).json(user);
+};
+
+const forgotPassword = async (req, res) => {
+  const { email } = req.body;
+  const result = await authService.forgotPassword(email);
+  res.status(HTTP_STATUS.OK).json(result);
+};
+
+const resetPassword = async (req, res) => {
+  const { resetToken } = req.params;
+  const { password } = req.body;
+  const result = await authService.resetPassword(resetToken, password);
+  res.status(HTTP_STATUS.OK).json(result);
+};
+
+const changePassword = async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  const result = await authService.changePassword(
+    req.user._id,
+    currentPassword,
+    newPassword
+  );
+  res.status(HTTP_STATUS.OK).json(result);
+};
+
+// --- Admin Auth Functions ---
+
+const setAdminCookies = (res, accessToken, refreshToken) => {
+  res.cookie("adminAccessToken", accessToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: 15 * 60 * 1000,
+  });
+  res.cookie("adminRefreshToken", refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+};
+
+const adminLogin = async (req, res) => {
+  const { email, password } = req.body;
+  const { user, accessToken, refreshToken } = await authService.loginUser(
+    email,
+    password
+  );
+
+  if (user.role !== "admin") {
+    res.status(HTTP_STATUS.UNAUTHORIZED);
+    throw new Error(MESSAGES.AUTH.ADMIN_UNAUTHORIZED);
+  }
+
+  setAdminCookies(res, accessToken, refreshToken);
+
+  res.status(HTTP_STATUS.OK).json({
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+  });
+};
+
+const adminLogout = async (req, res) => {
+  const { adminRefreshToken } = req.cookies;
+  await authService.logoutUser(adminRefreshToken);
+
+  res.cookie("adminAccessToken", "", { httpOnly: true, expires: new Date(0) });
+  res.cookie("adminRefreshToken", "", { httpOnly: true, expires: new Date(0) });
+
+  res
+    .status(HTTP_STATUS.OK)
+    .json({ message: MESSAGES.AUTH.ADMIN_LOGOUT_SUCCESS });
+};
+
+const refreshAdminToken = async (req, res) => {
+  try {
+    const { adminRefreshToken } = req.cookies;
+    if (!adminRefreshToken) {
+      return res
+        .status(HTTP_STATUS.UNAUTHORIZED)
+        .json({ message: MESSAGES.AUTH.NO_REFRESH_TOKEN });
+    }
+    const { newAccessToken, newRefreshToken } =
+      await authService.refreshAccessToken(adminRefreshToken);
+
+    setAdminCookies(res, newAccessToken, newRefreshToken);
+
+    res
+      .status(HTTP_STATUS.OK)
+      .json({ message: MESSAGES.AUTH.ADMIN_REFRESH_SUCCESS });
+  } catch (error) {
+    res.cookie("adminAccessToken", "", {
+      httpOnly: true,
+      expires: new Date(0),
+    });
+    res.cookie("adminRefreshToken", "", {
+      httpOnly: true,
+      expires: new Date(0),
+    });
+    throw error;
+  }
+};
+
+const getAdminProfile = async (req, res) => {
+  const user = {
+    _id: req.user._id,
+    name: req.user.name,
+    email: req.user.email,
+    role: req.user.role,
+  };
+  res.status(HTTP_STATUS.OK).json(user);
+};
+
+export {
+  register,
   login,
   logout,
-  register
+  refreshToken,
+  verifyOTP,
+  resendOTP,
+  getProfile,
+  forgotPassword,
+  resetPassword,
+  changePassword,
+  adminLogin,
+  adminLogout,
+  refreshAdminToken,
+  getAdminProfile,
 };

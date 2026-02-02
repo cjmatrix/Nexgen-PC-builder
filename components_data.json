@@ -1,0 +1,151 @@
+[
+  {
+    "name": "Intel Core i5-13600K",
+    "category": "cpu",
+    "price": 28999,
+    "stock": 75,
+    "image": "https://m.media-amazon.com/images/I/6125mFrzr6L._AC_SL1000_.jpg",
+    "tier_level": 4,
+    "specs": {
+      "socket": "LGA1700",
+      "cores": 14,
+      "threads": 20,
+      "wattage": 181,
+      "integratedGraphics": true
+    }
+  },
+  {
+    "name": "AMD Ryzen 5 7600X",
+    "category": "cpu",
+    "price": 21999,
+    "stock": 60,
+    "image": "https://m.media-amazon.com/images/I/51p17j-1uAL._AC_SL1000_.jpg",
+    "tier_level": 3,
+    "specs": {
+      "socket": "AM5",
+      "cores": 6,
+      "threads": 12,
+      "wattage": 105,
+      "integratedGraphics": true
+    }
+  },
+  {
+    "name": "NVIDIA GeForce RTX 4070",
+    "category": "gpu",
+    "price": 58999,
+    "stock": 35,
+    "image": "https://m.media-amazon.com/images/I/71tDu30-mZL._AC_SL1500_.jpg",
+    "tier_level": 4,
+    "specs": {
+      "vram_gb": 12,
+      "length_mm": 244,
+      "wattage": 200,
+      "recommendedPsuWattage": 650,
+      "boostClock_mhz": 2475,
+      "pcieStandard": "PCIE 4.0"
+    }
+  },
+  {
+    "name": "AMD Radeon RX 7800 XT",
+    "category": "gpu",
+    "price": 51999,
+    "stock": 40,
+    "image": "https://m.media-amazon.com/images/I/81Ics1r1+LL._AC_SL1500_.jpg",
+    "tier_level": 4,
+    "specs": {
+      "vram_gb": 16,
+      "length_mm": 280,
+      "wattage": 263,
+      "recommendedPsuWattage": 700,
+      "boostClock_mhz": 2430,
+      "pcieStandard": "PCIE 4.0"
+    }
+  },
+  {
+    "name": "MSI MAG B650 Tomahawk WiFi",
+    "category": "motherboard",
+    "price": 22999,
+    "stock": 45,
+    "image": "https://m.media-amazon.com/images/I/81c8k+c3fPL._AC_SL1500_.jpg",
+    "tier_level": 4,
+    "specs": {
+      "socket": "AM5",
+      "formFactor": "ATX",
+      "ramType": "DDR5",
+      "ramSlots": 4,
+      "chipset": "B650",
+      "wifi": true
+    }
+  },
+  {
+    "name": "G.Skill Trident Z5 RGB 32GB (2x16GB) DDR5-6400",
+    "category": "ram",
+    "price": 13999,
+    "stock": 80,
+    "image": "https://m.media-amazon.com/images/I/51y1C05-sXL._AC_SL1200_.jpg",
+    "tier_level": 5,
+    "specs": {
+      "ramType": "DDR5",
+      "capacity_gb": 32,
+      "speed_mhz": 6400,
+      "modules": "2x16GB",
+      "casLatency": 32
+    }
+  },
+  {
+    "name": "WD Black SN850X 1TB NVMe SSD",
+    "category": "storage",
+    "price": 8999,
+    "stock": 100,
+    "image": "https://m.media-amazon.com/images/I/7120GgUKj3L._AC_SL1500_.jpg",
+    "tier_level": 4,
+    "specs": {
+      "storageType": "SSD",
+      "capacity_gb": 1000,
+      "readSpeed_mbps": 7300
+    }
+  },
+  {
+    "name": "NZXT H5 Flow",
+    "category": "case",
+    "price": 8499,
+    "stock": 50,
+    "image": "https://m.media-amazon.com/images/I/61pD-z-2BFL._AC_SL1500_.jpg",
+    "tier_level": 3,
+    "specs": {
+      "formFactor": "ATX",
+      "maxGpuLength_mm": 365,
+      "maxCpuCoolerHeight_mm": 165,
+      "powerSupplySupport": "ATX",
+      "image_air_cooler": "https://example.com/h5-air.jpg",
+      "image_liquid_cooler": "https://example.com/h5-liquid.jpg"
+    }
+  },
+  {
+    "name": "Seasonic Focus GX-750",
+    "category": "psu",
+    "price": 9999,
+    "stock": 65,
+    "image": "https://m.media-amazon.com/images/I/71-0+c-123L._AC_SL1500_.jpg",
+    "tier_level": 4,
+    "specs": {
+      "wattage": 750,
+      "efficiencyRating": "80+ Gold",
+      "modular": "Fully Modular"
+    }
+  },
+  {
+    "name": "Deepcool AK620 Zero Dark",
+    "category": "cooler",
+    "price": 5499,
+    "stock": 55,
+    "image": "https://m.media-amazon.com/images/I/61y8L1-2B4L._AC_SL1500_.jpg",
+    "tier_level": 4,
+    "specs": {
+      "coolerType": "Air",
+      "radiatorSize_mm": 0,
+      "fanSize_mm": 120,
+      "compatibleSockets": ["LGA1700", "AM5", "AM4"]
+    }
+  }
+]
