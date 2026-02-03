@@ -10,25 +10,28 @@ export const fetchCart = createAsyncThunk(
       return response.data;
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.message || "Failed to fetch cart"
+        error.response?.data?.message || "Failed to fetch cart",
       );
     }
-  }
+  },
 );
 
 export const addToCart = createAsyncThunk(
   "cart/addToCart",
-  async ({ productId, quantity ,customBuild}, { rejectWithValue }) => {
+  async ({ productId, quantity, customBuild }, { rejectWithValue }) => {
     try {
-      const response = await api.post("/cart/add", { productId, quantity ,customBuild});
+      const response = await api.post("/cart/add", {
+        productId,
+        quantity,
+        customBuild,
+      });
       return response.data;
     } catch (error) {
-     
       return rejectWithValue(
-        error.response?.data?.message || "Failed to add to cart"
+        error.response?.data?.message || "Failed to add to cart",
       );
     }
-  }
+  },
 );
 
 export const removeFromCart = createAsyncThunk(
@@ -39,10 +42,10 @@ export const removeFromCart = createAsyncThunk(
       return response.data;
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.message || "Failed to remove item"
+        error.response?.data?.message || "Failed to remove item",
       );
     }
-  }
+  },
 );
 
 export const updateQuantity = createAsyncThunk(
@@ -53,10 +56,10 @@ export const updateQuantity = createAsyncThunk(
       return response.data;
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.message || "Failed to update quantity"
+        error.response?.data?.message || "Failed to update quantity",
       );
     }
-  }
+  },
 );
 
 export const applyCoupon = createAsyncThunk(
@@ -67,10 +70,10 @@ export const applyCoupon = createAsyncThunk(
       return response.data;
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.message || "Failed to apply coupon"
+        error.response?.data?.message || "Failed to apply coupon",
       );
     }
-  }
+  },
 );
 
 export const removeCoupon = createAsyncThunk(
@@ -81,10 +84,10 @@ export const removeCoupon = createAsyncThunk(
       return response.data;
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.message || "Failed to remove coupon"
+        error.response?.data?.message || "Failed to remove coupon",
       );
     }
-  }
+  },
 );
 
 const initialState = {
@@ -127,6 +130,15 @@ const cartSlice = createSlice({
       .addCase(addToCart.fulfilled, (state, action) => {
         state.items = action.payload.cart.items;
         state.summary = action.payload.summary;
+        state.loading=false
+      })
+      .addCase(addToCart.pending, (state, action) => {
+       
+        state.loading=true
+      })
+       .addCase(addToCart.rejected, (state, action) => {
+       
+        state.loading=false
       })
 
       .addCase(removeFromCart.fulfilled, (state, action) => {
@@ -134,11 +146,19 @@ const cartSlice = createSlice({
         state.summary = action.payload.summary;
       })
 
-      // Update
+     
+      .addCase(updateQuantity.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(updateQuantity.fulfilled, (state, action) => {
+        state.loading = false;
         state.items = action.payload.cart.items;
         state.summary = action.payload.summary;
-       
+      })
+      .addCase(updateQuantity.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       })
 
       // Apply Coupon

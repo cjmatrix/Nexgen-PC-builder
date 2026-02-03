@@ -38,6 +38,21 @@ const ProductList = () => {
     removeFromWishlist,
   } = useWishlist();
 
+
+  const [optiWishlistItems,setOptiWishlistItems]=useState({});
+
+  useEffect(()=>{
+    let optObj={}
+   wishlistItems && wishlistItems.forEach(item=>{
+      optObj[item.product._id]=true;
+    })
+
+    setOptiWishlistItems(optObj)
+  },[wishlistItems])
+
+
+
+
   const [filters, setFilters] = useState({
     search: "",
     category: "",
@@ -60,6 +75,15 @@ const ProductList = () => {
   useEffect(() => {
     dispatch(fetchPublicProducts({ ...filters, page }));
   }, [dispatch, filters, page]);
+
+
+    const { data: categories } = useQuery({
+    queryKey: ["category"],
+    queryFn: async () => {
+      const response = await api.get("/category");
+      return response?.data.categories;
+    },
+  });
 
   // Entrance Animations
   useGSAP(
@@ -84,8 +108,8 @@ const ProductList = () => {
 
   useGSAP(
     () => {
-      if (initialRef.current)
-        gsap.to(gridRef.current?.querySelectorAll(".product-card"), {
+        console.log("heyy")
+        gridRef.current && gsap.to(gridRef.current.querySelectorAll(".product-card"), {
           y: 0,
           opacity: 1,
           duration: 0.6,
@@ -97,7 +121,7 @@ const ProductList = () => {
           },
         });
     },
-    { scope: containerRef, dependencies: [loading, items] },
+    { scope: containerRef, dependencies: [loading, items,categories] },
   );
 
   const isInWishlist = (productId) => {
@@ -105,22 +129,29 @@ const ProductList = () => {
     return wishlistItems.some((item) => item.product?._id === productId);
   };
 
-  const handleWishlistToggle = async (e, productId) => {
+  // const handleWishlistToggle = async (e, productId) => {
+  //   e.stopPropagation();
+
+  //   if (isInWishlist(productId)) {
+  //     removeFromWishlist(productId);
+  //   } else {
+  //     addToWishlist(productId);
+  //   }
+  // };
+
+   const handleWishlistToggle = async (e, productId) => {
     e.stopPropagation();
-    if (isInWishlist(productId)) {
+    
+    if (optiWishlistItems[productId]) {
+      setOptiWishlistItems(prev=>({...prev,[productId]:false}))
       removeFromWishlist(productId);
     } else {
+       setOptiWishlistItems(prev=>({...prev,[productId]:true}))
       addToWishlist(productId);
     }
   };
 
-  const { data: categories } = useQuery({
-    queryKey: ["category"],
-    queryFn: async () => {
-      const response = await api.get("/category");
-      return response?.data.categories;
-    },
-  });
+
 
   return (
     <div
@@ -155,8 +186,11 @@ const ProductList = () => {
               icon={Filter}
               placeholder="Category"
               value={filters.category}
-              onChange={(val) =>
-                setFilters({ ...filters, category: val, page: 1 })
+              onChange={(val) =>{
+                  setPage(1)
+                   setFilters({ ...filters, category: val, page: 1 })
+              }
+               
               }
               options={[
                 { label: "All Categories", value: "" },
@@ -268,7 +302,7 @@ const ProductList = () => {
                         >
                           <HeartIcon
                             className={`h-4 w-4 md:h-5 md:w-5 ${
-                              isInWishlist(product._id)
+                              optiWishlistItems[product._id]
                                 ? "fill-red-500 text-red-500"
                                 : "text-gray-600"
                             }`}

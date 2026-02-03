@@ -12,16 +12,12 @@ services:
       - ./backend/.env
     environment:
       - PORT=5000
-      # Ensure your MONGO_URI in .env matches this format:
-      # mongodb://nexgen-mongo-prod:27017/nexgen_pc_builder?replicaSet=rs0
-      - MONGO_URI=mongodb://nexgen-mongo-prod:27017/nexgen_pc_builder?replicaSet=rs0
       - REDIS_HOST=nexgen-redis-prod
       - REDIS_PORT=6379
       - NODE_ENV=production
       # UPDATE THIS IP after deployment
       - CLIENT_URL=http://localhost:5173
     depends_on:
-      - mongodb
       - redis
     networks:
       - nexgen-network
@@ -44,44 +40,6 @@ services:
       - nexgen-network
     restart: always
 
-  mongodb:
-    image: mongo:6
-    container_name: nexgen-mongo-prod
-    # Enabled Replica Set here
-    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
-    volumes:
-      - mongo-data:/data/db
-    networks:
-      - nexgen-network
-    # We use a proper healthcheck to see if Mongo is ready to accept connections
-    healthcheck:
-      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
-      interval: 10s
-      timeout: 10s
-      retries: 5
-    restart: always
-
-  # 🛠️ THIS SERVICE INITIALIZES THE REPLICA SET ONCE 🛠️
-  mongo-init:
-    image: mongo:6
-    container_name: nexgen-mongo-init
-    depends_on:
-      mongodb:
-        condition: service_healthy
-    networks:
-      - nexgen-network
-    # This script tries to initiate. If already initiated, it fails gracefully (catch block).
-    command: >
-      mongosh --host nexgen-mongo-prod:27017 --eval 
-      'try { 
-        rs.status(); 
-        print("Replica Set already initialized"); 
-      } catch (e) { 
-        rs.initiate({ _id: "rs0", members: [{ _id: 0, host: "nexgen-mongo-prod:27017" }] }); 
-        print("Replica Set initialized successfully"); 
-      }'
-    restart: "no" # Runs once and exits
-
   redis:
     image: redis:alpine
     container_name: nexgen-redis-prod
@@ -93,7 +51,6 @@ services:
     restart: always
 
 volumes:
-  mongo-data:
   redis-data:
 
 networks:

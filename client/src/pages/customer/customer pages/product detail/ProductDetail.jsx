@@ -36,6 +36,11 @@ const ProductDetail = () => {
     loading,
     error,
   } = useSelector((state) => state.products);
+
+  const{loading:cartLoading}=useSelector(state=>state.cart);
+
+  console.log(cartLoading)
+
   const { user } = useSelector((state) => state.auth);
 
   const {
@@ -69,20 +74,20 @@ const ProductDetail = () => {
 
       const tl = gsap.timeline();
 
-      tl.fromTo(
-        ".animate-left",
-        { x: -50, opacity: 0 },
-        { x: 0, opacity: 1, duration: 0.8, ease: "power3.out", stagger: 0.1 },
-      )
-        .fromTo(
+      tl.to(".animate-left", {
+        x: 0,
+        opacity: 1,
+        duration: 0.8,
+        ease: "power3.out",
+        stagger: 0.1,
+      })
+        .to(
           ".animate-right",
-          { x: 50, opacity: 0 },
           { x: 0, opacity: 1, duration: 0.8, ease: "power3.out", stagger: 0.1 },
           "-=0.6",
         )
-        .fromTo(
+        .to(
           ".spec-item",
-          { y: 20, opacity: 0 },
           {
             y: 0,
             opacity: 1,
@@ -198,7 +203,7 @@ const ProductDetail = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
           {/* LEFT: Image Gallery */}
-          <div className="lg:col-span-7 animate-left space-y-6 relative">
+          <div className="lg:col-span-7 animate-left space-y-6 relative opacity-0 -translate-x-12">
             <div className="bg-white rounded-3xl p-8 shadow-xl shadow-gray-200/50 border border-white ring-1 ring-gray-100 relative overflow-hidden group">
               <div className="absolute top-4 right-4 z-20 flex flex-col gap-2">
                 <button
@@ -257,7 +262,7 @@ const ProductDetail = () => {
           </div>
 
           {/* RIGHT: Product Info */}
-          <div className="lg:col-span-5 animate-right space-y-8">
+          <div className="lg:col-span-5 animate-right space-y-8 opacity-0 translate-x-12">
             {/* Title & Badge */}
             <div>
               <div className="flex items-center gap-2 mb-4">
@@ -316,7 +321,7 @@ const ProductDetail = () => {
               <div className="flex gap-4">
                 <button
                   onClick={() => handleAddToCart(id)}
-                  disabled={isOutOfStock}
+                  disabled={cartLoading||isOutOfStock}
                   className={`flex-1 py-4 px-6 rounded-xl font-bold text-lg flex items-center justify-center gap-2 shadow-lg transition-all duration-300 transform active:scale-[0.98] ${
                     isOutOfStock
                       ? "bg-gray-200 text-gray-400 cursor-not-allowed"
@@ -324,7 +329,7 @@ const ProductDetail = () => {
                   }`}
                 >
                   <ShoppingCart className="w-5 h-5" />
-                  {isOutOfStock ? "Unavailable" : "Add to Cart"}
+                  {isOutOfStock ? "Unavailable" : !cartLoading? "Add to Cart":"Adding ..."}
                 </button>
 
                 <button
@@ -379,7 +384,7 @@ const ProductDetail = () => {
                   component && (
                     <div
                       key={index}
-                      className="spec-item bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300 group"
+                      className="spec-item bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300 group opacity-0 translate-y-5"
                     >
                       <div className="flex items-start justify-between mb-4">
                         <div className="p-3 bg-gray-50 rounded-xl group-hover:bg-blue-50 transition-colors">

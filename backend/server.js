@@ -37,6 +37,8 @@ import componentRoutes from "./routes/componentRoutes.js";
 
 import morgan from "morgan";
 
+import { globalLimiter } from "./middleware/rateLimitMiddleware.js";
+
 const app = express();
 
 app.use(helmet());
@@ -60,14 +62,6 @@ app.use((req, res, next) => {
 app.use(xss());
 app.use(cookieParser());
 
-// const limiter = rateLimit({
-//   max: 100,
-//   windowMs: 15 * 60 * 1000,
-//   message: "Too many requests from this IP, please try again in an hour!",
-// });
-
-// app.use("/api", limiter);
-
 app.use(passport.initialize());
 
 app.use(
@@ -78,12 +72,15 @@ app.use(
 );
 app.use(morgan("dev"));
 
+// app.use("/api", globalLimiter);
+
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/upload", uploadRoutes);
 app.use("/api/v1/products", productRoutes);
 app.use("/api/v1/cart", cartRoutes);
 app.use("/api/v1/orders", orderRoutes);
+
 app.use("/api/v1/ai", aiRoutes);
 app.use("/api/v1/coupons", couponRoutes);
 app.use("/api/v1/referral", referralRoutes);
