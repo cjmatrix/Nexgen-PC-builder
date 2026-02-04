@@ -72,7 +72,7 @@ app.use(
 );
 app.use(morgan("dev"));
 
-// app.use("/api", globalLimiter);
+app.use("/api", globalLimiter);
 
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/admin", adminRoutes);

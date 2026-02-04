@@ -7,6 +7,7 @@ import TransitionWrapper from "../../../../components/TransitionWrapper";
 import CustomModal from "../../../../components/CustomModal";
 import api from "../../../../api/axios";
 import { useQuery } from "@tanstack/react-query";
+import { toast } from "react-toastify";
 import {
   fetchCart,
   removeFromCart,
@@ -32,11 +33,7 @@ const Cart = () => {
   });
 
   const [optimisticQty, setOptimisticQty] = useState({});
-  const [optiCart,setOptiCart]=useState([]);
-
-  useEffect(()=>{
-
-  })
+  const [optiCart, setOptiCart] = useState([]);
 
   useEffect(() => {
     let qtyObj = {};
@@ -51,13 +48,9 @@ const Cart = () => {
     });
   }, [items]);
 
-
-  useEffect(()=>{
-
-    if(items)
-    setOptiCart(items)
-
-  },[items])
+  useEffect(() => {
+    if (items) setOptiCart(items);
+  }, [items]);
 
   console.log(optimisticQty);
   const closeModal = () => {
@@ -134,11 +127,24 @@ const Cart = () => {
     }
   };
 
-
-  console.log(optiCart)
-  const handleRemove = (productId) => {
-    setOptiCart(prev=>prev.filter(item=>item.product._id!==productId))
-    dispatch(removeFromCart(productId));
+  console.log(optiCart);
+  const handleRemove = async (productId) => {
+    const previousCart = optiCart;
+    setOptiCart((prev) =>
+      prev.filter((item) =>
+        item.isCustomBuild
+          ? item._id !== productId
+          : item.product._id !== productId,
+      ),
+    );
+    await dispatch(removeFromCart(productId))
+      .unwrap()
+      .then()
+      .catch((error) => {
+        console.log("erroring");
+        setOptiCart(previousCart);
+        toast.error("Failed To Remove From Cart")
+      });
   };
 
   const handleCheckout = async () => {

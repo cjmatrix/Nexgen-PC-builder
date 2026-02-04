@@ -114,12 +114,12 @@ const CommunityBuilds = lazy(
   () => import("./pages/customer/customer pages/community/CommunityBuilds"),
 );
 const NotFound = lazy(() => import("./pages/NotFound"));
+const TooManyRequests = lazy(() => import("./pages/TooManyRequests"));
 
 const CustomerPage = lazy(() => import("./pages/customer/layout/CustomerPage"));
 
 const ProtectedRoute = lazy(() => import("./protectedroutes/ProtectedRoute"));
 
-// Loading Fallback
 const LoadingSpinner = () => (
   <div className="flex h-screen w-full items-center justify-center bg-white">
     <div className="flex flex-col items-center gap-4">
@@ -131,7 +131,6 @@ const LoadingSpinner = () => (
   </div>
 );
 
-// Helper to wrap components in Suspense
 const Load = (Component) => (
   <Suspense fallback={<LoadingSpinner />}>
     <Component />
@@ -342,6 +341,10 @@ const router = createBrowserRouter([
   {
     path: "*",
     element: Load(NotFound),
+  },
+  {
+    path: "/too-many-requests",
+    element: Load(TooManyRequests),
   },
 ]);
 

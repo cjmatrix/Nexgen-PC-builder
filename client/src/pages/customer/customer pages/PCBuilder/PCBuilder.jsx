@@ -45,6 +45,7 @@ import BackgroundGears from "./components/BackgroundGears";
 import DragIndicator from "./components/DragIndicator";
 
 import DraggablePartCard from "./components/DraggablePartCard";
+import PartSkeleton from "./components/PartSkeleton";
 import { useDrop } from "react-dnd";
 import CustomModal from "../../../../components/CustomModal";
 
@@ -196,13 +197,24 @@ const PCBuilder = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [draggedItem, setDraggedItem] = useState({});
 
-
-
   const { user } = useSelector((state) => state.auth);
 
-  const { selected, options, totalPrice, estimatedWattage } = useSelector(
-    (state) => state.builder,
-  );
+  const { selected, options, totalPrice, estimatedWattage, loading } =
+    useSelector((state) => state.builder);
+
+  const [showSkeleton, setShowSkeleton] = useState(false);
+
+  useEffect(() => {
+    let timer;
+    if (loading) {
+      timer = setTimeout(() => {
+        setShowSkeleton(true);
+      }, 500);
+    } else {
+      setShowSkeleton(false);
+    }
+    return () => clearTimeout(timer);
+  }, [loading]);
 
   const isFirstRender = useRef(true);
 
@@ -213,9 +225,8 @@ const PCBuilder = () => {
     }
 
     const currentStepId = STEPS[currentStep].id;
-    
+
     if (selected[currentStepId] && currentStep < STEPS.length - 1) {
-    
       const timer = setTimeout(() => {
         setCurrentStep((prev) => prev + 1);
       }, 500);
@@ -244,7 +255,6 @@ const PCBuilder = () => {
     }
     setModalState((prev) => ({ ...prev, isOpen: false }));
   };
-
 
   useEffect(() => {
     if (draggedItem?.part && visible) {
@@ -679,7 +689,9 @@ const PCBuilder = () => {
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-3" ref={stepRef}>
-            {currentOptions.length === 0 ? (
+            {showSkeleton ? (
+              Array.from({ length: 4 }).map((_, i) => <PartSkeleton key={i} />)
+            ) : currentOptions.length === 0 && !loading ? (
               <div className="text-center py-10 text-gray-500">
                 <p>No compatible options found.</p>
                 <p className="text-xs mt-2">

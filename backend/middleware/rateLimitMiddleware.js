@@ -3,9 +3,9 @@ import { RedisStore } from "rate-limit-redis";
 import { redisConnection } from "../config/redis.js";
 
 export const globalLimiter = rateLimit({
-  max: 1000,
+  max: 2000,
   windowMs: 15 * 60 * 1000,
-  message: "Too many requests from this IP, please try again in an hour!",
+  message: "Too many requests from this IP, please try again in 15 minutes!",
 });
 
 

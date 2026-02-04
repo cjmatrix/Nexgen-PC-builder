@@ -41,17 +41,14 @@ const calculateSummary = async (items, coupon = null) => {
     return sum + (baseprice - finalprice) * Number(item.quantity);
   }, 0);
 
- 
   let couponDiscount = 0;
 
   const billableTotalCents = subtotal - itemDiscount;
   const billableTotalRupees = billableTotalCents / 100;
 
   if (coupon && coupon.isActive) {
-    
     const minOrder = coupon.minOrderValue || 0;
 
-   
     const isExpired = new Date() > new Date(coupon.expiryDate);
 
     if (!isExpired && billableTotalRupees >= minOrder) {
@@ -70,7 +67,6 @@ const calculateSummary = async (items, coupon = null) => {
         couponDiscount = coupon.discountValue;
       }
 
-    
       if (couponDiscount > billableTotalRupees) {
         couponDiscount = billableTotalRupees;
       }
@@ -172,7 +168,6 @@ const checkStockAvailability = async (cartItems, newItem = null) => {
   }
 };
 
-
 export const getCart = async (userId) => {
   let cart = await Cart.findOne({ user: userId })
     .populate({
@@ -180,15 +175,15 @@ export const getCart = async (userId) => {
       select:
         "name base_price final_price applied_offer images description isActive",
     })
-    .populate("coupon").sort({createdAt:1});
-  
+    .populate("coupon")
+    .sort({ createdAt: 1 });
+
   if (!cart) {
     cart = await Cart.create({ user: userId, items: [] });
   }
 
   const summary = await calculateSummary(cart.items, cart.coupon);
 
-  
   if (cart.discount !== summary.couponDiscount) {
     cart.discount = summary.couponDiscount;
     await cart.save();
@@ -275,12 +270,10 @@ export const addToCart = async (
 
   const populatedCart = populateCart(currentCart);
 
-
   const summary = await calculateSummary(
     populatedCart.items,
     currentCart.coupon,
   );
-
 
   if (currentCart.discount !== summary.couponDiscount) {
     currentCart.discount = summary.couponDiscount;
@@ -300,6 +293,8 @@ export const removeFromCart = async (userId, productId) => {
       },
     })
     .populate("coupon");
+
+  
 
   if (!cart) {
     throw new AppError(MESSAGES.CART.CART_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
@@ -429,7 +424,7 @@ export const applyCouponToCart = async (userId, couponCode) => {
     throw new AppError(MESSAGES.CART.CART_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
   }
 
-  const currentSummary = await calculateSummary(cart.items); 
+  const currentSummary = await calculateSummary(cart.items);
 
   const { coupon, discountAmount } = await validateCoupon(
     couponCode,
