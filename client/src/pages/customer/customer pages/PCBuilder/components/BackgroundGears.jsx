@@ -23,13 +23,6 @@ const BackgroundGears = () => {
         ease: "none",
       });
 
-      gsap.to(".gear-fast", {
-        rotation: 360,
-        duration: 10,
-        repeat: -1,
-        ease: "none",
-      });
-
 
     },
     { scope: containerRef }

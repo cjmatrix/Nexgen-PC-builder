@@ -127,7 +127,7 @@ const Cart = () => {
     }
   };
 
-  console.log(optiCart);
+
   const handleRemove = async (productId) => {
     const previousCart = optiCart;
     setOptiCart((prev) =>
@@ -141,7 +141,7 @@ const Cart = () => {
       .unwrap()
       .then()
       .catch((error) => {
-        console.log("erroring");
+      
         setOptiCart(previousCart);
         toast.error("Failed To Remove From Cart")
       });
