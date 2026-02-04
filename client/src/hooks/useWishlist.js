@@ -4,6 +4,8 @@ import { useDispatch } from "react-redux";
 import { fetchCart } from "../store/slices/cartSlice";
 import toast from "react-hot-toast";
 
+const EMPTY_ARRAY = [];
+
 export const useWishlist = () => {
   const queryClient = useQueryClient();
   const dispatch = useDispatch();
@@ -78,7 +80,7 @@ export const useWishlist = () => {
 
   return {
     wishlist: wishlist,
-    items: wishlist?.items || [],
+    items: wishlist?.items || EMPTY_ARRAY,
     loading: isLoading,
     error,
     addToWishlist:
