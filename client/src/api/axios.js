@@ -38,6 +38,13 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
+    if (error.response?.status === 429) {
+      if (!window.location.pathname.includes("/too-many-requests")) {
+         window.location.href = "/too-many-requests";
+      }
+      return Promise.reject(error);
+    }
+
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
         return new Promise(function (resolve, reject) {
@@ -51,11 +58,9 @@ api.interceptors.response.use(
           });
       }
 
-     
       originalRequest._retry = true;
       isRefreshing = true;
       const isAdmin = originalRequest.url?.includes("/admin");
-     
 
       try {
         if (isAdmin) {

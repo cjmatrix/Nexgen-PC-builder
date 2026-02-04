@@ -70,6 +70,9 @@ const TransitionWrapper = ({ children, mode = "move", ...props }) => {
     <Transition
       timeout={300}
       onExit={onExit}
+      onEnter={()=>{
+        gsap.to(nodeRef.current,{opacity:1,scale:1,x: 0, y: 0 })
+      }}
       {...props}
       onExited={onExited} //onexted like bell that need ring by manager(wrapoprer) to the boss(transitionGrouup)
       nodeRef={nodeRef}
