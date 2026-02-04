@@ -322,7 +322,7 @@ const OrderHistory = () => {
 
                   {/* Card Actions */}
                   <div className="flex items-center gap-3 pt-2 mt-auto">
-                    <button
+                    {(order.status==="Delivered" || order.status==="Return Approved" || order.status==="Returned" ) && <button
                       onClick={(e) => {
                         e.stopPropagation();
                         generateInvoice(order);
@@ -333,6 +333,7 @@ const OrderHistory = () => {
                       <FileText className="w-4 h-4" />
                       Invoice
                     </button>
+                    }
                     <button
                       onClick={() => handleViewDetails(order._id)}
                       disabled={detailsLoadingId === order._id}

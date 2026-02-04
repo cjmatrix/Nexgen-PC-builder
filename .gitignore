@@ -30,5 +30,10 @@ yarn-error.log*
 *.swp
 *.swo
 
+mongo-dump
+
+
 # Docker
 docker-compose.override.yml
+
+mongo-dump

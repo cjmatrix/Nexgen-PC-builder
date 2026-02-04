@@ -262,7 +262,7 @@ const AIPCAssistant = () => {
             {error && (
               <div className="mt-4 p-4 bg-red-50 border border-red-100 text-red-600 rounded-xl flex items-center gap-3 shadow-sm">
                 <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
-                {error}
+                {error }
               </div>
             )}
           </div>

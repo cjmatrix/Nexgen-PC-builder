@@ -54,20 +54,25 @@ export const useWishlist = () => {
       await api.post("/wishlist/move-to-cart", { productId });
       return productId;
     },
-    onSuccess: (productId) => {
-      queryClient.setQueryData(["wishlist"], (oldData) => {
-        if (!oldData) return oldData;
+    onMutate: async (productId) => {
+      await queryClient.cancelQueries(["wishlist"]);
+      const previousWishlist = queryClient.getQueryData(["wishlist"]);
+      queryClient.setQueryData(["wishlist"], (old) => {
         return {
-          ...oldData,
-          items: oldData.items.filter((item) => item.product._id !== productId),
+          ...old,
+          items: old.items.filter((item) => item.product._id !== productId),
         };
       });
 
-      dispatch(fetchCart());
-      toast.success("Moved to Cart");
+      return { previousWishlist };
     },
-    onError: (err) => {
-      toast.error(err.response?.data?.message || "Failed to move to cart");
+    onSettled: () => {
+      console.log("heyy");
+      queryClient.invalidateQueries(["wishlist"]);
+      dispatch(fetchCart());
+    },
+    onError: (err, newTodo, context) => {
+      queryClient.setQueryData(["wishlist"], context.previousWishlist);
     },
   });
 

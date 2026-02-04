@@ -10,27 +10,8 @@ export const generatePCBuild = createAsyncThunk(
       // localStorage.setItem("aiBuild", JSON.stringify(response.data.product));
       return response.data;
     } catch (error) {
-      let errorMessage = error.message;
-      if (error.response?.data) {
-        if (typeof error.response.data.message === "object") {
-          
-          errorMessage =
-            error.response.data.error?.message ||
-            error.response.data.message ||
-            JSON.stringify(error.response.data);
-        } else if (typeof error.response.data.message === "string") {
-          try {
-            const parsed = JSON.parse(error.response.data.message);
-
-            errorMessage = parsed.error.message;
-            return rejectWithValue(errorMessage);
-          } catch (e) {
-            errorMessage = error.response.data;
-          }
-        }
-      }
- 
-      return rejectWithValue(errorMessage);
+      console.log(error)
+      return rejectWithValue(error.response?.data);
     }
   }
 );

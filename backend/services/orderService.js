@@ -326,7 +326,7 @@ export const getUserOrders = async (
 
   const orders = await Order.find(query)
     .select(
-      "orderId status totalPrice createdAt orderItems.image orderItems.isAiBuild orderItems.isCustomBuild",
+      "orderId status totalPrice createdAt shippingAddress shippingPrice couponDiscount orderItems.image orderItems.name orderItems.qty orderItems.price orderItems.discount orderItems.isAiBuild orderItems.isCustomBuild",
     )
     .sort({ createdAt: -1 })
     .limit(limit)
@@ -367,7 +367,6 @@ export const getOrderById = async (orderId, user) => {
 };
 
 export const getOrderItemDetail = async (orderId, itemId, user) => {
-
   const order = await Order.findById(orderId).select(
     "orderItems._id orderItems.components user",
   );
@@ -496,7 +495,6 @@ export const cancelOrder = async (orderId, itemId, reason, currentUser) => {
       throw new AppError(MESSAGES.ORDER.NOT_FOUND, HTTP_STATUS.NOT_FOUND);
     }
 
-   
     if (
       currentUser.role !== "admin" &&
       order.user.toString() !== currentUser._id.toString()
@@ -556,11 +554,9 @@ export const cancelOrder = async (orderId, itemId, reason, currentUser) => {
         const itemEffectivePrice =
           item.price * (1 - (item.discount || 0) / 100);
         const itemTotal = itemEffectivePrice * item.qty;
-       
+
         const currentBillableTotal =
           order.itemsPrice + order.shippingPrice + order.taxPrice;
-
-      
 
         const remainingTotal = currentBillableTotal - itemTotal;
 
@@ -803,22 +799,20 @@ export const approveReturn = async (
         );
       }
 
-      
-
       if (addToBlacklist) {
         const components = [
-         { type: "cpu", componentId: item.components.cpu.componentId },
-        { type: "gpu", componentId: item.components.gpu.componentId },
-        {
-          type: "motherboard",
-          componentId: item.components.motherboard.componentId,
-        },
-        { type: "ram", componentId: item.components.ram.componentId },
-        { type: "storage", componentId: item.components.storage.componentId },
-        { type: "case", componentId: item.components.case.componentId },
-        { type: "psu", componentId: item.components.psu.componentId },
-        { type: "cooler", componentId: item.components.cooler.componentId },
-      ];
+          { type: "cpu", componentId: item.components.cpu.componentId },
+          { type: "gpu", componentId: item.components.gpu.componentId },
+          {
+            type: "motherboard",
+            componentId: item.components.motherboard.componentId,
+          },
+          { type: "ram", componentId: item.components.ram.componentId },
+          { type: "storage", componentId: item.components.storage.componentId },
+          { type: "case", componentId: item.components.case.componentId },
+          { type: "psu", componentId: item.components.psu.componentId },
+          { type: "cooler", componentId: item.components.cooler.componentId },
+        ];
 
         await Blacklist.create(
           [
@@ -826,8 +820,8 @@ export const approveReturn = async (
               productName: item.name,
               productId: item.product,
               orderId: order._id,
-              itemId:item._id,
-              quantity:item.qty,
+              itemId: item._id,
+              quantity: item.qty,
               reason: item.returnReason || "Damaged/Defective",
               components,
             },

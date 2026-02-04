@@ -7,6 +7,7 @@ import TransitionWrapper from "../../../../components/TransitionWrapper";
 import CustomModal from "../../../../components/CustomModal";
 import api from "../../../../api/axios";
 import { useQuery } from "@tanstack/react-query";
+import { toast } from "react-toastify";
 import {
   fetchCart,
   removeFromCart,
@@ -31,6 +32,27 @@ const Cart = () => {
     message: "",
   });
 
+  const [optimisticQty, setOptimisticQty] = useState({});
+  const [optiCart, setOptiCart] = useState([]);
+
+  useEffect(() => {
+    let qtyObj = {};
+    setOptimisticQty(() => {
+      items?.length !== 0 &&
+        items.forEach((item) => {
+          qtyObj[item.isCustomBuild ? item?._id : item.product?._id] =
+            item.quantity;
+        });
+
+      return qtyObj;
+    });
+  }, [items]);
+
+  useEffect(() => {
+    if (items) setOptiCart(items);
+  }, [items]);
+
+  console.log(optimisticQty);
   const closeModal = () => {
     setModalConfig((prev) => ({ ...prev, isOpen: false }));
   };
@@ -84,20 +106,45 @@ const Cart = () => {
     }
   };
 
-  const handleUpdateQuantity = async (productId, newQuantity) => {
+  const handleUpdateQuantity = async (productId, newQuantity, op) => {
     if (newQuantity < 1) return;
     try {
-      await dispatch(
-        updateQuantity({ productId, quantity: newQuantity }),
-      ).unwrap();
+      await dispatch(updateQuantity({ productId, quantity: newQuantity }))
+        .unwrap()
+        .then()
+        .catch((error) => {
+          setOptimisticQty((prev) => ({
+            ...prev,
+            [productId]:
+              op === "plus" ? prev[productId] - 1 : prev[productId] + 1,
+          }));
+
+          throw error;
+        });
       setErrors((prev) => ({ ...prev, [productId]: null }));
     } catch (error) {
       setErrors((prev) => ({ ...prev, [productId]: error }));
     }
   };
 
-  const handleRemove = (productId) => {
-    dispatch(removeFromCart(productId));
+  console.log(optiCart);
+  const handleRemove = async (productId) => {
+    const previousCart = optiCart;
+    setOptiCart((prev) =>
+      prev.filter((item) =>
+        item.isCustomBuild
+          ? item._id !== productId
+          : item.product._id !== productId,
+      ),
+    );
+    await dispatch(removeFromCart(productId))
+      .unwrap()
+      .then()
+      .catch((error) => {
+        console.log("erroring");
+        setOptiCart(previousCart);
+        toast.error("Failed To Remove From Cart")
+      });
   };
 
   const handleCheckout = async () => {
@@ -134,7 +181,7 @@ const Cart = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-6">
               <TransitionGroup component={null}>
-                {items.map((item) => {
+                {optiCart.map((item) => {
                   const isCustom = item.isCustomBuild;
                   const name = isCustom
                     ? item.customBuild.name
@@ -250,28 +297,60 @@ const Cart = () => {
                             <div className="flex flex-col items-end gap-1">
                               <div className="flex items-center gap-3 bg-gray-50 rounded-lg p-1">
                                 <button
-                                  onClick={() =>
+                                  onClick={() => {
+                                    setOptimisticQty((prev) => ({
+                                      ...prev,
+                                      [item.isCustomBuild
+                                        ? item._id
+                                        : item.product._id]:
+                                        prev[
+                                          item.isCustomBuild
+                                            ? item._id
+                                            : item.product._id
+                                        ] - 1,
+                                    }));
+
                                     handleUpdateQuantity(
                                       isCustom ? item._id : item.product?._id,
                                       item.quantity - 1,
-                                    )
-                                  }
+                                      "minus",
+                                    );
+                                  }}
                                   className="p-2 text-gray-600 hover:text-gray-900 hover:bg-white rounded-md transition-all shadow-sm disabled:opacity-50"
-                                  disabled={item.quantity <= 1}
+                                  disabled={loading || item.quantity <= 1}
                                 >
                                   <Minus className="h-4 w-4" />
                                 </button>
                                 <span className="text-sm font-semibold w-8 text-center">
-                                  {item.quantity}
+                                  {
+                                    optimisticQty[
+                                      item.isCustomBuild
+                                        ? item._id
+                                        : item.product._id
+                                    ]
+                                  }
                                 </span>
                                 <button
-                                  onClick={() =>
+                                  onClick={() => {
+                                    setOptimisticQty((prev) => ({
+                                      ...prev,
+                                      [item.isCustomBuild
+                                        ? item._id
+                                        : item.product._id]:
+                                        prev[
+                                          item.isCustomBuild
+                                            ? item._id
+                                            : item.product._id
+                                        ] + 1,
+                                    }));
                                     handleUpdateQuantity(
                                       isCustom ? item._id : item.product?._id,
                                       item.quantity + 1,
-                                    )
-                                  }
+                                      "plus",
+                                    );
+                                  }}
                                   className="p-2 text-gray-600 hover:text-gray-900 hover:bg-white rounded-md transition-all shadow-sm"
+                                  disabled={loading}
                                 >
                                   <Plus className="h-4 w-4" />
                                 </button>
