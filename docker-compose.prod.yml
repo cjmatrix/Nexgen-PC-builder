@@ -8,15 +8,16 @@ services:
     container_name: nexgen-backend-prod
     ports:
       - "5000:5000"
+    env_file:
+      - ./backend/.env
     environment:
       - PORT=5000
-      - MONGO_URI=mongodb://mongodb:27017/nexgen_pc_builder
-      - REDIS_HOST=redis
+      - REDIS_HOST=nexgen-redis-prod
       - REDIS_PORT=6379
       - NODE_ENV=production
-      
+      # UPDATE THIS IP after deployment
+      - CLIENT_URL=http://localhost:5173
     depends_on:
-      - mongodb
       - redis
     networks:
       - nexgen-network
@@ -26,6 +27,10 @@ services:
     build:
       context: ./client
       dockerfile: Dockerfile
+      args:
+        # CRITICAL: Must be your Public IP/Domain. 
+        # If testing locally, localhost:5000 is fine, but rebuild for Prod.
+        - VITE_API_URL=http://localhost:5000
     container_name: nexgen-client-prod
     ports:
       - "80:80"
@@ -34,3 +39,20 @@ services:
     networks:
       - nexgen-network
     restart: always
+
+  redis:
+    image: redis:alpine
+    container_name: nexgen-redis-prod
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    networks:
+      - nexgen-network
+    restart: always
+
+volumes:
+  redis-data:
+
+networks:
+  nexgen-network:
+    driver: bridge
