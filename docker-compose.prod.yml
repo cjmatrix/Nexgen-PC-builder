@@ -15,8 +15,7 @@ services:
       - REDIS_HOST=nexgen-redis-prod
       - REDIS_PORT=6379
       - NODE_ENV=production
-      # UPDATE THIS IP after deployment
-      - CLIENT_URL=http://localhost:5173
+      - CLIENT_URL=http://localhost
     depends_on:
       - redis
     networks:
@@ -28,8 +27,7 @@ services:
       context: ./client
       dockerfile: Dockerfile
       args:
-        # CRITICAL: Must be your Public IP/Domain. 
-        # If testing locally, localhost:5000 is fine, but rebuild for Prod.
+        
         - VITE_API_URL=http://localhost:5000
     container_name: nexgen-client-prod
     ports:
