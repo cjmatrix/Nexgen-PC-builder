@@ -6,14 +6,13 @@ export const generatePCBuild = createAsyncThunk(
   async (prompt, { rejectWithValue }) => {
     try {
       const response = await axios.post("/ai/generate-pc", { prompt });
-    
+
       // localStorage.setItem("aiBuild", JSON.stringify(response.data.product));
       return response.data;
     } catch (error) {
-      console.log(error)
       return rejectWithValue(error.response?.data);
     }
-  }
+  },
 );
 
 const aiSlice = createSlice({
@@ -24,7 +23,7 @@ const aiSlice = createSlice({
     error: null,
     success: false,
     message: "",
-    showPromptBar: true,
+    showPromptBar: !JSON.parse(localStorage.getItem("aiBuild")),
   },
   reducers: {
     resetAIState: (state) => {
@@ -37,12 +36,14 @@ const aiSlice = createSlice({
     },
     setAiPc: (state, action) => {
       localStorage.setItem("aiBuild", JSON.stringify(action.payload));
-      state.aiBuild = action.payload; 
+      state.aiBuild = action.payload;
     },
-    setError:(state,action)=>{
-   
-      state.error=action.payload;
-      state.showPromptBar= true;
+    setError: (state, action) => {
+      state.error = action.payload;
+
+      if (action.payload) {
+        state.showPromptBar = true;
+      }
     },
     setShowPromptBar: (state, action) => {
       state.showPromptBar = action.payload;
@@ -68,5 +69,6 @@ const aiSlice = createSlice({
   },
 });
 
-export const { resetAIState, setAiPc, setShowPromptBar,setError } = aiSlice.actions;
+export const { resetAIState, setAiPc, setShowPromptBar, setError } =
+  aiSlice.actions;
 export default aiSlice.reducer;

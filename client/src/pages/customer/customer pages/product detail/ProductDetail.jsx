@@ -39,7 +39,7 @@ const ProductDetail = () => {
 
   const{loading:cartLoading}=useSelector(state=>state.cart);
 
-  console.log(cartLoading)
+
 
   const { user } = useSelector((state) => state.auth);
 

@@ -108,7 +108,7 @@ const ProductList = () => {
 
   useGSAP(
     () => {
-        console.log("heyy")
+    
         gridRef.current && gsap.to(gridRef.current.querySelectorAll(".product-card"), {
           y: 0,
           opacity: 1,
@@ -117,7 +117,7 @@ const ProductList = () => {
           ease: "back.out(1.2)",
           onComplete: () => {
             initialRef.current = false;
-            console.log("heyy");
+          
           },
         });
     },

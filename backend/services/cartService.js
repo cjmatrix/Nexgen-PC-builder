@@ -214,7 +214,7 @@ export const addToCart = async (
   }
   // SCENARIO A: Adding a Custom Build
   if (customBuild) {
-    currentCart.items.push({
+    currentCart.items.unshift({
       isCustomBuild: true,
       isAiBuild: customBuild.isAiBuild || false,
       customBuild: customBuild,

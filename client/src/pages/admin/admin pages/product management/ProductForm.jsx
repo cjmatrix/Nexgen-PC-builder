@@ -76,7 +76,7 @@ const AddProductForm = () => {
   const [imageSrc, setImageSrc] = useState(null);
   const [compImage,setCompImage]=useState("")
   const [currentImageIndex, setCurrentImageIndex] = useState(null);
-  console.log(compImage)
+
   const [modal, setModal] = useState({
     isOpen: false,
     title: "",
@@ -279,7 +279,7 @@ const AddProductForm = () => {
   }, [selected.case, selected.gpu, selected.motherboard, dispatch]);
 
   const handleSelect = (category, component) => {
-    console.log(component)
+
     setCompImage(component?.image)
     dispatch(selectPart({ category, component }));
   };

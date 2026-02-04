@@ -55,16 +55,16 @@ const AIPCAssistant = () => {
     onCloseAction: null,
   });
 
-  useEffect(()=>{
-    dispatch(setError(null))
-  },[])
+  useEffect(() => {
+    dispatch(setError(null));
+  }, []);
   const handleCloseModal = () => {
     if (modalState.onCloseAction) {
       modalState.onCloseAction();
     }
     setModalState((prev) => ({ ...prev, isOpen: false }));
   };
-
+ 
   useGSAP(
     () => {
       const tl = gsap.timeline();
@@ -105,9 +105,7 @@ const AIPCAssistant = () => {
         const data = await dispatch(generatePCBuild(prompt)).unwrap();
         dispatch(setShowPromptBar(false));
         showCustomToast(data?.message);
-      } catch (err) {
-      
-      }
+      } catch (err) {}
     }
   };
 
@@ -159,7 +157,6 @@ const AIPCAssistant = () => {
         },
       });
     } catch (error) {
-     
       setModalState({
         isOpen: true,
         type: "error",
@@ -173,7 +170,6 @@ const AIPCAssistant = () => {
     }
   };
 
-  
   return (
     <div
       ref={containerRef}
@@ -262,13 +258,13 @@ const AIPCAssistant = () => {
             {error && (
               <div className="mt-4 p-4 bg-red-50 border border-red-100 text-red-600 rounded-xl flex items-center gap-3 shadow-sm">
                 <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
-                {error }
+                {error}
               </div>
             )}
           </div>
         )}
 
-        {!aiBuild && !showPromptBar && !error&& <AIBuildLoader />}
+        {!aiBuild && !showPromptBar && !error && <AIBuildLoader />}
 
         {aiBuild && (
           <div
@@ -336,7 +332,7 @@ const AIPCAssistant = () => {
                         setPrompt("");
                         dispatch(setShowPromptBar(true));
                       }}
-                      className="py-4 rounded-xl font-bold bg-white text-gray-700 hover:bg-gray-50 transition-colors border border-gray-200 shadow-sm flex items-center justify-center gap-2 group"
+                      className="py-4 rounded-xl font-bold bg-white text-gray-700 hover:bg-gray-50 transition-colors border-4 border-gray-200 shadow-sm flex items-center justify-center gap-2 group animate-heartbeat"
                     >
                       <RefreshCcw
                         size={18}
