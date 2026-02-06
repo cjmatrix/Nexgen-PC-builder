@@ -22,6 +22,7 @@ import CustomDropdown from "../../../../components/CustomDropdown";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 
+
 import ScrollToTop from "../../../../components/ScrollToTop";
 
 gsap.registerPlugin(useGSAP);
@@ -32,6 +33,7 @@ const ProductList = () => {
   const navigate = useNavigate();
   const containerRef = useRef(null);
   const { items, pagination, loading } = useSelector((state) => state.products);
+  const { user } = useSelector((state) => state.auth);
   const {
     items: wishlistItems,
     addToWishlist,
@@ -39,8 +41,13 @@ const ProductList = () => {
   } = useWishlist();
 
   const [optiWishlistItems, setOptiWishlistItems] = useState({});
-
+    
   useEffect(() => {
+     if (!user) {
+        setOptiWishlistItems({});
+        return;
+    }
+
     let optObj = {};
     wishlistItems &&
       wishlistItems.forEach((item) => {
@@ -48,7 +55,7 @@ const ProductList = () => {
       });
 
     setOptiWishlistItems(optObj);
-  }, [wishlistItems]);
+  }, [wishlistItems,user]);
 
   const [filters, setFilters] = useState({
     search: "",
@@ -97,27 +104,29 @@ const ProductList = () => {
 
         { y: 0, opacity: 1, duration: 0.8, ease: "power2.out" },
         "-=0.5",
-      );
-    },
-    { scope: containerRef, dependencies: [loading, items] },
-  );
-
-  useGSAP(
-    () => {
-      gridRef.current &&
-        gsap.to(gridRef.current.querySelectorAll(".product-card"), {
+      ).to(
+          gridRef.current?.querySelectorAll(".product-card"), {
           y: 0,
           opacity: 1,
-          duration: 0.6,
+          duration: 0.1,
           stagger: 0.1,
           ease: "back.out(1.2)",
           onComplete: () => {
             initialRef.current = false;
           },
-        });
+        }
+      )
     },
-    { scope: containerRef, dependencies: [loading, items, categories] },
+    { scope: containerRef, dependencies: [loading, items] },
   );
+
+  // useGSAP(
+  //   () => {
+  //     gridRef.current &&
+  //       gsap.to();
+  //   },
+  //   { scope: containerRef, dependencies: [loading, items, categories] },
+  // );
 
   const isInWishlist = (productId) => {
     if (!wishlistItems) return false;

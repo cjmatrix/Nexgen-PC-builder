@@ -66,10 +66,12 @@ app.use(passport.initialize());
 
 app.use(
   cors({
-    origin: [process.env.CLIENT_URL, "https://bdghml9c-5173.euw.devtunnels.ms"],
+    origin: [process.env.CLIENT_URL || "http://localhost:5173"],
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD"],
     credentials: true,
   }),
 );
+
 app.use(morgan("dev"));
 
 app.use("/api", globalLimiter);

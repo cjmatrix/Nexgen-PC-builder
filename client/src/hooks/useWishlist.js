@@ -3,10 +3,12 @@ import api from "../api/axios";
 import { useDispatch } from "react-redux";
 import { fetchCart } from "../store/slices/cartSlice";
 import toast from "react-hot-toast";
-
+import { useSelector } from "react-redux";
 const EMPTY_ARRAY = [];
 
 export const useWishlist = () => {
+
+    const {user}=useSelector(state=>state.auth)
   const queryClient = useQueryClient();
   const dispatch = useDispatch();
 
@@ -21,6 +23,7 @@ export const useWishlist = () => {
       return res.data.data;
     },
     staleTime: 1000 * 60 * 5,
+    enabled:!!user
   });
 
   const addToWishlistMutation = useMutation({

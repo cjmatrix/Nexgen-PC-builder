@@ -139,9 +139,39 @@ const Load = (Component) => (
 
 const router = createBrowserRouter([
   {
-    path: "/",
-    element: Load(LandingPage),
-  },
+  path: "/",
+  element: Load(CustomerPage),
+  children: [
+   
+    { index: true, element: Load(LandingPage) },
+    { path: "products", element: Load(ProductList) },
+    { path: "products/:id", element: Load(ProductDetail) },
+    { path: "builder", element: Load(PCBuilder) },
+    { path: "deals", element: Load(Deals) },
+    { path: "community-builds", element: Load(CommunityBuilds) },
+    { path: "ai-assistant", element: Load(AIPCAssistant) },
+    { path: "products/customization/:id", element: Load(PCBuilder) },
+    {
+      element: Load(ProtectedRoute),
+      children: [
+        { path: "cart", element: Load(Cart) },
+        { path: "checkout", element: Load(Checkout) },
+        { path: "payment/retry/:orderId", element: Load(PaymentRetry) },
+        {
+          path: "user",
+          element: Load(UserDashboard),
+          children: [
+            { path: "profile", element: Load(ProfileSetting) },
+            { path: "orders", element: Load(OrderHistory) },
+            { path: "referral", element: Load(Referral) },
+            { path: "wallet", element: Load(Wallet) },
+            { path: "wishlist", element: Load(Wishlist) },
+          ],
+        },
+      ],
+    },
+  ],
+},
   {
     path: "/login",
     element: Load(Login),
@@ -162,41 +192,6 @@ const router = createBrowserRouter([
     path: "/reset-password/:resetToken",
     element: Load(ResetPassword),
   },
-  {
-    path: "/",
-    element: Load(CustomerPage),
-    children: [
-      {
-        path: "/products",
-        element: Load(ProductList),
-      },
-      {
-        path: "/products/:id",
-        element: Load(ProductDetail),
-      },
-      {
-        path: "/products/customization/:id",
-        element: Load(PCBuilder),
-      },
-      {
-        path: "/builder",
-        element: Load(PCBuilder),
-      },
-      {
-        path: "/deals",
-        element: Load(Deals),
-      },
-      {
-        path: "/community-builds",
-        element: Load(CommunityBuilds),
-      },
-      {
-        path: "/ai-assistant",
-        element: Load(AIPCAssistant),
-      },
-    ],
-  },
-
   {
     element: Load(AdminRoutes),
     children: [
@@ -283,56 +278,6 @@ const router = createBrowserRouter([
           {
             path: "/admin/blacklist/:id",
             element: Load(BlacklistComponents),
-          },
-        ],
-      },
-    ],
-  },
-  {
-    element: Load(ProtectedRoute),
-    children: [
-      {
-        path: "/",
-        element: Load(CustomerPage),
-        children: [
-          {
-            path: "/cart",
-            element: Load(Cart),
-          },
-          {
-            path: "/checkout",
-            element: Load(Checkout),
-          },
-          {
-            path: "/payment/retry/:orderId",
-            element: Load(PaymentRetry),
-          },
-          {
-            path: "/user",
-            element: Load(UserDashboard),
-
-            children: [
-              {
-                path: "/user/profile",
-                element: Load(ProfileSetting),
-              },
-              {
-                path: "/user/orders",
-                element: Load(OrderHistory),
-              },
-              {
-                path: "/user/referral",
-                element: Load(Referral),
-              },
-              {
-                path: "/user/wallet",
-                element: Load(Wallet),
-              },
-              {
-                path: "/user/wishlist",
-                element: Load(Wishlist),
-              },
-            ],
           },
         ],
       },
