@@ -73,7 +73,6 @@ app.use(
 app.use(morgan("dev"));
 
 app.use("/api", globalLimiter);
-app.get("/health",(req,res)=>res.json({message:"API running"}))
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/upload", uploadRoutes);
