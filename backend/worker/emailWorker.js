@@ -11,7 +11,7 @@ const emailWorker= new Worker ("email-queue",async(job)=>{
      await sendEmail({email,subject,message});
 
       console.log(`Email sent to ${email}`);
-},{connection:redisConfig,concurrency:50})
+},{connection:redisConnection ,concurrency:50})
 
 
 
