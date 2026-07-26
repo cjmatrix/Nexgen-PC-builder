@@ -51,7 +51,7 @@ const aiWorker = new Worker(
    
 
   },
-  { connection: redisConfig, concurrency: 10 }
+  { connection:redisConnection , concurrency: 10 }
 );
 
 aiWorker.on("failed", async(job, err) => {
