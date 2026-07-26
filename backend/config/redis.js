@@ -1,21 +1,25 @@
-import { Redis } from "ioredis";
+import { Redis, RedisOptions } from "ioredis";
 
 
-const redisConfig = {
-  host: process.env.REDIS_HOST || "127.0.0.1",
-  port: process.env.REDIS_PORT || 6379,
-  maxRetriesPerRequest: null, // REQUIRED for BullMQ
+const redisOptions: RedisOptions = {
+  maxRetriesPerRequest: null,
 };
 
 
-const redisConnection = new Redis(redisConfig);
+const redisConnection = process.env.REDIS_URL
+  ? new Redis(process.env.REDIS_URL, redisOptions)
+  : new Redis({
+      host: process.env.REDIS_HOST || "127.0.0.1",
+      port: Number(process.env.REDIS_PORT) || 6379,
+      ...redisOptions,
+    });
 
 redisConnection.on("connect", () => {
-  console.log(" Redis Connected (Local Ubuntu)");
+  console.log("Redis Connected Successfully!");
 });
 
 redisConnection.on("error", (err) => {
-  console.error(" Redis Connection Error:", err);
+  console.error("Redis Connection Error:", err);
 });
 
-export { redisConnection, redisConfig };
+export { redisConnection };
