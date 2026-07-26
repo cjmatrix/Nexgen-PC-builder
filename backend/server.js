@@ -66,14 +66,14 @@ app.use(passport.initialize());
 
 app.use(
   cors({
-    origin: [process.env.CLIENT_URL, "https://bdghml9c-5173.euw.devtunnels.ms"],
+    origin: [process.env.CLIENT_URL, "https://bdghml9c-5173.euw.devtunnels.ms","https://nexgenpc.xyz"],
     credentials: true,
   }),
 );
 app.use(morgan("dev"));
 
 app.use("/api", globalLimiter);
-
+app.get("/health",(req,res)=>res.json({message:"API running"}))
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/upload", uploadRoutes);
