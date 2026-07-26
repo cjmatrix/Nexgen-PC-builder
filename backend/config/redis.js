@@ -1,26 +1,21 @@
 import { Redis } from "ioredis";
 
 
+const redisUrl = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
+
 const redisConfig = {
   maxRetriesPerRequest: null, 
 };
 
 
-const redisConnection = process.env.REDIS_URL
-  ? new Redis(process.env.REDIS_URL, redisConfig)
-  : new Redis({
-      host: process.env.REDIS_HOST || "127.0.0.1",
-      port: Number(process.env.REDIS_PORT) || 6379,
-      ...redisConfig,
-    });
+if (redisUrl.startsWith('rediss://')) {
+  redisConfig.tls = {
+    rejectUnauthorized: false,
+  };
+}
 
-redisConnection.on("connect", () => {
-  console.log("Redis Connected Successfully!");
-});
+const redisConnection = new Redis(redisUrl, redisConfig);
 
-redisConnection.on("error", (err) => {
-  console.error("Redis Connection Error:", err);
-});
-
+redisConnection.on('error', (err) => console.error('Redis Connection Error:', err));
 
 export { redisConnection, redisConfig };
