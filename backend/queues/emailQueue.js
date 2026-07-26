@@ -13,3 +13,4 @@ export const addEmailJob = async (data) => {
     removeOnComplete: true, 
   });
 };
+
