@@ -1,7 +1,7 @@
-import { Redis, RedisOptions } from "ioredis";
+import { Redis } from "ioredis";
 
 
-const redisOptions: RedisOptions = {
+const redisOptions = {
   maxRetriesPerRequest: null,
 };
 
