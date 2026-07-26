@@ -74,16 +74,19 @@ router.get(
         req.user._id,
       );
 
-      res.cookie("accessToken", accessToken, {
+      const isProduction = process.env.NODE_ENV === "production";
+      const cookieOptions = {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
+        secure: isProduction,
+        sameSite: isProduction ? "none" : "strict",
+      };
+
+      res.cookie("accessToken", accessToken, {
+        ...cookieOptions,
         maxAge: 15 * 60 * 1000, // 15m
       });
       res.cookie("refreshToken", refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
+        ...cookieOptions,
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7d
       });
 
